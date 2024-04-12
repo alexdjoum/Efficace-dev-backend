@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\Employee;
-use App\Models\User;
 
 
 class EmployeeService
@@ -16,7 +15,7 @@ class EmployeeService
     {
         $employee = Employee::create($data);
         $this->userService->create($data, $employee);
-
+        $employee->fresh();
         return $employee;
     }
 
@@ -25,7 +24,7 @@ class EmployeeService
         $employee->update($data);
 
         $this->userService->update($employee->user, $data);
-
+        $employee->fresh();
         return $employee;
     }
 }

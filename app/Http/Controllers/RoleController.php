@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Spatie\Activitylog\Facades\LogBatch;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
@@ -45,7 +44,7 @@ class RoleController extends Controller
 
         $role->syncPermissions($request->permissions);
 
-        activity()->performedOn($role)->log('created');
+        activity()->performedOn($role)->log('Ce model a été crée');
 
         return response()->json([
             'success' => true,
@@ -92,7 +91,7 @@ class RoleController extends Controller
 
         $role->refresh();
 
-        activity()->performedOn($role)->log('updated');
+        activity()->performedOn($role)->log('Ce model a été modifié');
 
         return response()->json([
             'success' => true,
@@ -107,7 +106,7 @@ class RoleController extends Controller
     public function destroy(Role $role)
     {
         $role->delete();
-        activity()->performedOn($role)->log('deleted');
+        activity()->performedOn($role)->log('Ce model a été supprimé');
         return response()->json([
             'success' => true,
             'message' => 'Role supprimé avec succès.',

@@ -4,9 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Employee;
 use App\Services\EmployeeService;
-use App\Services\UserService;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 
 class EmployeeController extends Controller

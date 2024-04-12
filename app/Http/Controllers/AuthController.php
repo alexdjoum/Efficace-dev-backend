@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Employee;
 use App\Models\User;
 use Illuminate\Http\Request;
 use App\Services\CustomerService;
+use App\Services\EmployeeService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Spatie\Activitylog\Models\Activity;
 
 class AuthController extends Controller
 {
@@ -153,14 +156,14 @@ class AuthController extends Controller
             'success' => true,
             'message' => 'Utilisateur connecté.',
             'data' => [
-                'auth' => $request->user()->userable,
+                'auth' => $request->user()?->userable,
             ]
         ]);
     }
 
     // update customer profile
 
-    public function updateProfile(Request $request, CustomerService $customerService)
+    public function updateProfile(Request $request, CustomerService $customerService, EmployeeService $employeeService)
     {
         $user = $request->user();
 
@@ -183,16 +186,30 @@ class AuthController extends Controller
             ], 422);
         }
 
-        $customer = DB::transaction(function () use ($user, $request, $customerService) {
-            return $customerService->update($user, $request->all());
+        $service = ($user->userable instanceof Employee) ? $employeeService : $customerService;
+
+        $auth = DB::transaction(function () use ($user, $request, $service) {
+            return $service->update($user->userable, $request->all());
         });
 
         return response()->json([
             'success' => true,
             'message' => 'Profil mis à jour avec succès.',
-            'data' => $customer
+            'data' => $auth
         ]);
     }
 
-    
+    public function logs(Request $request)
+    {
+        if ($request->name) {
+            $logs = Activity::query()->where('log_name', $request->name)->get();
+        } else {
+            $logs = Activity::all();
+        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Logs',
+            'data' => $logs
+        ]);
+    }
 }

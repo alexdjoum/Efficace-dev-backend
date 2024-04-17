@@ -13,7 +13,7 @@ class UpdateAccommodationRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -33,6 +33,7 @@ class UpdateAccommodationRequest extends FormRequest
             'description' => 'string',
             'type' => 'sometimes|required|string',
             'property_id' => 'sometimes|required|exists:properties,id',
+            'images' => 'array',
             'images.*' => 'image|mimes:jpeg,png,jpg,gif,svg',
         ];
     }

@@ -5,10 +5,9 @@ namespace App\Http\Requests;
 use App\Traits\FailValidation;
 use Illuminate\Foundation\Http\FormRequest;
 
-class StorePropertyRequest extends FormRequest
+class StoreLandRequest extends FormRequest
 {
     use FailValidation;
-
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -25,23 +24,18 @@ class StorePropertyRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => 'required|string|min:3',
-            'build_area' => 'required|numeric|min:0',
-            'field_area' => 'required|numeric|min:0',
-            'levels' => 'required|integer|min:0',
-            'has_garden' => 'required|boolean',
-            'parkings' => 'required|integer|min:0',
-            'has_pool' => 'required|boolean',
-            'basement_area' => 'required|numeric|min:0',
-            'ground_floor_area' => 'required|numeric|min:0',
-            'type' => 'required|string',
-            'description' => 'required|string',
+            'area' => 'required|numeric',
+            'is_fragmentable' => 'required|boolean',
+            'relief' => 'required|string',
+            'description' => 'string',
+            'land_title' => 'file|mimes:png,jpg,pdf',
+            'certificat_of_ownership' => 'file|mimes:png,jpg,pdf',
+            'technical_doc' => 'file|mimes:png,jpg,pdf',
             'country' => 'required|string',
             'city' => 'required|string',
             'street' => 'required|string',
             'coordinate_link' => 'required|string',
-            'images' => 'array',
-            'images.*' => 'image|mimes:jpeg,png,jpg,gif,svg',
+            'images.*' => 'image|mimes:png,jpg,jpeg,svg|max:2048',
         ];
     }
 }

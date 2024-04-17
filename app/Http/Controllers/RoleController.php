@@ -111,7 +111,7 @@ class RoleController extends Controller
             'success' => true,
             'message' => 'Role supprimé avec succès.',
             'data' => null
-        ], 204);
+        ]);
     }
 
     // list of permissions

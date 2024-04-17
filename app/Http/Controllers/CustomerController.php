@@ -76,7 +76,7 @@ class CustomerController extends Controller
         $validator = validator()->make($request->all(), [
             "first_name" => "sometimes|required|string",
             "last_name" => "sometimes|required|string",
-            "email" => "sometimes|required|email|unique:users,email," . $customer->id,
+            "email" => "sometimes|required|email|unique:users,email," . $customer->user->id,
             "phone" => "sometimes|required|string",
             "country" => "sometimes|required|string",
             "city" => "sometimes|required|string",
@@ -107,12 +107,15 @@ class CustomerController extends Controller
      */
     public function destroy(Customer $customer)
     {
+        $customer->user->clearMediaCollection('profile');
+        $customer->user->delete();
+        $customer->address->delete();
         $customer->delete();
 
         return response()->json([
             'success' => true,
             'message' => 'Client mise à jour avec succès.',
             'data' => null
-        ], 204);
+        ]);
     }
 }

@@ -10,7 +10,6 @@ class Location extends Model
     use HasFactory;
 
     protected $fillable = [
-        'address_id',
         'coordinate_link',
     ];
 
@@ -20,6 +19,6 @@ class Location extends Model
 
     public function address()
     {
-        return $this->belongsTo(Address::class);
+        return $this->morphOne(Address::class, 'addressable');
     }
 }

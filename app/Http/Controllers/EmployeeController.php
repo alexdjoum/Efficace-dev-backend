@@ -83,7 +83,7 @@ class EmployeeController extends Controller
         $validator = validator()->make($request->all(), [
             "first_name" => "sometimes|required|string",
             "last_name" => "sometimes|required|string",
-            "email" => "sometimes|required|email|unique:users,email," . $employee->id,
+            "email" => "sometimes|required|email|unique:users,email," . $employee->user->id,
             "phone" => "sometimes|required|string",
             "position" => "sometimes|required|string",
             "roles" => "array",
@@ -116,12 +116,14 @@ class EmployeeController extends Controller
      */
     public function destroy(Employee $employee)
     {
+        $employee->user->clearMediaCollection('profile');
+        $employee->user->delete();
         $employee->delete();
 
         return response()->json([
             'success' => true,
             'message' => "Employé supprimé avec succès.",
             'data' => null
-        ], 204);
+        ]);
     }
 }

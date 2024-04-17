@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 use App\Traits\FailValidation;
 use Illuminate\Foundation\Http\FormRequest;
 
-class UpdatePropertyRequest extends FormRequest
+class UpdateLandRequest extends FormRequest
 {
     use FailValidation;
     /**
@@ -24,23 +24,19 @@ class UpdatePropertyRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => 'sometimes|required|string|min:3',
-            'build_area' => 'sometimes|required|numeric|min:0',
-            'field_area' => 'sometimes|required|numeric|min:0',
-            'levels' => 'sometimes|required|integer|min:0',
-            'has_garden' => 'sometimes|required|boolean',
-            'parkings' => 'sometimes|required|integer|min:0',
-            'has_pool' => 'sometimes|required|boolean',
-            'basement_area' => 'sometimes|required|numeric|min:0',
-            'ground_floor_area' => 'sometimes|required|numeric|min:0',
-            'type' => 'sometimes|required|string',
-            'description' => 'sometimes|required|string',
+            'area' => 'sometimes|required|numeric',
+            'is_fragmentable' => 'sometimes|required|boolean',
+            'relief' => 'sometimes|required|string',
+            'description' => 'string',
+            'land_title' => 'file|mimes:png,jpg,pdf',
+            'certificat_of_ownership' => 'file|mimes:png,jpg,pdf',
+            'technical_doc' => 'file|mimes:png,jpg,pdf',
             'country' => 'sometimes|required|string',
             'city' => 'sometimes|required|string',
             'street' => 'sometimes|required|string',
             'coordinate_link' => 'sometimes|required|string',
             'images' => 'array',
-            'images.*' => 'image|mimes:jpeg,png,jpg,gif,svg',
+            'images.*' => 'image|mimes:png,jpg,jpeg,svg|max:2048',
         ];
     }
 }

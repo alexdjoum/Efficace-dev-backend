@@ -11,9 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('locations', function (Blueprint $table) {
+        Schema::create('lands', function (Blueprint $table) {
             $table->id();
-            $table->string('coordinate_link');
+            $table->double('area');
+            $table->boolean('is_fragmentable')->default(0);
+            $table->string('relief')->nullable();
+            $table->longText('description')->nullable();
+            $table->foreignId('location_id')->constrained()->onDelete('cascade');
             $table->timestamps();
         });
     }
@@ -23,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('locations');
+        Schema::dropIfExists('lands');
     }
 };

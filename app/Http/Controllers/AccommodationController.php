@@ -71,6 +71,7 @@ class AccommodationController extends Controller
      */
     public function destroy(Accommodation $accommodation)
     {
+        $accommodation->clearMediaCollection('accommodation');
         $accommodation->delete();
 
         return response()->json([

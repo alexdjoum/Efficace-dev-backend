@@ -10,23 +10,22 @@ class PropertyService
 {
     public function create(array $data)
     {
-        $address = Address::query()->create($data);
-        $location = Location::query()->create($data);
+        $address = Address::query()->make($data);
+        $location = Location::query()->make($data);
+        $location->save();
         $location->address()->save($address);
-
-        $property = Property::query()->create($data);
-        $property->location()->save($location);
+        $property = Property::query()->make($data);
+        $property->location()->associate($location);
+        // dd($property, $address, $location);
+        $property->save();
 
         if (isset($data['images'])) {
-
             collect($data['images'])->each(function ($item) use ($property) {
                 $property->addMedia($item)->toMediaCollection('property');
             });
         }
 
-        $property->fresh();
-
-        return $property;
+        return $property->fresh();
     }
 
 
@@ -34,9 +33,9 @@ class PropertyService
     {
         $property->update($data);
 
-        $property->location()->update($data);
+        $property->location->update($data);
 
-        $property->location->address()->update($data);
+        $property->location->address->update($data);
 
         if (isset($data['images'])) {
             $property->clearMediaCollection('property');
@@ -46,8 +45,7 @@ class PropertyService
             });
         }
 
-        $property->fresh();
 
-        return $property;
+        return $property->fresh();
     }
 }

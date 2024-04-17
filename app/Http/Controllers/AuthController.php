@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use App\Services\CustomerService;
 use App\Services\EmployeeService;
+use Illuminate\Auth\Events\Failed;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Activitylog\Models\Activity;
@@ -69,10 +70,10 @@ class AuthController extends Controller
             'last_name' => 'required|string',
             'email' => 'required|email|unique:users',
             'password' => 'required|string|min:6|confirmed',
-            'phone' => 'required|string',
-            'country' => 'required|string',
-            'city' => 'required|string',
-            'street' => 'required|string',
+            // 'phone' => 'required|string',
+            // 'country' => 'required|string',
+            // 'city' => 'required|string',
+            // 'street' => 'required|string',
         ]);
 
         if ($validator->fails()) {

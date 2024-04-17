@@ -23,9 +23,7 @@ class CustomerService
             $customer->address()->save($address);
         }
 
-        $customer->fresh();
-
-        return $customer;
+        return $customer->fresh();
     }
 
     public function update(Customer $customer, array $data)
@@ -39,7 +37,7 @@ class CustomerService
         }
 
         $this->userService->update($customer->user, $data);
-        $customer->fresh();
-        return $customer;
+
+        return $customer->fresh();
     }
 }

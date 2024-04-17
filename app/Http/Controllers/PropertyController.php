@@ -71,6 +71,8 @@ class PropertyController extends Controller
      */
     public function destroy(Property $property)
     {
+        $property->location->address()->delete();
+        $property->clearMediaCollection('property');
         $property->delete();
 
         return response()->json([

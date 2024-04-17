@@ -15,8 +15,8 @@ class EmployeeService
     {
         $employee = Employee::create($data);
         $this->userService->create($data, $employee);
-        $employee->fresh();
-        return $employee;
+
+        return $employee->fresh();
     }
 
     public function update(Employee $employee, array $data)
@@ -24,7 +24,7 @@ class EmployeeService
         $employee->update($data);
 
         $this->userService->update($employee->user, $data);
-        $employee->fresh();
-        return $employee;
+
+        return $employee->fresh();
     }
 }

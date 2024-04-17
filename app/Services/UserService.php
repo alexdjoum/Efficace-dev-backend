@@ -51,8 +51,6 @@ class UserService
             $user->syncPermissions($data['permissions']);
         }
 
-        $user->refresh();
-
         return $user;
     }
 }

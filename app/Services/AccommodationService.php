@@ -16,9 +16,7 @@ class AccommodationService
             });
         }
 
-        $accommodation->fresh();
-
-        return $accommodation;
+        return $accommodation->fresh();
     }
 
 
@@ -34,8 +32,6 @@ class AccommodationService
             });
         }
 
-        $accommodation->fresh();
-
-        return $accommodation;
+        return $accommodation->fresh();
     }
 }

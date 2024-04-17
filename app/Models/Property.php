@@ -29,9 +29,11 @@ class Property extends Model implements HasMedia
         'location_id',
     ];
 
-    protected $hidden = ['media'];
+    protected $hidden = ['media', 'location_id'];
 
     protected $appends = ['images'];
+
+    protected $with = ['accommodations', 'location'];
 
     public function getImagesAttribute()
     {

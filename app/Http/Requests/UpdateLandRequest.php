@@ -28,15 +28,17 @@ class UpdateLandRequest extends FormRequest
             'is_fragmentable' => 'sometimes|required|boolean',
             'relief' => 'sometimes|required|string',
             'description' => 'string',
-            'land_title' => 'file|mimes:png,jpg,pdf',
-            'certificat_of_ownership' => 'file|mimes:png,jpg,pdf',
-            'technical_doc' => 'file|mimes:png,jpg,pdf',
+            'land_title' => 'sometimes|required|string',
+            'certificat_of_ownership' => 'sometimes|required|boolean',
+            'technical_doc' => 'sometimes|required|boolean',
             'country' => 'sometimes|required|string',
             'city' => 'sometimes|required|string',
             'street' => 'sometimes|required|string',
             'coordinate_link' => 'sometimes|required|string',
             'images' => 'array',
             'images.*' => 'image|mimes:png,jpg,jpeg,svg|max:2048',
+            'fragments' => 'array',
+            'fragments.*' => 'required|numeric',
         ];
     }
 }

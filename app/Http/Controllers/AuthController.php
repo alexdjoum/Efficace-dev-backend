@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Employee;
+use App\Models\OTP;
 use App\Models\User;
 use Illuminate\Http\Request;
 use App\Services\CustomerService;
@@ -18,7 +19,7 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $validator = validator()->make($request->all(), [
-            'email' => 'required|email',
+            'email' => 'required|email|exists:users',
             'password' => 'required',
         ]);
 
@@ -40,7 +41,6 @@ class AuthController extends Controller
             ], 404);
         }
 
-        $credentials = $request->only('email', 'password');
 
         // check if the credentials are correct
         if (!$user || !Hash::check($request->password, $user->password)) {
@@ -50,6 +50,7 @@ class AuthController extends Controller
                 'data' => null
             ], 401);
         }
+
 
         return response()->json([
             'success' => true,
@@ -70,10 +71,6 @@ class AuthController extends Controller
             'last_name' => 'required|string',
             'email' => 'required|email|unique:users',
             'password' => 'required|string|min:6|confirmed',
-            // 'phone' => 'required|string',
-            // 'country' => 'required|string',
-            // 'city' => 'required|string',
-            // 'street' => 'required|string',
         ]);
 
         if ($validator->fails()) {
@@ -88,8 +85,9 @@ class AuthController extends Controller
             return $customerService->create($request->all());
         });
 
-        $customer->refresh();
+        OTP::query()->create($customer->user->email);
 
+        // send mail to activate account
 
         return response()->json([
             'success' => true,
@@ -136,7 +134,7 @@ class AuthController extends Controller
                 'success' => false,
                 'message' => 'Erreurs de validation.',
                 'data' => [
-                    'errors' => ['errors' => $validator->errors()],
+                    'errors' => $validator->errors(),
                 ]
             ]);
         }
@@ -211,6 +209,139 @@ class AuthController extends Controller
             'success' => true,
             'message' => 'Logs',
             'data' => $logs
+        ]);
+    }
+
+    public function getResetCode(Request $request)
+    {
+        $validator = validator()->make($request->all(), [
+            'email' => 'required|email|exists:users'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreurs de validation.',
+                'data' => ['errors' => $validator->errors()]
+            ], 422);
+        }
+
+        $otp = OTP::query()->create($request->all());
+
+        // send email for notify user
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Un code de vérification vous a été envoyé par mail',
+            'data' => null
+        ]);
+    }
+
+    public function verifyResetCode(Request $request)
+    {
+        $validator = validator()->make($request->all(), [
+            'email' => 'required|email|exists:users',
+            'code' => 'required|numeric|exists:otps'
+        ], [
+            'code.exists' => 'Ce code est incorrect',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreurs de validation.',
+                'data' => ['errors' => $validator->errors()]
+            ], 422);
+        }
+
+        $otp = OTP::query()->whereCode($request->code)->whereEmail($request->email)->first();
+
+        if ($otp->isExpire()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ce code vérification a expiré',
+                'data' => null
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Ce code de vérification est valide',
+            'data' => null,
+        ]);
+    }
+
+    public function resetPassword(Request $request)
+    {
+        $validator = validator()->make($request->all(), [
+            'code' => 'required|numeric|exists:otps',
+            'password' => 'required|min:6|confirmed'
+        ], [
+            'code.exists' => 'Ce code est incorrect',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreurs de validation.',
+                'data' => ['errors' => $validator->errors()]
+            ], 422);
+        }
+
+        $otp = OTP::query()->whereCode($request->code)->first();
+
+        $user = User::query()->whereEmail($otp->email)->first();
+
+        $user->update($request->only('password'));
+
+        $otp->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Mot de passe réinitialisé avec succès',
+            'data' => null
+        ]);
+    }
+
+    public function activateAccount(Request $request)
+    {
+        $validator = validator()->make($request->all(), [
+            'email' => 'required|email|exists:users',
+            'code' => 'required|numeric|exists:otps'
+        ], [
+            'code.exists' => 'Ce code est incorrect',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreurs de validation.',
+                'data' => ['errors' => $validator->errors()]
+            ], 422);
+        }
+
+        $otp = OTP::query()->whereCode($request->code)->whereEmail($request->email)->first();
+
+        if ($otp->isExpire()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ce code vérification a expiré',
+                'data' => null
+            ]);
+        }
+
+        $user = User::query()->whereEmail($request->email)->first();
+
+        $user->update([
+            'email_verified_at' => now()
+        ]);
+
+        $otp->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Utilisateur activé avec succès.',
+            'data' => null,
         ]);
     }
 }

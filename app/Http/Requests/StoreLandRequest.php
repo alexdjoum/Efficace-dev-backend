@@ -28,14 +28,16 @@ class StoreLandRequest extends FormRequest
             'is_fragmentable' => 'required|boolean',
             'relief' => 'required|string',
             'description' => 'string',
-            'land_title' => 'file|mimes:png,jpg,pdf',
-            'certificat_of_ownership' => 'file|mimes:png,jpg,pdf',
-            'technical_doc' => 'file|mimes:png,jpg,pdf',
+            'land_title' => 'required|string',
+            'certificat_of_ownership' => 'required|boolean',
+            'technical_doc' => 'required|boolean',
             'country' => 'required|string',
             'city' => 'required|string',
             'street' => 'required|string',
             'coordinate_link' => 'required|string',
             'images.*' => 'image|mimes:png,jpg,jpeg,svg|max:2048',
+            'fragments' => 'array',
+            'fragments.*' => 'required|numeric',
         ];
     }
 }

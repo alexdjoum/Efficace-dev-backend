@@ -33,7 +33,7 @@ class Property extends Model implements HasMedia
 
     protected $appends = ['images'];
 
-    protected $with = ['accommodations', 'location'];
+    protected $with = ['accommodations', 'location', 'retails_spaces'];
 
     public function getImagesAttribute()
     {
@@ -45,6 +45,11 @@ class Property extends Model implements HasMedia
     public function accommodations()
     {
         return $this->hasMany(Accommodation::class);
+    }
+
+    public function retail_spaces()
+    {
+        return $this->hasMany(RetailSpace::class);
     }
 
     public function location()

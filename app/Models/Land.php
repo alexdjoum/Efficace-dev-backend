@@ -26,35 +26,24 @@ class Land extends Model implements HasMedia
 
     protected $hidden = ['media'];
 
-    protected $appends = ['images', 'technical_doc', 'certificat_of_ownership', 'land_title'];
+    protected $appends = ['images'];
+
+    protected $with = ['location', 'fragments'];
 
     public function getImagesAttributes()
     {
         return $this->getMedia('land')->map(fn (Media $media) => $media->getUrl());
     }
 
-    public function getTechnicalDocAttribute()
+    public function fragments()
     {
-        return $this->getFirstMediaUrl();
-    }
-
-    public function getLandTitleAttribute()
-    {
-        return $this->getFirstMediaUrl();
-    }
-
-    public function getCertificatOfOwnershipAttribute()
-    {
-        return $this->getFirstMediaUrl();
+        return $this->hasMany(Fragment::class);
     }
 
 
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('land');
-        $this->addMediaCollection('technical_doc')->singleFile();
-        $this->addMediaCollection('certificat_of_ownership')->singleFile();
-        $this->addMediaCollection('land_title')->singleFile();
     }
 
     public function location()

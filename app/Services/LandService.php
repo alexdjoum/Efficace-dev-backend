@@ -21,19 +21,16 @@ class LandService
 
         $land->location()->save($location);
 
-        if (isset($data['land_title'])) {
-            $land->addMedia($data['land_title'])->toMediaCollection('land_tile');
-        }
-        if (isset($data['certificat_of_ownership'])) {
-            $land->addMedia($data['certificat_of_ownership'])->toMediaCollection('certificat_of_ownership');
-        }
-        if (isset($data['technical_doc'])) {
-            $land->addMedia($data['technical_doc'])->toMediaCollection('technical_doc');
-        }
 
         if (isset($data["images"])) {
             collect($data["images"])->each(function ($image) use ($land) {
                 $land->addMedia($image)->toMediaCollection('land');
+            });
+        }
+
+        if (isset($data['fragments'])) {
+            collect($data['fragments'])->each(function ($fragment) use ($land) {
+                $land->fragments()->create(['area' => $fragment]);
             });
         }
 
@@ -47,14 +44,13 @@ class LandService
         $land->location->address->update($data);
         $land->update($data);
 
-        if (isset($data['land_title'])) {
-            $land->addMedia($data['land_title'])->toMediaCollection('land_tile');
-        }
-        if (isset($data['certificat_of_ownership'])) {
-            $land->addMedia($data['certificat_of_ownership'])->toMediaCollection('certificat_of_ownership');
-        }
-        if (isset($data['technical_doc'])) {
-            $land->addMedia($data['technical_doc'])->toMediaCollection('documents');
+
+        if (isset($data['fragments'])) {
+            $land->fragments()->delete();
+
+            collect($data['fragments'])->each(function ($fragment) use ($land) {
+                $land->fragments()->create(['area' => $fragment]);
+            });
         }
 
         if (isset($data['images'])) {

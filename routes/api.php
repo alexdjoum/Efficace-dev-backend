@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('login', [\App\Http\Controllers\AuthController::class, 'login'])->name('login');
 Route::post('register', [\App\Http\Controllers\AuthController::class, 'register'])->name('register');
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
     Route::apiResource('customers', \App\Http\Controllers\CustomerController::class);
     Route::apiResource('roles', \App\Http\Controllers\RoleController::class);
     Route::apiResource('employees', \App\Http\Controllers\EmployeeController::class);
@@ -28,7 +28,15 @@ Route::middleware('auth')->group(function () {
         Route::post('change-password', 'changePassword');
         Route::post('update-profile', 'updateProfile');
         Route::get('logs', 'logs');
+        Route::post('get-reset-code', 'getResetCode');
+        Route::post('verify-reset-code', 'verifyResetCode');
+        Route::post('reset-password', 'resetPassword');
+        Route::post('activate-account', 'activateAccount');
     });
     Route::apiResource('accommodations', \App\Http\Controllers\AccommodationController::class);
     Route::apiResource('properties', \App\Http\Controllers\PropertyController::class);
+    Route::apiResource('lands', \App\Http\Controllers\LandController::class);
+    Route::apiResource('retail_spaces', \App\Http\Controllers\RetailSpaceController::class);
+    Route::apiResource('virtuals', \App\Http\Controllers\VirtualController::class);
+    Route::apiResource('products', \App\Http\Controllers\ProductController::class);
 });

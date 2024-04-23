@@ -14,8 +14,15 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::post('login', [\App\Http\Controllers\AuthController::class, 'login'])->name('login');
-Route::post('register', [\App\Http\Controllers\AuthController::class, 'register'])->name('register');
+Route::controller(\App\Http\Controllers\AuthController::class)->group(function () {
+    Route::post('login', 'login');
+    Route::post('register', 'register');
+    Route::post('resend-code', 'resendCode');
+    Route::post('get-reset-code', 'getResetCode');
+    Route::post('verify-reset-code', 'verifyResetCode');
+    Route::post('reset-password', 'resetPassword');
+    Route::post('activate-account', 'activateAccount');
+});
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::apiResource('customers', \App\Http\Controllers\CustomerController::class);
     Route::apiResource('roles', \App\Http\Controllers\RoleController::class);

@@ -62,7 +62,7 @@ class AuthController extends Controller
         ]);
     }
 
-    // register customer 
+    // register customer
 
     public function register(Request $request, CustomerService $customerService)
     {
@@ -82,10 +82,11 @@ class AuthController extends Controller
         }
 
         $customer = DB::transaction(function () use ($request, $customerService) {
-            return $customerService->create($request->all());
+            $customer =  $customerService->create($request->all());
+            OTP::query()->create(["email" => $customer->user->email]);
+            return $customer;
         });
 
-        OTP::query()->create($customer->user->email);
 
         // send mail to activate account
 
@@ -306,7 +307,7 @@ class AuthController extends Controller
     public function activateAccount(Request $request)
     {
         $validator = validator()->make($request->all(), [
-            'email' => 'required|email|exists:users',
+            // 'email' => 'required|email|exists:users',
             'code' => 'required|numeric|exists:otps'
         ], [
             'code.exists' => 'Ce code est incorrect',
@@ -320,7 +321,8 @@ class AuthController extends Controller
             ], 422);
         }
 
-        $otp = OTP::query()->whereCode($request->code)->whereEmail($request->email)->first();
+        // dd($request);
+        $otp = OTP::query()->whereCode($request->code)->whereEmail($request->user()->email)->first();
 
         if ($otp->isExpire()) {
             return response()->json([
@@ -330,9 +332,9 @@ class AuthController extends Controller
             ]);
         }
 
-        $user = User::query()->whereEmail($request->email)->first();
+        // $user = User::query()->whereEmail($request->email)->first();
 
-        $user->update([
+        $request->user()->update([
             'email_verified_at' => now()
         ]);
 
@@ -342,6 +344,30 @@ class AuthController extends Controller
             'success' => true,
             'message' => 'Utilisateur activé avec succès.',
             'data' => null,
+        ]);
+    }
+
+    public function resendCode(Request $request)
+    {
+        $validator = validator()->make($request->all(), [
+            'email' => 'required|email|exists:users',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreurs de validation.',
+                'data' => ['errors' => $validator->errors()]
+            ], 422);
+        }
+
+        OTP::query()->whereEmail($request->email)->delete();
+        OTP::query()->create(['email' => $request->email]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Code de validation envoyé avec succès à ' . $request->email,
+            'data' => null
         ]);
     }
 }

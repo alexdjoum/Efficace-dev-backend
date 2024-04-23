@@ -39,16 +39,20 @@ class User extends Authenticatable implements HasMedia
     protected $hidden = [
         'password',
         'remember_token',
-        'media'
+        'media',
     ];
 
-    protected $with = [
-        "roles"
-    ];
+    protected $with = ['roles'];
 
     protected $appends = [
-        "profile"
+        "profile",
+        "all_permissions"
     ];
+
+    public function getAllPermissionsAttribute()
+    {
+        return $this->getAllPermissions();
+    }
 
     /**
      * The attributes that should be cast.

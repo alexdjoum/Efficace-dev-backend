@@ -27,6 +27,8 @@ class UpdateRetailSpaceRequest extends FormRequest
             'area' => 'sometimes|required|numeric',
             'type' => 'sometimes|required|string',
             'property_id' => 'sometimes|required|exists:properties,id',
+            'images' => 'array',
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048'
         ];
     }
 }

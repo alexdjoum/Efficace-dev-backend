@@ -36,7 +36,7 @@ class StoreLandRequest extends FormRequest
             'street' => 'required|string',
             'coordinate_link' => 'required|string',
             'images.*' => 'image|mimes:png,jpg,jpeg,svg|max:2048',
-            'fragments' => 'array',
+            'fragments' => 'array|required_if:is_fragmentable,true',
             'fragments.*' => 'required|numeric',
         ];
     }

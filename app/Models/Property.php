@@ -33,7 +33,7 @@ class Property extends Model implements HasMedia
 
     protected $appends = ['images'];
 
-    protected $with = ['accommodations', 'location', 'retails_spaces'];
+    protected $with = ['accommodations', 'location', 'retail_spaces'];
 
     public function getImagesAttribute()
     {
@@ -61,5 +61,10 @@ class Property extends Model implements HasMedia
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('property');
+    }
+
+    public function product()
+    {
+        return $this->morphOne(Product::class, 'productable');
     }
 }

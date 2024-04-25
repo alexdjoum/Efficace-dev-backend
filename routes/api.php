@@ -21,7 +21,6 @@ Route::controller(\App\Http\Controllers\AuthController::class)->group(function (
     Route::post('get-reset-code', 'getResetCode');
     Route::post('verify-reset-code', 'verifyResetCode');
     Route::post('reset-password', 'resetPassword');
-    Route::post('activate-account', 'activateAccount');
 });
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::apiResource('customers', \App\Http\Controllers\CustomerController::class);
@@ -35,9 +34,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('change-password', 'changePassword');
         Route::post('update-profile', 'updateProfile');
         Route::get('logs', 'logs');
-        Route::post('get-reset-code', 'getResetCode');
-        Route::post('verify-reset-code', 'verifyResetCode');
-        Route::post('reset-password', 'resetPassword');
         Route::post('activate-account', 'activateAccount');
     });
     Route::apiResource('accommodations', \App\Http\Controllers\AccommodationController::class);

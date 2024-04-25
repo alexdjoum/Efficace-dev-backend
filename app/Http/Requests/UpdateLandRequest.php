@@ -37,7 +37,7 @@ class UpdateLandRequest extends FormRequest
             'coordinate_link' => 'sometimes|required|string',
             'images' => 'array',
             'images.*' => 'image|mimes:png,jpg,jpeg,svg|max:2048',
-            'fragments' => 'array',
+            'fragments' => 'array|required_if:is_fragmentable,true',
             'fragments.*' => 'required|numeric',
         ];
     }

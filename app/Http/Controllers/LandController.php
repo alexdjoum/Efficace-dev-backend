@@ -73,9 +73,6 @@ class LandController extends Controller
     {
         $land->location->address()->delete();
         $land->clearMediaCollection('land');
-        $land->clearMediaCollection('land_title');
-        $land->clearMediaCollection('certificat_of_ownership');
-        $land->clearMediaCollection('technical_doc');
         $land->delete();
 
         return response()->json([

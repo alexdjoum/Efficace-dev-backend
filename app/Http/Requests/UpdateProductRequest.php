@@ -24,14 +24,14 @@ class UpdateProductRequest extends FormRequest
     public function rules(): array
     {
         return [
-            "type" => "required|in:land,property,accommodation,virtual,retail_space",
-            "productable_id" => "required",
-            "for_rent" => "boolean",
-            "for_sale" => "boolean",
+            "type" => "sometimes|required|in:land,property,accommodation,virtual,retail_space",
+            "productable_id" => "sometimes|required|numeric",
+            "for_rent" => "sometimes|boolean|required_without:for_sale",
+            "for_sale" => "sometimes|boolean|required_without:for_rent",
             "unit_price" => "sometimes|required|numeric",
             "total_price" => "sometimes|required|numeric",
             "description" => "string",
-            "status" => "string",
+            "status" => "sometimes|required|string",
         ];
     }
 }

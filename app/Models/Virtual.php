@@ -19,9 +19,9 @@ class Virtual extends Model implements HasMedia
 
     protected $with = ['property'];
 
-    public function getImagesAttributes()
+    public function getImagesAttribute()
     {
-        return $this->getMedia('land')->map(fn (Media $media) => $media->getUrl());
+        return $this->getMedia('virtual')->map(fn (Media $media) => $media->getUrl());
     }
     protected $fillable = [
         'property_id', 'archi_project_price', 'big_work_price', 'building_permit_price', 'finishing_price', 'land_price', 'total_project_price', 'description', 'delivery_delay'
@@ -35,5 +35,10 @@ class Virtual extends Model implements HasMedia
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('virtual');
+    }
+
+    public function product()
+    {
+        return $this->morphOne(Product::class, 'productable');
     }
 }

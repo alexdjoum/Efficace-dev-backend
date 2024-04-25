@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::create('products', function (Blueprint $table) {
             $table->id();
             $table->string('reference');
-            $table->boolean('for_rent');
-            $table->boolean('for_sale');
+            $table->boolean('for_rent')->default(false);
+            $table->boolean('for_sale')->default(false);
             $table->double('unit_price');
             $table->double('total_price');
             $table->string('status');

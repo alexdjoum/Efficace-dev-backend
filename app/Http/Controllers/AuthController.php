@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use App\Services\CustomerService;
 use App\Services\EmployeeService;
 use Illuminate\Auth\Events\Failed;
+use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Activitylog\Models\Activity;
@@ -44,12 +45,15 @@ class AuthController extends Controller
 
         // check if the credentials are correct
         if (!$user || !Hash::check($request->password, $user->password)) {
+            event(new Failed("api", $user, $request->all()));
             return response()->json([
                 'success' => false,
                 'message' => 'Email ou mot de passe incorrect.',
                 'data' => null
             ], 401);
         }
+
+        event(new Login("api", $user, false));
 
 
         return response()->json([
@@ -127,7 +131,7 @@ class AuthController extends Controller
 
         $validator = validator()->make($request->all(), [
             'current_password' => 'required|current_password',
-            'password' => 'required|string|min:8|confirmed',
+            'password' => 'required|string|min:6|confirmed',
         ]);
 
         if ($validator->fails()) {
@@ -226,6 +230,8 @@ class AuthController extends Controller
                 'data' => ['errors' => $validator->errors()]
             ], 422);
         }
+
+        OTP::query()->whereEmail($request->email)->delete();
 
         $otp = OTP::query()->create($request->all());
 

@@ -15,11 +15,13 @@ class LandService
 
         $address = Address::query()->make($data);
 
-        $location = Location::query()->make($data);
+        $location = Location::query()->create($data);
 
         $location->address()->save($address);
 
-        $land->location()->save($location);
+        $land->location()->associate($location);
+
+        $land->save();
 
 
         if (isset($data["images"])) {

@@ -30,7 +30,7 @@ class Land extends Model implements HasMedia
 
     protected $with = ['location', 'fragments'];
 
-    public function getImagesAttributes()
+    public function getImagesAttribute()
     {
         return $this->getMedia('land')->map(fn (Media $media) => $media->getUrl());
     }
@@ -49,5 +49,10 @@ class Land extends Model implements HasMedia
     public function location()
     {
         return $this->belongsTo(Location::class);
+    }
+
+    public function product()
+    {
+        return $this->morphOne(Product::class, 'productable');
     }
 }

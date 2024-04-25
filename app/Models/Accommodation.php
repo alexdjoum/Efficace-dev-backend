@@ -49,4 +49,9 @@ class Accommodation extends Model implements HasMedia
     {
         $this->addMediaCollection('accommodation');
     }
+
+    public function product()
+    {
+        return $this->morphOne(Product::class, 'productable');
+    }
 }

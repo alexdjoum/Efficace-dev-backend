@@ -27,7 +27,14 @@ class RetailSpaceController extends Controller
     public function store(StoreRetailSpaceRequest $request)
     {
         $retail = DB::transaction(function () use ($request) {
-            return RetailSpace::create($request->all());
+            $retail = RetailSpace::create($request->all());
+            if ($request->has('images')) {
+                collect($request->images)->each(function ($image) use ($retail) {
+                    $retail->addMedia($image)->toMediaCollection('retail_space');
+                });
+            }
+
+            return $retail;
         });
 
         return response()->json([
@@ -54,14 +61,20 @@ class RetailSpaceController extends Controller
      */
     public function update(UpdateRetailSpaceRequest $request, RetailSpace $retailSpace)
     {
-        $retail = DB::transaction(function () use ($request, $retailSpace) {
-            return $retailSpace->update($request->all());
+        DB::transaction(function () use ($request, $retailSpace) {
+            $retailSpace->update($request->all());
+            if ($request->has('images')) {
+                $retailSpace->clearMediaCollection('retail_space');
+                collect($request->images)->each(function ($image) use ($retailSpace) {
+                    $retailSpace->addMedia($image)->toMediaCollection('retail_space');
+                });
+            }
         });
 
         return response()->json([
             'success' => true,
             'message' => 'Espace commercial modifié avec succès.',
-            'data' => $retail
+            'data' => $retailSpace->refresh()
         ]);
     }
 
@@ -70,10 +83,12 @@ class RetailSpaceController extends Controller
      */
     public function destroy(RetailSpace $retailSpace)
     {
+        $retailSpace->clearMediaCollection('retail_space');
+        $retailSpace->delete();
         return response()->json([
             'success' => true,
             'message' => 'Espace commercial supprimé avec succès.',
-            'data' => $retailSpace->delete()
+            'data' => null
         ]);
     }
 }

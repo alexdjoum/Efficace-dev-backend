@@ -27,6 +27,8 @@ class StoreRetailSpaceRequest extends FormRequest
             'area' => 'required|numeric',
             'type' => 'required|string',
             'property_id' => 'required|exists:properties,id',
+            'images' => 'array',
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ];
     }
 }

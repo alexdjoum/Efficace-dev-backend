@@ -25,12 +25,13 @@ class StoreProductRequest extends FormRequest
     {
         return [
             "type" => "required|in:land,property,accommodation,virtual,retail_space",
-            "for_rent" => "boolean",
-            "for_sale" => "boolean",
+            "for_rent" => "boolean|required_without:for_sale",
+            "for_sale" => "boolean|required_without:for_rent",
+            "productable_id" => "required|numeric",
             "unit_price" => "required|numeric",
             "total_price" => "required|numeric",
             "description" => "string",
-            "status" => "string",
+            "status" => "required|string",
         ];
     }
 }

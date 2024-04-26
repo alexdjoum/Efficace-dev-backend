@@ -6,6 +6,8 @@ use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Event;
+use Spatie\Backup\Events\BackupWasSuccessful;
+use Spatie\Backup\Events\CleanupWasSuccessful;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -18,6 +20,14 @@ class EventServiceProvider extends ServiceProvider
         Registered::class => [
             SendEmailVerificationNotification::class,
         ],
+
+        BackupWasSuccessful::class => [
+            \App\Listeners\BackupSuccessListener::class,
+        ],
+
+        CleanupWasSuccessful::class => [
+            \App\Listeners\CleanupSuccessListener::class,
+        ]
     ];
 
     /**

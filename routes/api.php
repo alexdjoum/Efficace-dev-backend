@@ -36,6 +36,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('logs', 'logs');
         Route::post('activate-account', 'activateAccount');
     });
+    Route::get('backups', [\App\Http\Controllers\BackupController::class, 'index']);
+    Route::get('backups/{backup}/download', [\App\Http\Controllers\BackupController::class, 'download']);
+    Route::delete('backups/{backup}', [\App\Http\Controllers\BackupController::class, 'destroy']);
     Route::apiResource('accommodations', \App\Http\Controllers\AccommodationController::class);
     Route::apiResource('properties', \App\Http\Controllers\PropertyController::class);
     Route::apiResource('lands', \App\Http\Controllers\LandController::class);

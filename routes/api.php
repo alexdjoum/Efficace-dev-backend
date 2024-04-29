@@ -45,4 +45,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::apiResource('retail_spaces', \App\Http\Controllers\RetailSpaceController::class);
     Route::apiResource('virtuals', \App\Http\Controllers\VirtualController::class);
     Route::apiResource('products', \App\Http\Controllers\ProductController::class);
+    Route::apiResource('orders', \App\Http\Controllers\OrderController::class);
+    Route::apiResource('propositions', \App\Http\Controllers\PropositionController::class);
+    Route::apiResource('contracts', \App\Http\Controllers\ContractController::class)->except('index', 'show');
 });

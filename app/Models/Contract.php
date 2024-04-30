@@ -12,10 +12,13 @@ class Contract extends Model implements HasMedia
 {
     use HasFactory, CustomLogsActivity, InteractsWithMedia;
 
-    protected $fillable = ['terms'];
+    protected $fillable = ['terms', 'contractable_id', 'contractable_type'];
 
     protected $appends = ['document_url'];
 
+    protected $hidden = ['media'];
+
+    
     public function getDocumentUrlAttribute()
     {
         return $this->getFirstMediaUrl('contract');

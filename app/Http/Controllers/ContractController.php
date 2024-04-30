@@ -16,6 +16,12 @@ class ContractController extends Controller
         $validator = validator()->make($request->all(), [
             'terms' => 'required',
             'document' => 'required|file',
+            'contractable_id' => 'required',
+            'type' => 'required|in:proposition,investment',
+        ]);
+
+        $request->merge([
+            'contractable_type' => $request->type == 'proposition' ? 'App\Models\Proposition' : 'App\Models\Investment',
         ]);
 
         if ($validator->fails()) {
@@ -28,9 +34,7 @@ class ContractController extends Controller
 
         $file = $request->file('document');
 
-        $contract = Contract::create([
-            'terms' => $request->terms,
-        ]);
+        $contract = Contract::create($request->all());
 
         $contract->addMedia($file)->toMediaCollection('contract');
 

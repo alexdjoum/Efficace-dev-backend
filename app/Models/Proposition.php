@@ -23,4 +23,9 @@ class Proposition extends Model
     {
         return $this->morphOne(Contract::class, 'contractable');
     }
+
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
 }

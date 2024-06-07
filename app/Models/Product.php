@@ -16,11 +16,11 @@ class Product extends Model
     {
         parent::boot();
         static::creating(function ($model) {
-            $model->reference = strtoupper(uniqid('PROD-', true));
+            $model->reference = strtoupper(uniqid('PROD-'));
         });
     }
 
-    protected $fillable = ['reference', 'for_rent', 'for_sale', 'unit_price', 'total_price', 'description', 'status', 'published', 'productable_id', 'productable_type'];
+    protected $fillable = ['reference', 'for_rent', 'for_sale', 'unit_price', 'total_price', 'description', 'status', 'published_at', 'productable_id', 'productable_type'];
 
     public function productable()
     {

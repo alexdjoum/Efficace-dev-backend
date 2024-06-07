@@ -36,7 +36,7 @@ class UpdateLandRequest extends FormRequest
             'street' => 'sometimes|required|string',
             'coordinate_link' => 'sometimes|required|string',
             'images' => 'array',
-            'images.*' => 'image|mimes:png,jpg,jpeg,svg|max:2048',
+            'images.*' => 'image|mimes:png,jpg,jpeg,svg|max:10192',
             'fragments' => 'array|required_if:is_fragmentable,true',
             'fragments.*' => 'required|numeric',
         ];

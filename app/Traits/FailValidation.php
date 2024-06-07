@@ -13,6 +13,6 @@ trait FailValidation
             'success' => false,
             'message' => 'Erreurs de validation.',
             'data' => ['errors' => $validator->errors()]
-        ]));
+        ], 422));
     }
 }

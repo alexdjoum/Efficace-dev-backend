@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Requests;
 
 use App\Traits\FailValidation;
@@ -35,7 +34,7 @@ class StoreLandRequest extends FormRequest
             'city' => 'required|string',
             'street' => 'required|string',
             'coordinate_link' => 'required|string',
-            'images.*' => 'image|mimes:png,jpg,jpeg,svg|max:2048',
+            'images.*' => 'image|mimes:png,jpg,jpeg,svg|max:10192',
             'fragments' => 'array|required_if:is_fragmentable,true',
             'fragments.*' => 'required|numeric',
         ];

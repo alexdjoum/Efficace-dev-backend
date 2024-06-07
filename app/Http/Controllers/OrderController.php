@@ -18,9 +18,11 @@ class OrderController extends Controller
 
     public function store(Request $request)
     {
-        $request->merge([
-            'customer_id' => auth()->user()->userable->id
-        ]);
+        if(!$request->customer_id){
+            $request->merge([
+                'customer_id' => auth()->user()->userable->id
+            ]);
+        }
 
         $validator = validator()->make($request->all(), [
             'product_id' => 'required|exists:products,id',
@@ -58,9 +60,11 @@ class OrderController extends Controller
 
     public function update(Request $request, Order $order)
     {
-        $request->merge([
-            'customer_id' => auth()->user()->userable->id
-        ]);
+        if(!$request->customer_id){
+            $request->merge([
+                'customer_id' => auth()->user()->userable->id
+            ]);
+        }
 
         $validator = validator()->make($request->all(), [
             'product_id' => 'sometimes|required|exists:products,id',

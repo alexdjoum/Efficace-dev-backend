@@ -16,7 +16,7 @@ class RoleController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Liste des roles',
-            'data' => Role::all()
+            'data' => Role::with('permissions')->get()
         ]);
     }
 
@@ -28,14 +28,14 @@ class RoleController extends Controller
         $validator = validator()->make($request->all(), [
             'name' => 'required|unique:roles',
             'permissions' => 'array',
-            'permissions.*' => 'exists:permissions,id',
+            'permissions.*' => 'exists:permissions,name',
         ]);
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Erreurs de validation.',
                 'data' => ['errors' => $validator->errors()]
-            ]);
+            ], 422);
         }
 
         $role = Role::create([
@@ -71,16 +71,16 @@ class RoleController extends Controller
     public function update(Request $request, Role $role)
     {
         $validator = validator()->make($request->all(), [
-            'name' => 'required|unique:roles,name,' . $role->id,
+            'name' => 'sometimes|required|unique:roles,name,' . $role->id,
             'permissions' => 'array',
-            'permissions.*' => 'exists:permissions,id',
+            'permissions.*' => 'exists:permissions,name',
         ]);
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Erreurs de validation.',
                 'data' => ['errors' => $validator->errors()]
-            ]);
+            ], 422);
         }
 
         $role->update([

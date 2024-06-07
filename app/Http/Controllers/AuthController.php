@@ -141,7 +141,7 @@ class AuthController extends Controller
                 'data' => [
                     'errors' => $validator->errors(),
                 ]
-            ]);
+            ],422);
         }
 
         $request->user()->update($request->only(['password']));
@@ -179,7 +179,7 @@ class AuthController extends Controller
             'country' => 'sometimes|required|string',
             'city' => 'sometimes|required|string',
             'street' => 'sometimes|required|string',
-            'profile' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'profile' => 'image|mimes:jpeg,png,jpg,gif,svg|max:10240',
         ]);
 
         if ($validator->fails()) {

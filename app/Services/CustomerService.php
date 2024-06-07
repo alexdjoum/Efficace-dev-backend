@@ -32,8 +32,14 @@ class CustomerService
 
         if (isset($data['country'])) {
             $address = $customer->address;
+            if($address) {
+                $address->update($data);
+            } else {
+                $address = Address::make($data);
 
-            $address->update($data);
+                $customer->address()->save($address);
+            }
+
         }
 
         $this->userService->update($customer->user, $data);

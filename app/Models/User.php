@@ -13,6 +13,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Permission\Traits\HasRoles;
+use Spatie\Activitylog\Models\Activity;
 
 class User extends Authenticatable implements HasMedia
 {
@@ -47,12 +48,18 @@ class User extends Authenticatable implements HasMedia
 
     protected $appends = [
         "profile",
-        "all_permissions"
+        "all_permissions",
+        "logs"
     ];
 
     public function getAllPermissionsAttribute()
     {
         return $this->getAllPermissions();
+    }
+
+    public function getLogsAttribute()
+    {
+        return Activity::query()->where("causer_id", $this->id)->get();
     }
 
     /**

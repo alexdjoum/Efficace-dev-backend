@@ -20,7 +20,7 @@ return new class extends Migration
             $table->double('total_price');
             $table->string('status');
             $table->longText('description')->nullable();
-            $table->timestamp('published')->nullable();
+            $table->timestamp('published_at')->nullable();
             $table->morphs('productable');
             $table->timestamps();
         });

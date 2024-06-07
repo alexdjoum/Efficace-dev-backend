@@ -24,7 +24,7 @@ class UpdateAccommodationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'reference' => 'string|unique:accommodations',
+            'reference' => 'string|unique:accommodations,reference,' . $this->accommodation->id,
             'dining_room' => 'sometimes|required|integer',
             'kitchen' => 'sometimes|required|integer',
             'bath_room' => 'sometimes|required|integer',

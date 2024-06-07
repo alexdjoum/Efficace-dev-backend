@@ -11,7 +11,7 @@ class Employee extends Model
 {
     use HasFactory, CustomLogsActivity;
 
-    protected $with = ['user'];
+    protected $with = ['user', ];
 
     protected $fillable = ['first_name', 'last_name', 'phone', 'position'];
 

@@ -34,9 +34,9 @@ class EmployeeController extends Controller
             "position" => "required|string",
             "password" => "required|string|min:6|confirmed",
             "roles" => "array",
-            "roles.*" => "required|integer|exists:roles,id",
+            "roles.*" => "required|exists:roles,name",
             "permissions" => "array",
-            "permissions.*" => "required|integer|exists:permissions,id",
+            "permissions.*" => "required|exists:permissions,name",
         ]);
 
         if ($validator->fails()) {
@@ -87,9 +87,9 @@ class EmployeeController extends Controller
             "phone" => "sometimes|required|string",
             "position" => "sometimes|required|string",
             "roles" => "array",
-            "roles.*" => "sometimes|required|integer|exists:roles,id",
+            "roles.*" => "sometimes|required|exists:roles,name",
             "permissions" => "array",
-            "permissions.*" => "sometimes|required|integer|exists:permissions,id",
+            "permissions.*" => "sometimes|required|exists:permissions,name",
         ]);
 
         if ($validator->fails()) {

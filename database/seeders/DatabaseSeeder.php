@@ -17,7 +17,7 @@ class DatabaseSeeder extends Seeder
         $role = \Spatie\Permission\Models\Role::create(['name' => 'Super Admin']);
 
         $user = \App\Models\User::factory()->create([
-            "email" => "tatchumf@gmail.com",
+            "email" => "efficace@gmail.com",//tatchumf
 
         ]);
 

@@ -72,10 +72,10 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
 
 Assurez-vous d'avoir les logiciels suivants installés sur votre système :
 
-- PHP (version 8.0 ou supérieure)
+- PHP (version 8.1 ou supérieure)
 - Composer
 - PostgreSQL
-- Node.js & npm
+
 
 ## Installation
 
@@ -117,4 +117,5 @@ ALTER USER nom_utilisateur CREATEDB;
 8. Une fois les migrations terminées, vous pouvez peupler la base de données avec des données initiales (seed) : php artisan db:seed
 9. Lancer le serveur de développement : php artisan serve
 10. se connecter en utilisant le login : efficace@gmail.com et le mot de passe 123456
+11. puis utiliser le lein    http://localhost:5173/admin   pour acceder a l'interface admin
 

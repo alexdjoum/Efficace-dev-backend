@@ -38,7 +38,7 @@ class UpdatePropertyRequest extends FormRequest
             'country' => 'sometimes|required|string',
             'city' => 'sometimes|required|string',
             'street' => 'sometimes|required|string',
-            'coordinate_link' => 'sometimes|required|string',
+            'file' => 'required|file|mimes:kml',
             'images' => 'array',
             'images.*' => 'image|mimes:jpeg,png,jpg,gif,svg',
         ];

@@ -24,7 +24,7 @@ class Land extends Model implements HasMedia
         'location_id'
     ];
 
-    protected $hidden = ['media'];
+    protected $hidden = ['media', 'created_at', 'updated_at'];
 
     protected $appends = ['images'];
 
@@ -54,5 +54,10 @@ class Land extends Model implements HasMedia
     public function product()
     {
         return $this->morphOne(Product::class, 'productable');
+    }
+
+    public function videoLands()
+    {
+        return $this->hasMany(VideoLand::class, 'land_id');
     }
 }

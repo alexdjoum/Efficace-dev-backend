@@ -1,0 +1,19 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: efficace_backend
+    ports:
+      - "8001:9000"
+    volumes:
+      - efficace_app_data:/var/www/html
+    networks:
+      - efficace_net
+
+volumes:
+  efficace_app_data:
+
+networks:
+  efficace_net:
+

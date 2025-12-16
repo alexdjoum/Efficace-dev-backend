@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\StoreLandRequest;
+// use App\Http\Requests\StoreLandRequest;
+use Illuminate\Http\Request;
 use App\Http\Requests\UpdateLandRequest;
 use App\Models\Land;
 use App\Services\LandService;
@@ -15,32 +16,64 @@ class LandController extends Controller
      */
     public function index()
     {
-        return response()->json([
-            'success' => true,
-            'message' => 'Liste des terrains',
-            'data' => Land::all()
-        ]);
-    }
+        $lands = Land::with([
+            // Sélectionner uniquement les champs nécessaires pour fragments
+            'fragments:id,area',
+            // Sélectionner uniquement les champs nécessaires pour videoLands
+            'videoLands:land_id,videoLink',
+            // Charger location avec address, mais seulement coordinate_link et address fields
+            'location:id,coordinate_link',
+            'location.address:id,addressable_id,street,city,country'
+        ])->get()->map(function ($land) {
+            // Transformer les images pour ne renvoyer que les URLs
+            $land->images = $land->getMedia('land')->map(fn($media) => $media->getUrl());
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(StoreLandRequest $request, LandService $landService)
-    {
-        $land = DB::transaction(function () use ($request, $landService) {
-            return $landService->create($request->all());
+            // Replacer location.address pour ne garder que les champs demandés
+            if ($land->location && $land->location->address) {
+                $land->location->address = [
+                    'street' => $land->location->address->street,
+                    'city' => $land->location->address->city,
+                    'country' => $land->location->address->country,
+                ];
+            }
+
+            // Replacer location pour ne garder que address et coordinate_link
+            if ($land->location) {
+                $land->location = [
+                    'coordinate_link' => $land->location->coordinate_link,
+                    'address' => $land->location->address
+                ];
+            }
+
+            return $land;
         });
 
         return response()->json([
             'success' => true,
-            'message' => 'Terrain créé avec succès',
-            'data' => $land
-        ], 201);
+            'message' => 'Liste des terrains',
+            'data' => $lands
+        ]);
     }
 
-    /**
-     * Display the specified resource.
-     */
+
+    public function store(Request $request, LandService $landService)
+    {
+        $data = $request->except(['images', 'file']);
+
+        $data['images'] = $request->file('images');
+        $data['file']   = $request->file('file');
+
+        $land = $landService->create($data);
+
+        return response()->json([
+            'message' => 'Land created successfully',
+            'data' => $land
+        ]);
+    }
+
+        /**
+         * Display the specified resource.
+         */
     public function show(Land $land)
     {
         return response()->json([

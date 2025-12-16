@@ -39,7 +39,7 @@ class StorePropertyRequest extends FormRequest
             'country' => 'required|string',
             'city' => 'required|string',
             'street' => 'required|string',
-            'coordinate_link' => 'required|string',
+            'file' => 'required|file|mimes:kml',
             'images' => 'array',
             'images.*' => 'image|mimes:jpeg,png,jpg,gif,svg',
         ];

@@ -33,7 +33,7 @@ class StoreLandRequest extends FormRequest
             'country' => 'required|string',
             'city' => 'required|string',
             'street' => 'required|string',
-            'coordinate_link' => 'required|string',
+            'file' => 'required|file|mimes:kml',
             'images.*' => 'image|mimes:png,jpg,jpeg,svg|max:10192',
             'fragments' => 'array|required_if:is_fragmentable,true',
             'fragments.*' => 'required|numeric',

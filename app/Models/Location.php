@@ -4,11 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-class Location extends Model
+class Location extends Model implements HasMedia
 {
-    use HasFactory;
+    use HasFactory, InteractsWithMedia;
 
+    protected $hidden = ['created_at', 'updated_at'];
+    protected $appends = ['kml'];
     protected $fillable = [
         'coordinate_link',
     ];
@@ -20,5 +24,24 @@ class Location extends Model
     public function address()
     {
         return $this->morphOne(Address::class, 'addressable');
+    }
+
+    /**
+     * Collection KML
+     */
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('kml')->singleFile();
+    }
+
+    public function getKmlAttribute()
+    {
+        $media = $this->getFirstMedia('kml');
+
+        return $media ? [
+            'id' => $media->id,
+            'url' => $media->getUrl(),
+            'name' => $media->file_name,
+        ] : null;
     }
 }

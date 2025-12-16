@@ -21,6 +21,7 @@ Route::controller(\App\Http\Controllers\AuthController::class)->group(function (
     Route::post('get-reset-code', 'getResetCode');
     Route::post('verify-reset-code', 'verifyResetCode');
     Route::post('reset-password', 'resetPassword');
+    Route::apiResource('lands', \App\Http\Controllers\LandController::class);
 });
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::apiResource('customers', \App\Http\Controllers\CustomerController::class);
@@ -41,7 +42,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('backups/{backup}', [\App\Http\Controllers\BackupController::class, 'destroy']);
     Route::apiResource('accommodations', \App\Http\Controllers\AccommodationController::class);
     Route::apiResource('properties', \App\Http\Controllers\PropertyController::class);
-    Route::apiResource('lands', \App\Http\Controllers\LandController::class);
+    // Route::apiResource('lands', \App\Http\Controllers\LandController::class);
     Route::apiResource('retail_spaces', \App\Http\Controllers\RetailSpaceController::class);
     Route::apiResource('virtuals', \App\Http\Controllers\VirtualController::class);
     Route::apiResource('products', \App\Http\Controllers\ProductController::class);

@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('locations', function (Blueprint $table) {
             $table->id();
-            $table->string('coordinate_link');
+            $table->string('coordinate_link')->nullable();
             $table->timestamps();
         });
     }

@@ -18,53 +18,57 @@ class AuthController extends Controller
 {
     // authenticate the user
     public function login(Request $request)
-    {
-        $validator = validator()->make($request->all(), [
-            'email' => 'required|email|exists:users',
-            'password' => 'required',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Erreurs de validation.',
-                'data' => ['errors' => $validator->errors()]
-            ], 422);
-        }
-
-        // check if the user exists
-
-        if (!$user = User::query()->where('email', $request->email)->first()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Utilisateur introuvable.',
-                'data' => null
-            ], 404);
-        }
-
-
-        // check if the credentials are correct
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            event(new Failed("api", $user, $request->all()));
-            return response()->json([
-                'success' => false,
-                'message' => 'Email ou mot de passe incorrect.',
-                'data' => null
-            ], 401);
-        }
-
-        event(new Login("api", $user, false));
-
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Utilisateur connecté avec succès.',
-            'data' => [
-                'token' => $user->createToken("token")->plainTextToken,
-                'auth' => $user->userable,
-            ]
-        ]);
+{
+    // Forcer le parsing du JSON si nécessaire
+    $data = $request->all();
+    if (empty($data) && $request->getContent()) {
+        $data = json_decode($request->getContent(), true);
     }
+    
+    \Log::info('Parsed data: ' . json_encode($data));
+    
+    $validator = validator()->make($data, [
+        'email' => 'required|email|exists:users',
+        'password' => 'required',
+    ]);
+    
+    if ($validator->fails()) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Erreurs de validation.',
+            'data' => ['errors' => $validator->errors()]
+        ], 422);
+    }
+    
+    $user = User::where('email', $data['email'])->first();
+    
+    if (!$user || !Hash::check($data['password'], $user->password)) {
+        if ($user) {
+            event(new Failed("api", $user, $data));
+        }
+        return response()->json([
+            'success' => false,
+            'message' => 'Email ou mot de passe incorrect.',
+            'data' => null
+        ], 401);
+    }
+    
+    event(new Login("api", $user, false));
+    
+    return response()->json([
+        'success' => true,
+        'message' => 'Utilisateur connecté avec succès.',
+        'data' => [
+            'token' => $user->createToken("token")->plainTextToken,
+            
+        ]
+        
+        // 'data' => [
+        //     'token' => $user->createToken("token")->plainTextToken,
+        //     'auth' => $user->userable,
+        // ]
+    ]);
+}
 
     // register customer
 

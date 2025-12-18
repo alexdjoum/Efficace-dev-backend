@@ -2,25 +2,27 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Rappasoft\LaravelAuthenticationLog\Traits\AuthenticationLoggable;
-use Spatie\Activitylog\LogOptions;
-use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\Models\Activity;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
-use Spatie\Permission\Traits\HasRoles;
-use Spatie\Activitylog\Models\Activity;
+use App\Traits\HasRolesAndPermissions; // ✅ Utiliser uniquement votre trait
 
 class User extends Authenticatable implements HasMedia
 {
-    use HasApiTokens, HasFactory, Notifiable, HasRoles, InteractsWithMedia, AuthenticationLoggable;
+    use HasApiTokens, 
+        HasFactory, 
+        Notifiable, 
+        HasRolesAndPermissions, // ✅ Votre système de rôles
+        InteractsWithMedia, 
+        AuthenticationLoggable;
 
     /**
-     * The attributes that are mass assignable.
+     * Les champs autorisés au mass-assignment
      *
      * @var array<int, string>
      */
@@ -34,7 +36,7 @@ class User extends Authenticatable implements HasMedia
     ];
 
     /**
-     * The attributes that should be hidden for serialization.
+     * Champs à cacher lors de la sérialisation
      *
      * @var array<int, string>
      */
@@ -44,26 +46,26 @@ class User extends Authenticatable implements HasMedia
         'media',
     ];
 
+    /**
+     * Relations à charger automatiquement
+     *
+     * @var array
+     */
     protected $with = ['roles', 'authentications'];
 
+    /**
+     * Champs ajoutés à la sérialisation
+     *
+     * @var array
+     */
     protected $appends = [
         "profile",
         "all_permissions",
         "logs"
     ];
 
-    public function getAllPermissionsAttribute()
-    {
-        return $this->getAllPermissions();
-    }
-
-    public function getLogsAttribute()
-    {
-        return Activity::query()->where("causer_id", $this->id)->get();
-    }
-
     /**
-     * The attributes that should be cast.
+     * Casts
      *
      * @var array<string, string>
      */
@@ -72,16 +74,41 @@ class User extends Authenticatable implements HasMedia
         'password' => 'hashed',
     ];
 
+    /**
+     * Relation polymorphique
+     */
     public function userable()
     {
         return $this->morphTo();
     }
 
+    /**
+     * URL du profil
+     */
     public function getProfileAttribute()
     {
         return $this->getFirstMediaUrl("profile");
     }
 
+    /**
+     * Permissions de l'utilisateur
+     */
+    public function getAllPermissionsAttribute()
+    {
+        return $this->getAllPermissions();
+    }
+
+    /**
+     * Logs de l'utilisateur
+     */
+    public function getLogsAttribute()
+    {
+        return Activity::query()->where("causer_id", $this->id)->get();
+    }
+
+    /**
+     * Collections de médias
+     */
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('profile')

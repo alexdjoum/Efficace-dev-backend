@@ -41,4 +41,20 @@ class StoreProductRequest extends FormRequest
             "status" => "required|string",
         ];
     }
+
+    protected function failedValidation(Validator $validator)
+    {
+        \Log::error('StoreProductRequest validation failed:', [
+            'errors' => $validator->errors()->toArray(),
+            'input' => $this->all(),
+        ]);
+
+        throw new HttpResponseException(
+            response()->json([
+                'success' => false,
+                'message' => 'Erreurs de validation.',
+                'data' => ['errors' => $validator->errors()]
+            ], 422)
+        );
+    }
 }

@@ -16,62 +16,18 @@ use Spatie\Activitylog\Models\Activity;
 
 class AuthController extends Controller
 {
-    // authenticate the user
-    public function login(Request $request)
-{
-    // Forcer le parsing du JSON si nécessaire
-    $data = $request->all();
-    if (empty($data) && $request->getContent()) {
-        $data = json_decode($request->getContent(), true);
+    public function __construct()
+    {
+        // Utiliser le guard 'api' pour les routes protégées
+        $this->middleware('auth:api')->except([
+            'login', 
+            'register', 
+            'resendCode', 
+            'getResetCode', 
+            'verifyResetCode', 
+            'resetPassword'
+        ]);
     }
-    
-    \Log::info('Parsed data: ' . json_encode($data));
-    
-    $validator = validator()->make($data, [
-        'email' => 'required|email|exists:users',
-        'password' => 'required',
-    ]);
-    
-    if ($validator->fails()) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Erreurs de validation.',
-            'data' => ['errors' => $validator->errors()]
-        ], 422);
-    }
-    
-    $user = User::where('email', $data['email'])->first();
-    
-    if (!$user || !Hash::check($data['password'], $user->password)) {
-        if ($user) {
-            event(new Failed("api", $user, $data));
-        }
-        return response()->json([
-            'success' => false,
-            'message' => 'Email ou mot de passe incorrect.',
-            'data' => null
-        ], 401);
-    }
-    
-    event(new Login("api", $user, false));
-    
-    return response()->json([
-        'success' => true,
-        'message' => 'Utilisateur connecté avec succès.',
-        'data' => [
-            'token' => $user->createToken("token")->plainTextToken,
-            
-        ]
-        
-        // 'data' => [
-        //     'token' => $user->createToken("token")->plainTextToken,
-        //     'auth' => $user->userable,
-        // ]
-    ]);
-}
-
-    // register customer
-
     public function register(Request $request, CustomerService $customerService)
     {
         $validator = validator()->make($request->all(), [
@@ -79,6 +35,9 @@ class AuthController extends Controller
             'last_name' => 'required|string',
             'email' => 'required|email|unique:users',
             'password' => 'required|string|min:6|confirmed',
+            'phone' => 'required|string|unique:customers,phone',
+            'address' => 'nullable|string',
+            // ❌ Pas de champ role ici
         ]);
 
         if ($validator->fails()) {
@@ -89,21 +48,106 @@ class AuthController extends Controller
             ], 422);
         }
 
-        $customer = DB::transaction(function () use ($request, $customerService) {
-            $customer =  $customerService->create($request->all());
-            OTP::query()->create(["email" => $customer->user->email]);
-            return $customer;
-        });
+        try {
+            $customer = DB::transaction(function () use ($request, $customerService) {
+                $customer = $customerService->create($request->all());
+                
+                // ✅ Toujours customer pour les inscriptions publiques
+                $customer->user->assignRole('customer');
+                
+                OTP::query()->create(["email" => $customer->user->email]);
+                $customer->load('user.roles');
+                
+                return $customer;
+            });
 
+            $roleName = $customer->user->roles->first()?->name ?? 'Client';
 
-        // send mail to activate account
-
+            return response()->json([
+                'success' => true,
+                'message' => 'Client enregistré avec succès. Veuillez vérifier votre email pour activer votre compte.',
+                'data' => [
+                    'customer' => $customer,
+                    'role' => $roleName
+                ]
+            ], 201);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Une erreur est survenue lors de l\'inscription.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+    // authenticate the user
+    public function login(Request $request)
+    {
+        $data = $request->all();
+        if (empty($data) && $request->getContent()) {
+            $data = json_decode($request->getContent(), true);
+        }
+        
+        \Log::info('Login attempt: ' . json_encode($data));
+        
+        $validator = validator()->make($data, [
+            'email' => 'required|email|exists:users',
+            'password' => 'required',
+        ]);
+        
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreurs de validation.',
+                'data' => ['errors' => $validator->errors()]
+            ], 422);
+        }
+        
+        $user = User::where('email', $data['email'])->first();
+        
+        if (!$user || !Hash::check($data['password'], $user->password)) {
+            if ($user) {
+                try {
+                    event(new Failed("api", $user, $data));
+                } catch (\Exception $e) {
+                    \Log::warning('Failed to send login failure notification: ' . $e->getMessage());
+                }
+            }
+            return response()->json([
+                'success' => false,
+                'message' => 'Email ou mot de passe incorrect.',
+                'data' => null
+            ], 401);
+        }
+        
+        // Envoyer l'événement Login (sans bloquer en cas d'erreur mail)
+        try {
+            event(new Login("api", $user, false));
+        } catch (\Exception $e) {
+            \Log::warning('Failed to send login notification: ' . $e->getMessage());
+        }
+        
+        // Charger les relations
+        $user->load('roles', 'userable');
+        
         return response()->json([
             'success' => true,
-            'message' => 'Client enregistré avec succès.',
-            'data' => $customer
-        ], 201);
+            'message' => 'Utilisateur connecté avec succès.',
+            'data' => [
+                'token' => $user->createToken("token")->plainTextToken,
+                'user' => [
+                    'id' => $user->id,
+                    'email' => $user->email,
+                    'roles' => $user->roles,
+                    'profile' => $user->userable,
+                ]
+            ]
+        ]);
     }
+
+    // register customer
+
+    
 
     // Revoke the current token
     public function logout(Request $request)

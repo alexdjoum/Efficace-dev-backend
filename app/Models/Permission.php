@@ -1,0 +1,21 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Permission extends Model
+{
+    protected $fillable = [
+        'name', 
+        'slug', 
+        'guard_name',
+        'description'
+    ];
+
+    public function roles()
+    {
+        // Utiliser explicitement role_permission
+        return $this->belongsToMany(Role::class, 'role_permission');
+    }
+}

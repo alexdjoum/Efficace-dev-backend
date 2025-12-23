@@ -36,10 +36,6 @@ class StorePropertyRequest extends FormRequest
             'ground_floor_area' => 'required|numeric|min:0',
             'type' => 'required|string',
             'description' => 'required|string',
-            'country' => 'required|string',
-            'city' => 'required|string',
-            'street' => 'required|string',
-            'file' => 'required|file|mimes:kml',
             'images' => 'array',
             'images.*' => 'image|mimes:jpeg,png,jpg,gif,svg',
         ];

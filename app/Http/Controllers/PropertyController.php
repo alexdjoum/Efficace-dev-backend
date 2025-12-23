@@ -55,6 +55,7 @@ class PropertyController extends Controller
      */
     public function update(UpdatePropertyRequest $request, Property $property, PropertyService $propertyService)
     {
+
         $property = DB::transaction(function () use ($request, $property, $propertyService) {
             return $propertyService->update($property, $request->all());
         });

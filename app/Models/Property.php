@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use App\Models\ProposedSiteOrLandProposed;
 
 class Property extends Model implements HasMedia
 {
@@ -27,6 +28,10 @@ class Property extends Model implements HasMedia
         'type',
         'description',
         'location_id',
+        'bedrooms',           
+        'bathrooms',          
+        'estimated_payment',  
+
     ];
 
     protected $hidden = ['media', 'location_id'];
@@ -66,5 +71,10 @@ class Property extends Model implements HasMedia
     public function product()
     {
         return $this->morphOne(Product::class, 'productable');
+    }
+
+    public function proposedSites()
+    {
+        return $this->morphMany(ProposedSiteOrLandProposed::class, 'proposable');
     }
 }

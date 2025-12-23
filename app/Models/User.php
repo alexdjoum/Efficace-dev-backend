@@ -10,14 +10,14 @@ use Rappasoft\LaravelAuthenticationLog\Traits\AuthenticationLoggable;
 use Spatie\Activitylog\Models\Activity;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
-use App\Traits\HasRolesAndPermissions; // ✅ Utiliser uniquement votre trait
+use App\Traits\HasRolesAndPermissions; 
 
 class User extends Authenticatable implements HasMedia
 {
     use HasApiTokens, 
         HasFactory, 
         Notifiable, 
-        HasRolesAndPermissions, // ✅ Votre système de rôles
+        HasRolesAndPermissions, 
         InteractsWithMedia, 
         AuthenticationLoggable;
 

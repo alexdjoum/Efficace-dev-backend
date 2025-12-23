@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use App\Models\ProposedSiteOrLandProposed;
 
 class Land extends Model implements HasMedia
 {
@@ -60,4 +61,10 @@ class Land extends Model implements HasMedia
     {
         return $this->hasMany(VideoLand::class, 'land_id');
     }
+
+    public function proposedSites()
+    {
+        return $this->morphMany(ProposedSiteOrLandProposed::class, 'proposable');
+    }
+    
 }

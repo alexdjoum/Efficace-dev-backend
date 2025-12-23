@@ -24,7 +24,8 @@ return new class extends Migration
             $table->double('ground_floor_area')->default(0);
             $table->string('type');
             $table->longText('description')->nullable();
-            $table->foreignId('location_id')->constrained()->onDelete('cascade');
+            // $table->foreignId('location_id')->constrained()->onDelete('cascade');
+            $table->foreignId('location_id')->nullable();
             $table->timestamps();
         });
     }

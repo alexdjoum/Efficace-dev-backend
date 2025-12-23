@@ -10,18 +10,35 @@ class PropertyService
 {
     public function create(array $data)
     {
-        $address = Address::query()->make($data);
-        $location = Location::query()->make($data);
-        $location->save();
-        $location->address()->save($address);
-        $property = Property::query()->make($data);
-        $property->location()->associate($location);
-        // dd($property, $address, $location);
-        $property->save();
+        $property = Property::create([
+            'title' => $data['title'],
+            'build_area' => $data['build_area'],
+            'field_area' => $data['field_area'],
+            'levels' => $data['levels'],
+            'has_garden' => $data['has_garden'] ?? false,
+            'parkings' => $data['parkings'] ?? 0,
+            'has_pool' => $data['has_pool'] ?? false,
+            'basement_area' => $data['basement_area'] ?? 0,
+            'ground_floor_area' => $data['ground_floor_area'] ?? 0,
+            'type' => $data['type'],
+            'description' => $data['description'] ?? null,
+            'bedrooms' => $data['bedrooms'] ?? 0,
+            'bathrooms' => $data['bathrooms'] ?? 0,
+            'estimated_payment' => $data['estimated_payment'] ?? null,
+        ]);
 
-        if (isset($data['images'])) {
+        if (isset($data['images']) && is_array($data['images'])) {
             collect($data['images'])->each(function ($item) use ($property) {
                 $property->addMedia($item)->toMediaCollection('property');
+            });
+        }
+
+        if (isset($data['proposed_land_ids']) && is_array($data['proposed_land_ids'])) {
+            collect($data['proposed_land_ids'])->each(function ($landId) use ($property) {
+                $property->proposedSites()->create([
+                    'proposable_id' => $landId,
+                    'proposable_type' => Land::class,
+                ]);
             });
         }
 
@@ -31,11 +48,9 @@ class PropertyService
 
     public function update(Property $property, array $data)
     {
+        $data = is_array($data) ? $data : [];
+        
         $property->update($data);
-
-        $property->location->update($data);
-
-        $property->location->address->update($data);
 
         if (isset($data['images'])) {
             $property->clearMediaCollection('property');
@@ -45,7 +60,8 @@ class PropertyService
             });
         }
 
-
-        return $property->fresh();
+        $freshProperty = $property->fresh();
+        
+        return $freshProperty;
     }
 }

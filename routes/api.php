@@ -58,6 +58,8 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     Route::delete('/lands/{id}', [\App\Http\Controllers\LandController::class, 'destroy']);
     Route::post('/products', [\App\Http\Controllers\ProductController::class, 'store']);
     Route::delete('/products/{id}', [\App\Http\Controllers\ProductController::class, 'store']);
+    Route::post('/properties', [\App\Http\Controllers\PropertyController::class, 'store']);
+    Route::patch('/properties/{property}', [\App\Http\Controllers\PropertyController::class, 'update']);
 });
 Route::get('lands', [\App\Http\Controllers\LandController::class, 'index']);
 Route::middleware(['auth:api', 'role:admin'])->post('admin/users/create', [\App\Http\Controllers\UserController::class, 'createUser']);
@@ -80,7 +82,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::get('backups/{backup}/download', [\App\Http\Controllers\BackupController::class, 'download']);
     Route::delete('backups/{backup}', [\App\Http\Controllers\BackupController::class, 'destroy']);
     Route::apiResource('accommodations', \App\Http\Controllers\AccommodationController::class);
-    Route::apiResource('properties', \App\Http\Controllers\PropertyController::class);
+    //Route::apiResource('properties', \App\Http\Controllers\PropertyController::class);
     // Route::apiResource('lands', \App\Http\Controllers\LandController::class);
     Route::apiResource('retail_spaces', \App\Http\Controllers\RetailSpaceController::class);
     Route::apiResource('virtuals', \App\Http\Controllers\VirtualController::class);

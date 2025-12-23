@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Address;
 use App\Models\Location;
 use App\Models\Property;
+use App\Models\ProposedSiteOrLandProposed;
 
 class PropertyService
 {
@@ -35,7 +36,7 @@ class PropertyService
 
         if (isset($data['proposed_land_ids']) && is_array($data['proposed_land_ids'])) {
             collect($data['proposed_land_ids'])->each(function ($landId) use ($property) {
-                $property->proposedSites()->create([
+                ProposedSiteOrLandProposed::create([
                     'proposable_id' => $landId,
                     'proposable_type' => Land::class,
                 ]);

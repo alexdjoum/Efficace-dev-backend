@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Exception;
+use App\Models\ProposedSiteOrLandProposed;
 
 
 
@@ -107,11 +108,11 @@ class LandService
             }
         }
 
-        if (isset($data['proposed_land_ids']) && is_array($data['proposed_land_ids'])) {
-            collect($data['proposed_land_ids'])->each(function ($landId) use ($property) {
-                $property->proposedSites()->create([
-                    'proposable_id' => $landId,
-                    'proposable_type' => Land::class,
+        if (isset($data['proposed_property_ids']) && is_array($data['proposed_property_ids'])) {
+            collect($data['proposed_property_ids'])->each(function ($propertyId) use ($land) {
+                ProposedSiteOrLandProposed::create([
+                    'proposable_id' => $propertyId,
+                    'proposable_type' => Property::class,
                 ]);
             });
         }

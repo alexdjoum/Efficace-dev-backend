@@ -36,9 +36,6 @@ class ProductController extends Controller
         $data = json_decode($request->getContent(), true);
     }
     
-    // Log pour debug
-    \Log::info('Data received', ['data' => $data, 'is_empty' => empty($data)]);
-    
     // Valider les données parsées
     $validator = validator()->make($data, [
         'type' => 'required|in:land,property,accommodation,virtual,retail_space',

@@ -51,7 +51,7 @@ class User extends Authenticatable implements HasMedia
      *
      * @var array
      */
-    protected $with = ['roles', 'authentications'];
+    protected $with = ['roles', 'authentications', 'userable'];
 
     /**
      * Champs ajoutés à la sérialisation

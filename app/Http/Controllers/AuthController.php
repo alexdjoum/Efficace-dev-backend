@@ -134,6 +134,7 @@ class AuthController extends Controller
             'success' => true,
             'message' => 'Utilisateur connecté avec succès.',
             'data' => [
+                'email_verified_at' => $user->email_verified_at,
                 'token' => $user->createToken("token")->plainTextToken,
                 'user' => [
                     'id' => $user->id,

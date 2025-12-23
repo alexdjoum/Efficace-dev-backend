@@ -28,7 +28,7 @@ class Land extends Model implements HasMedia
 
     protected $appends = ['images'];
 
-    protected $with = ['location', 'fragments'];
+    protected $with = ['location', 'fragments', 'videoLands'];
 
     public function getImagesAttribute()
     {

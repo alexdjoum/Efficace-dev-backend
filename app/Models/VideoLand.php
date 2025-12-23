@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class VideoLand extends Model
 {
-    protected $fillable = ['idLand', 'videoLink'];
+    protected $fillable = ['idLand', 'video_link'];
     protected $hidden = ['created_at', 'updated_at'];
 
     public function land()
@@ -15,13 +15,13 @@ class VideoLand extends Model
         return $this->belongsTo(Land::class);
     }
 
-    //  public function getIdLandAttribute()
-    // {
-    //     return $this->attributes['land_id'];
-    // }
+     public function getIdLandAttribute()
+    {
+        return $this->attributes['land_id'];
+    }
     
-    // public function getVideoLinkAttribute()
-    // {
-    //     return $this->attributes['video_link'];
-    // }
+    public function getVideoLinkAttribute()
+    {
+        return $this->attributes['video_link'];
+    }
 }

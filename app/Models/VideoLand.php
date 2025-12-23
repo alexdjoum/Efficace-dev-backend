@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class VideoLand extends Model
 {
-    protected $fillable = ['idLand', 'video_link'];
+    protected $fillable = ['idLand', 'videoLink'];
     protected $hidden = ['created_at', 'updated_at'];
 
     public function land()

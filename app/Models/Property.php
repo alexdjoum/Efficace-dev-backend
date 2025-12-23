@@ -38,7 +38,7 @@ class Property extends Model implements HasMedia
 
     protected $appends = ['images'];
 
-    protected $with = ['accommodations', 'location', 'retail_spaces'];
+    protected $with = ['accommodations', 'location', 'retail_spaces', 'proposedSites'];
 
     public function getImagesAttribute()
     {

@@ -75,6 +75,6 @@ class Property extends Model implements HasMedia
 
     public function proposedSites()
     {
-        return $this->morphMany(ProposedSiteOrLandProposed::class, 'proposable');
+        return $this->hasMany(ProposedSiteOrLandProposed::class, 'property_id');
     }
 }

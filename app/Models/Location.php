@@ -31,17 +31,12 @@ class Location extends Model implements HasMedia
      */
     public function registerMediaCollections(): void
     {
-        $this->addMediaCollection('kml')->singleFile();
+        $this->addMediaCollection('kml');
     }
 
     public function getKmlAttribute()
     {
         $media = $this->getFirstMedia('kml');
-
-        return $media ? [
-            'id' => $media->id,
-            'url' => $media->getUrl(),
-            'name' => $media->file_name,
-        ] : null;
+        return $media ? $media->getUrl() : null;
     }
 }

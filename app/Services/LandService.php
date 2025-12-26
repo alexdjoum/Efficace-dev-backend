@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Exception;
 use App\Models\ProposedSiteOrLandProposed;
+use App\Models\Property;
 
 
 
@@ -17,18 +18,27 @@ class LandService
 {
     public function create(array $data)
     {
-        /** ==========================
-         * 1️⃣ Location
-         * ========================== */
+
+        \Log::info('Data reçue', [
+            'has_images' => isset($data['images']),
+            'images_type' => gettype($data['images'] ?? null),
+            'images_count' => is_array($data['images'] ?? null) ? count($data['images']) : 0,
+            'has_file' => isset($data['file']),
+            'file_type' => isset($data['file']) && is_object($data['file']) ? get_class($data['file']) : (isset($data['file']) ? gettype($data['file']) : 'not_set'),
+        ]);
+
         $location = Location::create([
-            'country' => $data['country'] ?? null,
-            'city' => $data['city'] ?? null,
-            'street' => $data['street'] ?? null,
-            'description' => $data['description'] ?? null,
             'coordinate_link' => null, 
         ]);
 
-        if (isset($data['file'])) {
+        \Log::info('Location créée', ['id' => $location->id]);
+
+        if (isset($data['file']) && $data['file'] instanceof \Illuminate\Http\UploadedFile) {
+            \Log::info('Traitement KML', [
+                'name' => $data['file']->getClientOriginalName(),
+                'extension' => $data['file']->getClientOriginalExtension(),
+            ]);
+            
             $uploadedKml = $data['file'];
             
             if (strtolower($uploadedKml->getClientOriginalExtension()) !== 'kml') {
@@ -40,6 +50,8 @@ class LandService
                 $uploadedKml->getClientOriginalName()
             );
 
+            \Log::info('KML simplifié', ['temp_path' => $tempFilePath]);
+
             if (!file_exists($tempFilePath)) {
                 throw new Exception("KML temporaire introuvable");
             }
@@ -49,22 +61,32 @@ class LandService
                 ->usingFileName($uploadedKml->getClientOriginalName())
                 ->toMediaCollection('kml');
 
+            \Log::info('Media KML ajouté', [
+                'media_id' => $media->id,
+                'url' => $media->getUrl()
+            ]);
+
             $location->update([
                 'coordinate_link' => $media->getUrl(),
             ]);
 
             if (file_exists($tempFilePath)) {
-                unlink($tempFilePath);
+                @unlink($tempFilePath);
             }
-        }
+            } else {
+                \Log::warning('Pas de fichier KML ou mauvais type', [
+                    'isset' => isset($data['file']),
+                    'type' => isset($data['file']) ? gettype($data['file']) : 'not_set'
+                ]);
+            }
 
-        $address = Address::create([
-            'country' => $data['country'],
-            'city' => $data['city'],
-            'street' => $data['street'],
-        ]);
+            $address = Address::create([
+                'country' => $data['country'],
+                'city' => $data['city'],
+                'street' => $data['street'],
+            ]);
 
-        $location->address()->save($address);
+            $location->address()->save($address);
 
         $land = Land::create([
             'area' => $data['area'],
@@ -77,10 +99,32 @@ class LandService
             'location_id' => $location->id,
         ]);
 
-        if (isset($data['images'])) {
-            collect($data['images'])->each(function ($image) use ($land) {
-                $land->addMedia($image)->toMediaCollection('land');
-            });
+        \Log::info('Land créé', ['id' => $land->id]);
+
+        // Gestion des images
+        if (isset($data['images']) && is_array($data['images'])) {
+            \Log::info('Traitement images', ['count' => count($data['images'])]);
+            
+            foreach ($data['images'] as $index => $image) {
+                \Log::info("Image $index", [
+                    'is_object' => is_object($image),
+                    'is_uploaded_file' => $image instanceof \Illuminate\Http\UploadedFile,
+                    'type' => is_object($image) ? get_class($image) : gettype($image)
+                ]);
+                
+                if ($image instanceof \Illuminate\Http\UploadedFile) {
+                    $media = $land->addMedia($image)->toMediaCollection('land');
+                    \Log::info("Image ajoutée", [
+                        'media_id' => $media->id,
+                        'url' => $media->getUrl()
+                    ]);
+                }
+            }
+        } else {
+            \Log::warning('Pas d\'images ou pas un tableau', [
+                'isset' => isset($data['images']),
+                'type' => isset($data['images']) ? gettype($data['images']) : 'not_set'
+            ]);
         }
 
         if (isset($data['fragments'])) {
@@ -89,21 +133,15 @@ class LandService
             });
         }
 
-        if (isset($data['videoLink']) && trim($data['videoLink']) !== '') {
-            $land->videoLands()->create([
-                'videoLink' => trim($data['videoLink'])
-            ]);
-        }
-
-        if (isset($data['videoLink']) && trim($data['videoLink']) !== '') {
+         if (isset($data['videoLink']) && trim($data['videoLink']) !== '') {
             try {
-                $land->videoLands()->create([
+                $video = $land->videoLands()->create([
                     'videoLink' => trim($data['videoLink'])
                 ]);
+                \Log::info('Video créée', ['id' => $video->id]);
             } catch (\Exception $e) {
                 \Log::error('Erreur création video_lands', [
                     'error' => $e->getMessage(),
-                    'videoLink' => $data['videoLink']
                 ]);
             }
         }
@@ -111,6 +149,7 @@ class LandService
         if (isset($data['proposed_property_ids']) && is_array($data['proposed_property_ids'])) {
             collect($data['proposed_property_ids'])->each(function ($propertyId) use ($land) {
                 ProposedSiteOrLandProposed::create([
+                    'land_id' => $land->id,            
                     'proposable_id' => $propertyId,
                     'proposable_type' => Property::class,
                 ]);
@@ -120,19 +159,26 @@ class LandService
         $land->load([
             'fragments',
             'videoLands',
-            'location',
+            'location.media',
             'location.address',
-            'proposedSites.proposable',
+            'proposedSites.proposable' => function ($query) {
+                $query->without(['accommodations', 'retail_spaces', 'proposedSites']);
+            },
         ]);
 
-        // Forcer le chargement des médias
-        $land->getMedia('land');
-        $land->location?->getMedia('kml');
+        $land->refresh();
+        $landImages = $land->getMedia('land');
+        \Log::info('Images finales', ['count' => $landImages->count()]);
+        
+        $location->refresh();
+        $locationKml = $location->getMedia('kml');
+        \Log::info('KML final', ['count' => $locationKml->count()]);
 
-        $land->location->refresh();
+        \Log::info('=== FIN CREATE LAND ===');
 
         return $land;
     }
+
 
     private function simplifyAndSaveKml(string $originalPath, string $originalFileName): string
     {

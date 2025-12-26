@@ -29,7 +29,8 @@ class Land extends Model implements HasMedia
 
     protected $appends = ['images'];
 
-    protected $with = ['location', 'fragments', 'videoLands'];
+    // protected $with = ['location', 'fragments', 'videoLands'];
+    protected $with = [];
 
     public function getImagesAttribute()
     {
@@ -64,7 +65,7 @@ class Land extends Model implements HasMedia
 
     public function proposedSites()
     {
-        return $this->morphMany(ProposedSiteOrLandProposed::class, 'proposable');
+        return $this->hasMany(ProposedSiteOrLandProposed::class, 'land_id');
     }
     
 }

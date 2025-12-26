@@ -27,15 +27,34 @@ class PropertyController extends Controller
      */
     public function store(StorePropertyRequest $request, PropertyService $propertyService)
     {
-        $property = DB::transaction(function () use ($request, $propertyService) {
-            return $propertyService->create($request->all());
-        });
+        try {
+            // ✅ Récupérer tous les champs sauf les fichiers
+            $data = $request->except(['images']);
+            
+            // ✅ Ajouter les images manuellement
+            if ($request->hasFile('images')) {
+                $data['images'] = $request->file('images');
+            }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Propriété crée avec succès.',
-            'data' => $property
-        ], 201);
+            $property = $propertyService->create($data);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Propriété créée avec succès.',
+                'data' => $property
+            ], 201);
+        } catch (\Exception $e) {
+            \Log::error('Erreur création property', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la création de la propriété',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**

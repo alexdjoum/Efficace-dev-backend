@@ -57,19 +57,54 @@ class LandController extends Controller
 
 
     public function store(Request $request, LandService $landService)
-    {
-        $data = $request->except(['images', 'file']);
+{
+    try {
+        // 🔍 Log pour déboguer
+        \Log::info('=== CONTROLLER STORE ===');
+        \Log::info('Request has file?', [
+            'hasFile_file' => $request->hasFile('file'),
+            'hasFile_images' => $request->hasFile('images'),
+            'file_from_request' => $request->file('file') ? get_class($request->file('file')) : 'NULL',
+            'images_from_request' => $request->file('images') ? 'ARRAY' : 'NULL',
+        ]);
 
-        $data['images'] = $request->file('images');
-        $data['file']   = $request->file('file');
+        $data = $request->except(['images', 'file']);
+        
+        if ($request->hasFile('file')) {
+            $data['file'] = $request->file('file');
+            \Log::info('File ajouté à data', ['type' => get_class($data['file'])]);
+        }
+        
+        if ($request->hasFile('images')) {
+            $data['images'] = $request->file('images');
+            \Log::info('Images ajoutées à data', ['count' => count($data['images'])]);
+        }
+
+        \Log::info('Data avant service', [
+            'has_file' => isset($data['file']),
+            'has_images' => isset($data['images']),
+        ]);
 
         $land = $landService->create($data);
 
         return response()->json([
-            'message' => 'Land created successfully',
+            'success' => true,
+            'message' => 'Terrain créé avec succès',
             'data' => $land
+        ], 201);
+    } catch (\Exception $e) {
+        \Log::error('Erreur création land', [
+            'message' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
         ]);
+        
+        return response()->json([
+            'success' => false,
+            'message' => 'Erreur lors de la création du terrain',
+            'error' => $e->getMessage()
+        ], 500);
     }
+}
 
         /**
          * Display the specified resource.

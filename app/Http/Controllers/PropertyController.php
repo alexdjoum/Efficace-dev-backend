@@ -14,13 +14,30 @@ class PropertyController extends Controller
      * Display a listing of the resource.
      */
     public function index()
-    {
-        return response()->json([
-            'success' => true,
-            'message' => 'Liste des propriétés',
-            'data' => Property::all()
-        ]);
-    }
+{
+    $properties = Property::with([
+        'accommodations',
+        'retail_spaces',
+        'location.address',
+        'location.media',
+        'proposedSites.proposable' => function ($query) {
+            // ✅ Charger location.media pour les lands proposés
+            $query->with([
+                'location.address',
+                'location.media',  // Le KML est ici
+                'fragments',
+                'videoLands'
+            ])
+            ->without(['accommodations', 'retail_spaces', 'proposedSites']);
+        }
+    ])->get();
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Liste des propriétés',
+        'data' => $properties
+    ]);
+}
 
     /**
      * Store a newly created resource in storage.
@@ -28,7 +45,6 @@ class PropertyController extends Controller
     public function store(StorePropertyRequest $request, PropertyService $propertyService)
     {
         try {
-            // ✅ Récupérer tous les champs sauf les fichiers
             $data = $request->except(['images']);
             
             // ✅ Ajouter les images manuellement

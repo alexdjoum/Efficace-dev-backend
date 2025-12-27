@@ -19,14 +19,6 @@ class LandService
     public function create(array $data)
     {
 
-        \Log::info('Data reçue', [
-            'has_images' => isset($data['images']),
-            'images_type' => gettype($data['images'] ?? null),
-            'images_count' => is_array($data['images'] ?? null) ? count($data['images']) : 0,
-            'has_file' => isset($data['file']),
-            'file_type' => isset($data['file']) && is_object($data['file']) ? get_class($data['file']) : (isset($data['file']) ? gettype($data['file']) : 'not_set'),
-        ]);
-
         $location = Location::create([
             'coordinate_link' => null, 
         ]);
@@ -178,7 +170,6 @@ class LandService
 
         return $land;
     }
-
 
     private function simplifyAndSaveKml(string $originalPath, string $originalFileName): string
     {

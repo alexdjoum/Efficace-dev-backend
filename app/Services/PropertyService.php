@@ -12,9 +12,6 @@ class PropertyService
 {
     public function create(array $data)
     {
-        \Log::info('Data reçue', $data);
-        \Log::info('proposed_land_ids isset?', ['isset' => isset($data['proposed_land_ids'])]);
-        \Log::info('proposed_land_ids is_array?', ['is_array' => is_array($data['proposed_land_ids'] ?? null)]);
         $property = Property::create([
             'title' => $data['title'],
             'build_area' => $data['build_area'],
@@ -41,58 +38,30 @@ class PropertyService
         }
 
         if (isset($data['proposed_land_ids']) && is_array($data['proposed_land_ids'])) {
-            \Log::info('ENTRE dans le IF pour créer propositions');
-            
             collect($data['proposed_land_ids'])->each(function ($landId) use ($property) {
-                \Log::info('Création proposition', [
-                    'property_id' => $property->id, 
-                    'land_id' => $landId
+                ProposedSiteOrLandProposed::create([
+                    'property_id' => $property->id,
+                    'proposable_id' => $landId,
+                    'proposable_type' => Land::class,
                 ]);
-        
-                try {
-                    $created = ProposedSiteOrLandProposed::create([
-                        'property_id' => $property->id,
-                        'proposable_id' => $landId,
-                        'proposable_type' => Land::class,
-                    ]);
-                    
-                    \Log::info('Proposition créée avec succès', [
-                        'id' => $created->id ?? 'NULL',
-                    ]);
-                    
-                } catch (\Exception $e) {
-                    \Log::error('ERREUR création proposition', [
-                        'message' => $e->getMessage(),
-                        'trace' => $e->getTraceAsString(),
-                    ]);
-                }
             });
         }
 
-        // return $property->fresh([
-        //     'proposedSites.proposable',
-        //     'media',
-        //     'accommodations',
-        //     'location',
-        //     'retail_spaces'
-        // ]);
-        $property->fresh()->proposedSites;
-
         return $property->fresh([
-            'proposedSites' => function ($query) {
-                $query->with(['proposable' => function ($q) {
-                    // Charger seulement les champs nécessaires pour Land
-                    $q->select('id', 'area', 'relief', 'land_title', 'description');
-                }]);
+            'proposedSites.proposable' => function ($query) {
+                $query->with([
+                    'location.address',   
+                    'location.media',     
+                    'fragments',
+                    'videoLands'
+                ])
+                ->without(['accommodations', 'retail_spaces', 'proposedSites']);
             },
             'media',
             'accommodations',
-            'location',
             'retail_spaces'
         ]);
-            return $property;
     }
-
 
     public function update(Property $property, array $data)
     {

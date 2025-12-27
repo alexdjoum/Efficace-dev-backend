@@ -59,8 +59,9 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     Route::post('/products', [\App\Http\Controllers\ProductController::class, 'store']);
     Route::delete('/products/{id}', [\App\Http\Controllers\ProductController::class, 'store']);
     Route::post('/properties', [\App\Http\Controllers\PropertyController::class, 'store']);
-    Route::patch('/properties/{property}', [\App\Http\Controllers\PropertyController::class, 'update']);
 });
+Route::get('/properties', [\App\Http\Controllers\PropertyController::class, 'index']);
+Route::patch('/properties/{property}', [\App\Http\Controllers\PropertyController::class, 'update']);
 Route::get('lands', [\App\Http\Controllers\LandController::class, 'index']);
 Route::middleware(['auth:api', 'role:admin'])->post('admin/users/create', [\App\Http\Controllers\UserController::class, 'createUser']);
 Route::get('products', [\App\Http\Controllers\ProductController::class, 'index']);

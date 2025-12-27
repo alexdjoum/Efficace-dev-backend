@@ -27,11 +27,9 @@ class Property extends Model implements HasMedia
         'ground_floor_area',
         'type',
         'description',
-        'location_id',
         'bedrooms',           
         'bathrooms',          
         'estimated_payment',  
-
     ];
 
     protected $hidden = ['media', 'location_id'];

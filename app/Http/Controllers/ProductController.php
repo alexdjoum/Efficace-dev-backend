@@ -21,30 +21,44 @@ class ProductController extends Controller
         
         if ($productable) {
             if ($product->productable_type === 'App\\Models\\Land') {
-                // Charger TOUTES les relations du Land
                 $productable->load([
-                    'fragments:id,land_id,area',
-                    'videoLands:id,land_id,videoLink',
-                    'location:id,coordinate_link',
-                    'location.address:id,addressable_id,addressable_type,street,city,country',
+                    'fragments',
+                    'videoLands',
+                    'location.address',
+                    'location.media',
                     'proposedSites' => function ($query) {
-                        $query->with(['proposable' => function ($q) {
-                            $q->select('id', 'title', 'type', 'bedrooms', 'bathrooms', 'estimated_payment');
-                        }]);
+                        $query->with([
+                            'proposable' => function ($q) {
+                                $q->select('id', 'title', 'type', 'bedrooms', 'bathrooms', 'estimated_payment', 'location_id')
+                                  ->with([
+                                      'location.address',
+                                      'location.media'     
+                                  ])
+                                  ->without(['proposed_sites']);
+                            }
+                        ]);
                     }
                 ]);
                 
             } elseif ($product->productable_type === 'App\\Models\\Property') {
-                // Charger TOUTES les relations de la Property
                 $productable->load([
                     'accommodations',
                     'retail_spaces',
-                    'location:id,coordinate_link',
-                    'location.address:id,addressable_id,addressable_type,street,city,country',
+                    'location.address',
+                    'location.media',
                     'proposedSites' => function ($query) {
-                        $query->with(['proposable' => function ($q) {
-                            $q->select('id', 'area', 'relief', 'land_title', 'description');
-                        }]);
+                        $query->with([
+                            'proposable' => function ($q) {
+                                $q->select('id', 'area', 'relief', 'land_title', 'description', 'location_id')
+                                  ->with([
+                                      'location.address',
+                                      'location.media',
+                                      'fragments',
+                                      'videoLands'
+                                  ])
+                                  ->without(['proposed_sites']);
+                            }
+                        ]);
                     }
                 ]);
             }

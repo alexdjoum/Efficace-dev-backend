@@ -18,32 +18,33 @@ class ProductService
         switch ($data['type']) {
             case 'land':
                 $land = Land::query()->findOrFail($data['productable_id']);
+                $this->validateProposedItemsAreProducts($land, Property::class, 'properties');
                 $product->productable()->associate($land);
-                $product->save();
                 break;
+                
             case 'property':
                 $property = Property::query()->findOrFail($data['productable_id']);
+                $this->validateProposedItemsAreProducts($property, Land::class, 'lands');
                 $product->productable()->associate($property);
-                $product->save();
                 break;
+                
             case 'accommodation':
                 $accommodation = Accommodation::query()->findOrFail($data['productable_id']);
                 $product->productable()->associate($accommodation);
-                $product->save();
                 break;
+                
             case 'virtual':
                 $virtual = Virtual::query()->findOrFail($data['productable_id']);
                 $product->productable()->associate($virtual);
-                $product->save();
                 break;
+                
             case 'retail_space':
                 $retail_space = RetailSpace::query()->findOrFail($data['productable_id']);
                 $product->productable()->associate($retail_space);
-                $product->save();
                 break;
         }
 
-
+        $product->save();
         return $product->fresh();
     }
 
@@ -52,5 +53,27 @@ class ProductService
         $product->update($data);
 
         return $product->fresh();
+    }
+
+    private function validateProposedItemsAreProducts($model, $proposableType, $itemName)
+    {
+        if (!$model->proposedSites()->exists()) {
+            return; 
+        }
+        
+        $proposedIds = $model->proposedSites()
+            ->where('proposable_type', $proposableType)
+            ->pluck('proposable_id');
+        
+        foreach ($proposedIds as $id) {
+            $isProduct = Product::where('productable_type', $proposableType)
+                ->where('productable_id', $id)
+                ->exists();
+            
+            if (!$isProduct) {
+                $itemNameSingular = rtrim($itemName, 's');
+                throw new \Exception("Le {$itemNameSingular} #{$id} proposé doit d'abord être un product avant de pouvoir créer ce product.");
+            }
+        }
     }
 }

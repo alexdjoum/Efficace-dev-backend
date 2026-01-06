@@ -67,5 +67,10 @@ class Land extends Model implements HasMedia
     {
         return $this->hasMany(ProposedSiteOrLandProposed::class, 'land_id');
     }
+
+    public function appointments()
+    {
+        return $this->morphMany(Appointment::class, 'appointable');
+    }
     
 }

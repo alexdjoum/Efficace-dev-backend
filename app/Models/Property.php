@@ -14,6 +14,8 @@ use App\Models\ProposedSiteOrLandProposed;
 class Property extends Model implements HasMedia
 {
     use HasFactory, CustomLogsActivity, InteractsWithMedia;
+    const TYPE_VILLA = 'villa';
+    const TYPE_BUILDING = 'building';
 
     protected $fillable = [
         'title',
@@ -28,7 +30,8 @@ class Property extends Model implements HasMedia
         'type',
         'description',
         'bedrooms',           
-        'bathrooms',          
+        'bathrooms', 
+        'number_of_salons',         
         'estimated_payment',  
     ];
 
@@ -36,7 +39,21 @@ class Property extends Model implements HasMedia
 
     protected $appends = ['images'];
 
-    protected $with = ['accommodations', 'location', 'retail_spaces', 'proposedSites'];
+    // protected $with = ['accommodations', 'location', 'retail_spaces', 'proposedSites'];
+    protected $with = [];
+
+    public static function getTypes()
+    {
+        return [
+            self::TYPE_VILLA,
+            self::TYPE_BUILDING,
+        ];
+    }
+
+    public static function isValidType($type)
+    {
+        return in_array($type, self::getTypes());
+    }
 
     public function getImagesAttribute()
     {
@@ -71,8 +88,18 @@ class Property extends Model implements HasMedia
         return $this->morphOne(Product::class, 'productable');
     }
 
+    public function partOfBuildings()
+    {
+        return $this->hasMany(PartOfBuilding::class);
+    }
+
     public function proposedSites()
     {
         return $this->hasMany(ProposedSiteOrLandProposed::class, 'property_id');
+    }
+
+    public function appointments()
+    {
+        return $this->morphMany(Appointment::class, 'appointable');
     }
 }

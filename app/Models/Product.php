@@ -11,7 +11,7 @@ class Product extends Model
     use HasFactory, CustomLogsActivity;
 
     protected $with = ['productable'];
-    // auto generate reference number
+    
     public static function boot()
     {
         parent::boot();
@@ -25,5 +25,10 @@ class Product extends Model
     public function productable()
     {
         return $this->morphTo();
+    }
+
+    public function appointments()
+    {
+        return $this->hasMany(Appointment::class);
     }
 }

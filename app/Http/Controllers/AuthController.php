@@ -18,7 +18,6 @@ class AuthController extends Controller
 {
     public function __construct()
     {
-        // Utiliser le guard 'api' pour les routes protégées
         $this->middleware('auth:api')->except([
             'login', 
             'register', 
@@ -34,10 +33,8 @@ class AuthController extends Controller
             'first_name' => 'required|string',
             'last_name' => 'required|string',
             'email' => 'required|email|unique:users',
-            'password' => 'required|string|min:6|confirmed',
+            'password' => 'required|string|min:6',
             'phone' => 'required|string|unique:customers,phone',
-            'address' => 'nullable|string',
-            // ❌ Pas de champ role ici
         ]);
 
         if ($validator->fails()) {
@@ -48,37 +45,36 @@ class AuthController extends Controller
             ], 422);
         }
 
-        try {
-            $customer = DB::transaction(function () use ($request, $customerService) {
-                $customer = $customerService->create($request->all());
-                
-                // ✅ Toujours customer pour les inscriptions publiques
-                $customer->user->assignRole('customer');
-                
-                OTP::query()->create(["email" => $customer->user->email]);
-                $customer->load('user.roles');
-                
-                return $customer;
-            });
-
-            $roleName = $customer->user->roles->first()?->name ?? 'Client';
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Client enregistré avec succès. Veuillez vérifier votre email pour activer votre compte.',
-                'data' => [
-                    'customer' => $customer,
-                    'role' => $roleName
-                ]
-            ], 201);
+        $customer = DB::transaction(function () use ($request, $customerService) {
+            $customer = $customerService->create($request->all());
+            $customer->user->email_verified_at = now();
+            $clientRole = \App\Models\Role::where('name', 'Client')
+                ->orWhere('slug', 'client')
+                ->first();
             
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Une erreur est survenue lors de l\'inscription.',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+            if (!$clientRole) {
+                throw new \Exception("Le rôle 'Client' n'existe pas dans la base de données.");
+            }
+            
+            DB::table('user_role')->insert([
+                'user_id' => $customer->user->id,
+                'role_id' => $clientRole->id,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            
+            OTP::query()->create(["email" => $customer->user->email]);
+            
+            $customer->load('user.roles');
+            
+            return $customer;
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Client enregistré avec succès.',
+            'data' => $customer
+        ], 201);
     }
     // authenticate the user
     public function login(Request $request)
@@ -87,8 +83,6 @@ class AuthController extends Controller
         if (empty($data) && $request->getContent()) {
             $data = json_decode($request->getContent(), true);
         }
-        
-        \Log::info('Login attempt: ' . json_encode($data));
         
         $validator = validator()->make($data, [
             'email' => 'required|email|exists:users',
@@ -120,14 +114,12 @@ class AuthController extends Controller
             ], 401);
         }
         
-        // Envoyer l'événement Login (sans bloquer en cas d'erreur mail)
         try {
             event(new Login("api", $user, false));
         } catch (\Exception $e) {
             \Log::warning('Failed to send login notification: ' . $e->getMessage());
         }
         
-        // Charger les relations
         $user->load('roles', 'userable');
         
         return response()->json([
@@ -145,10 +137,6 @@ class AuthController extends Controller
             ]
         ]);
     }
-
-    // register customer
-
-    
 
     // Revoke the current token
     public function logout(Request $request)

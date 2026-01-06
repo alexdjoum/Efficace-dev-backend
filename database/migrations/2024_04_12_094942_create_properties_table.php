@@ -11,6 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
+        DB::statement('DROP TABLE IF EXISTS properties CASCADE');
+
         Schema::create('properties', function (Blueprint $table) {
             $table->id();
             $table->string('title');
@@ -22,7 +24,7 @@ return new class extends Migration
             $table->boolean('has_pool')->default(false);
             $table->double('basement_area')->default(0);
             $table->double('ground_floor_area')->default(0);
-            $table->string('type');
+            $table->enum('type', ['villa', 'building'])->default('villa');
             $table->longText('description')->nullable();
             $table->integer('bedrooms')->default(3);
             $table->integer('bathrooms')->default(2);

@@ -65,6 +65,9 @@ Route::patch('/properties/{property}', [\App\Http\Controllers\PropertyController
 Route::get('lands', [\App\Http\Controllers\LandController::class, 'index']);
 Route::middleware(['auth:api', 'role:admin'])->post('admin/users/create', [\App\Http\Controllers\UserController::class, 'createUser']);
 Route::get('products', [\App\Http\Controllers\ProductController::class, 'index']);
+Route::get('/appointments', [\App\Http\Controllers\AppointmentController::class, 'index']);
+Route::post('/appointments', [\App\Http\Controllers\AppointmentController::class, 'store']);
+Route::patch('/appointments/{id}/status', [\App\Http\Controllers\AppointmentController::class, 'update']); 
 Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::apiResource('customers', \App\Http\Controllers\CustomerController::class);
     Route::apiResource('roles', \App\Http\Controllers\RoleController::class);

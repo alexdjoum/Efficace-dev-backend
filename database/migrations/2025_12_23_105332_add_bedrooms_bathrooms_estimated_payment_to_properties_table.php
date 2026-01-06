@@ -12,9 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('properties', function (Blueprint $table) {
-            $table->integer('bedrooms')->default(3);
-            $table->integer('bathrooms')->default(1);
-            $table->decimal('estimated_payment');
+           // $table->integer('bedrooms')->default(3);
+            //$table->integer('bathrooms')->default(1);
+            //$table->decimal('estimated_payment');
         });
     }
 

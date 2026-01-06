@@ -100,25 +100,21 @@ trait HasRolesAndPermissions
         })->unique('id');
     }
 
-    // Vérifier si l'utilisateur est Admin
     public function isAdmin()
     {
         return $this->hasRole('admin');
     }
 
-    // Vérifier si l'utilisateur est Validator
     public function isValidator()
     {
         return $this->hasRole('validator');
     }
 
-    // Vérifier si l'utilisateur est Corrector
     public function isCorrector()
     {
         return $this->hasRole('corrector');
     }
 
-    // Vérifier si l'utilisateur est Manager
     public function isManager()
     {
         return $this->hasRole('manager');
@@ -129,7 +125,6 @@ trait HasRolesAndPermissions
         return $this->hasRole('customer');
     }
 
-    // Vérifier si l'utilisateur a un niveau hiérarchique supérieur
     public function hasHigherRoleThan($user)
     {
         $myHighestLevel = $this->roles->max('hierarchy_level') ?? 0;
@@ -138,7 +133,6 @@ trait HasRolesAndPermissions
         return $myHighestLevel > $theirHighestLevel;
     }
 
-    // Obtenir le niveau hiérarchique le plus élevé
     public function getHighestHierarchyLevel()
     {
         return $this->roles->max('hierarchy_level') ?? 0;

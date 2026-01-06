@@ -15,39 +15,36 @@ class CustomerService
     public function create(array $data)
     {
         return DB::transaction(function () use ($data) {
-            // 1. Créer le customer SANS charger les relations (withoutRelations)
-            $customer = Customer::withoutEvents(function () use ($data) {
-                return Customer::create([
-                    'first_name' => $data['first_name'],
-                    'last_name' => $data['last_name'],
-                    'phone' => $data['phone'],
-                    'type' => $data['type'] ?? null,
-                ]);
-            });
-
-            // 2. Créer l'utilisateur associé
-            $user = User::create([
-                'email' => $data['email'],
-                'password' => bcrypt($data['password']),
-                'userable_type' => Customer::class,
-                'userable_id' => $customer->id,
+        $customer = Customer::withoutEvents(function () use ($data) {
+            return Customer::create([
+                'first_name' => $data['first_name'],
+                'last_name' => $data['last_name'],
+                'phone' => $data['phone'] ?? null,
+                'type' => $data['type'] ?? null,
             ]);
-
-            // 3. Créer l'adresse si fournie
-            if (!empty($data['address'])) {
-                Address::create([
-                    'addressable_type' => Customer::class,
-                    'addressable_id' => $customer->id,
-                    'address' => $data['address'],
-                    // Ajoutez d'autres champs selon votre table addresses
-                ]);
-            }
-
-            // 4. Recharger le customer avec toutes ses relations
-            $customer = $customer->fresh(['user', 'address']);
-
-            return $customer;
         });
+
+        $user = User::create([
+            'email' => $data['email'],
+            'password' => bcrypt($data['password']),
+            'userable_type' => Customer::class,
+            'userable_id' => $customer->id,
+        ]);
+
+        if (isset($data['street']) || isset($data['city']) || isset($data['country']) || isset($data['address'])) {
+            Address::create([
+                'street' => $data['street'] ?? $data['address'] ?? null,
+                'city' => $data['city'] ?? null,
+                'country' => $data['country'] ?? null,
+                'addressable_type' => Customer::class,
+                'addressable_id' => $customer->id,
+            ]);
+        }
+
+        $customer = $customer->fresh(['user', 'address']);
+
+        return $customer;
+    });
     }
 
     public function update(Customer $customer, array $data)

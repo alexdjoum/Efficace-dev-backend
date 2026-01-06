@@ -14,7 +14,8 @@ class Customer extends Model
 
     protected $fillable = ['first_name', 'phone', 'last_name', 'type'];
 
-    protected $with = ['address', 'user'];
+    //protected $with = ['address', 'user'];
+    protected $with = [];
 
     public function address()
     {

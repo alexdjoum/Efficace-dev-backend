@@ -12,9 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('proposed_site_or_land_proposeds', function (Blueprint $table) {
-            $table->id();
-            $table->morphs('proposable');
-            $table->timestamps();
+            // $table->id();
+            // $table->morphs('proposable');
+            // $table->timestamps();
         });
     }
 

@@ -7,37 +7,42 @@ use App\Http\Requests\UpdatePropertyRequest;
 use App\Models\Property;
 use App\Services\PropertyService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
 
 class PropertyController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
-{
-    $properties = Property::with([
-        'accommodations',
-        'retail_spaces',
-        'location.address',
-        'location.media',
-        'proposedSites.proposable' => function ($query) {
-            // ✅ Charger location.media pour les lands proposés
-            $query->with([
-                'location.address',
-                'location.media',  // Le KML est ici
-                'fragments',
-                'videoLands'
-            ])
-            ->without(['accommodations', 'retail_spaces', 'proposedSites']);
-        }
-    ])->get();
+    public function index(Request $request)
+    {
+        $query = Property::with([
+            'location.address',
+            'location.media',
+            'partOfBuildings',
+            'proposedSites.proposable' => function ($q) { 
+                $q->with([
+                    'location.address',
+                    'location.media',  
+                    'fragments',
+                    'videoLands'
+                ])
+                ->without(['accommodations', 'retail_spaces', 'proposed_sites']);
+            }
+        ]);
 
-    return response()->json([
-        'success' => true,
-        'message' => 'Liste des propriétés',
-        'data' => $properties
-    ]);
-}
+        if ($request->has('type') && in_array($request->type, ['villa', 'building'])) {
+            $query->where('type', $request->type);
+        }
+
+        $properties = $query->get();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Liste des propriétés',
+            'data' => $properties
+        ]);
+    }
 
     /**
      * Store a newly created resource in storage.
@@ -47,7 +52,6 @@ class PropertyController extends Controller
         try {
             $data = $request->except(['images']);
             
-            // ✅ Ajouter les images manuellement
             if ($request->hasFile('images')) {
                 $data['images'] = $request->file('images');
             }

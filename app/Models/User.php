@@ -44,6 +44,8 @@ class User extends Authenticatable implements HasMedia
         'password',
         'remember_token',
         'media',
+        'all_permissions',
+        'logs'
     ];
 
     /**
@@ -51,7 +53,8 @@ class User extends Authenticatable implements HasMedia
      *
      * @var array
      */
-    protected $with = ['roles', 'authentications', 'userable'];
+    //protected $with = ['roles', 'authentications', 'userable'];
+    protected $with = [];
 
     /**
      * Champs ajoutés à la sérialisation

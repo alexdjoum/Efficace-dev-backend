@@ -5,7 +5,7 @@ services:
       dockerfile: Dockerfile
     container_name: efficace_backend
     ports:
-      - "8001:9000"
+      - "8000:8000"
     volumes:
       - efficace_app_data:/var/www/html
     networks:

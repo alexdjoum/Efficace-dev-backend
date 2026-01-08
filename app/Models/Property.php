@@ -31,7 +31,8 @@ class Property extends Model implements HasMedia
         'description',
         'bedrooms',           
         'bathrooms', 
-        'number_of_salons',         
+        'number_of_salons', 
+        'number_of_appartements',        
         'estimated_payment',  
     ];
 

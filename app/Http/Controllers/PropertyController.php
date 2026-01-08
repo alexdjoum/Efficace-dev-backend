@@ -17,18 +17,7 @@ class PropertyController extends Controller
     public function index(Request $request)
     {
         $query = Property::with([
-            'location.address',
-            'location.media',
             'partOfBuildings',
-            'proposedSites.proposable' => function ($q) { 
-                $q->with([
-                    'location.address',
-                    'location.media',  
-                    'fragments',
-                    'videoLands'
-                ])
-                ->without(['accommodations', 'retail_spaces', 'proposed_sites']);
-            }
         ]);
 
         if ($request->has('type') && in_array($request->type, ['villa', 'building'])) {
@@ -36,6 +25,20 @@ class PropertyController extends Controller
         }
 
         $properties = $query->get();
+
+        $properties->each(function ($property) {
+            if ($property->type === 'building') {
+                $property->makeHidden(['bedrooms', 'bathrooms', 'number_of_salons']);
+            } else {
+                $property->makeHidden(['number_of_appartements', 'part_of_buildings']);
+            }
+
+            $property->makeHidden([
+                'proposed_sites',
+                'accommodations',
+                'retail_spaces'
+            ]);
+        });
 
         return response()->json([
             'success' => true,

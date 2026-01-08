@@ -25,7 +25,7 @@ class UpdatePropertyRequest extends FormRequest
     {
         return [
             'title' => 'sometimes|string|max:255',
-            'description' => 'sometimes|string',
+            'description' => 'nullable|string',
             'build_area' => 'sometimes|numeric',
             'field_area' => 'sometimes|numeric',
             'levels' => 'sometimes|integer',
@@ -37,6 +37,8 @@ class UpdatePropertyRequest extends FormRequest
             'type' => 'sometimes|string',
             'bedrooms' => 'sometimes|integer',
             'bathrooms' => 'sometimes|integer',
+            'has_garden' => 'nullable|boolean',
+            'has_pool' => 'nullable|boolean',
             'estimated_payment' => 'sometimes|numeric',
             'images' => 'sometimes|array',
             'images.*' => 'image|mimes:jpeg,png,jpg,gif',

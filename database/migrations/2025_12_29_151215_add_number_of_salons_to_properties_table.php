@@ -9,7 +9,7 @@ return new class extends Migration
     public function up()
     {
         Schema::table('properties', function (Blueprint $table) {
-            $table->integer('number_of_salons')->default(0);
+            $table->integer('number_of_salons')->nullable();;
         });
     }
 

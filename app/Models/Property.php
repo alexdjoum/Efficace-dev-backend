@@ -103,4 +103,9 @@ class Property extends Model implements HasMedia
     {
         return $this->morphMany(Appointment::class, 'appointable');
     }
+
+    public function buildingFinance()
+    {
+        return $this->hasOne(BuildingFinance::class);
+    }
 }

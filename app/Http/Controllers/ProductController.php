@@ -53,6 +53,8 @@ class ProductController extends Controller
                         $productable->load([
                             'accommodations',
                             'retail_spaces',
+                            'partOfBuildings',
+                            'buildingFinance',
                             'location.address',
                             'location.media',
                             'proposedSites.proposable' => function ($query) {
@@ -72,6 +74,7 @@ class ProductController extends Controller
                                 ->with([
                                     'productable.location.address',
                                     'productable.location.media',
+                                    'productable.buildingFinance',
                                     'productable.fragments',
                                     'productable.videoLands'
                                 ])

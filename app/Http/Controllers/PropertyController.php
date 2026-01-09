@@ -18,6 +18,7 @@ class PropertyController extends Controller
     {
         $query = Property::with([
             'partOfBuildings',
+            'buildingFinance',
         ]);
 
         if ($request->has('type') && in_array($request->type, ['villa', 'building'])) {
@@ -27,6 +28,14 @@ class PropertyController extends Controller
         $properties = $query->get();
 
         $properties->each(function ($property) {
+            if ($property->buildingFinance) {
+                $property->total_building_finance = (float) $property->buildingFinance->project_study 
+                    + (float) $property->buildingFinance->building_permit 
+                    + (float) $property->buildingFinance->structural_work 
+                    + (float) $property->buildingFinance->finishing 
+                    + (float) $property->buildingFinance->equipments 
+                    + (float) $property->buildingFinance->cost_of_land;
+            }
             if ($property->type === 'building') {
                 $property->makeHidden(['bedrooms', 'bathrooms', 'number_of_salons']);
             } else {

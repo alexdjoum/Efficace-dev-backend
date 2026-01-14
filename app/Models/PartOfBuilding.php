@@ -15,9 +15,11 @@ class PartOfBuilding extends Model implements HasMedia
         'title',
         'description',
         'property_id',
+        'type_of_part_of_the_building_id'
     ];
 
     protected $appends = ['photos'];
+    protected $hidden = ['media'];
 
     public function property()
     {
@@ -39,5 +41,10 @@ class PartOfBuilding extends Model implements HasMedia
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('part_photos');
+    }
+
+    public function typeOfPartOfTheBuilding()
+    {
+        return $this->belongsTo(TypeOfPartOfTheBuilding::class);
     }
 }

@@ -8,6 +8,14 @@ services:
       - "8000:8000"
     volumes:
       - efficace_app_data:/var/www/html
+    environment:
+      - APP_URL=http://${HOST_IP}:8000
+      - DB_CONNECTION=pgsql
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_DATABASE=efficace
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=root
     networks:
       - efficace_net
 
@@ -16,4 +24,4 @@ volumes:
 
 networks:
   efficace_net:
-
+    external: true

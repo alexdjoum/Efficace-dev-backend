@@ -47,11 +47,23 @@ class PropertyService
         if ($data['type'] === Property::TYPE_BUILDING) {
             if ($data['type'] === Property::TYPE_BUILDING && isset($data['parts_of_building']) && is_array($data['parts_of_building'])) {
                 foreach ($data['parts_of_building'] as $index => $part) {
+                    $typeId = null;
+                    if (isset($part['type_of_part_of_the_building_id'])) {
+                        $type = \App\Models\TypeOfPartOfTheBuilding::findOrFail($part['type_of_part_of_the_building_id']);
+                        $typeId = $type->id;
+                        
+                    } elseif (isset($part['type_name'])) {
+                        $type = \App\Models\TypeOfPartOfTheBuilding::firstOrCreate(
+                            ['name' => $part['type_name']]
+                        );
+                        $typeId = $type->id;
+                    }
+                    
                     $partOfBuilding = $property->partOfBuildings()->create([
                         'title' => $part['title'],
                         'description' => $part['description'] ?? null,
+                        'type_of_part_of_the_building_id' => $typeId,
                     ]);
-
                     if (isset($data["part_photos_{$index}"]) && is_array($data["part_photos_{$index}"])) {
                         foreach ($data["part_photos_{$index}"] as $photo) {
                             if ($photo instanceof \Illuminate\Http\UploadedFile) {
@@ -91,7 +103,7 @@ class PropertyService
         }
 
         return $property->fresh([
-            'partOfBuildings',
+            'partOfBuildings.typeOfPartOfTheBuilding',
             'buildingFinance',
             'partOfBuildings.photos',
             'proposedSites.proposable' => function ($query) {
@@ -166,9 +178,23 @@ class PropertyService
                 }
                 
                 if ($partOfBuilding && $partOfBuilding->property_id === $property->id) {
+                    $typeId = $partOfBuilding->type_of_part_of_the_building_id;
+                
+                    if (isset($partData['type_of_part_of_the_building_id'])) {
+                        $type = \App\Models\TypeOfPartOfTheBuilding::findOrFail($partData['type_of_part_of_the_building_id']);
+                        $typeId = $type->id;
+                        
+                    } elseif (isset($partData['type_name'])) {
+                        $type = \App\Models\TypeOfPartOfTheBuilding::firstOrCreate(
+                            ['name' => $partData['type_name']]
+                        );
+                        $typeId = $type->id;
+                    }
+                    
                     $partOfBuilding->update([
                         'title' => $partData['title'] ?? $partOfBuilding->title,
                         'description' => $partData['description'] ?? $partOfBuilding->description,
+                        'type_of_part_of_the_building_id' => $typeId,
                     ]);
 
                     if (isset($data["part_photos_{$index}"]) && is_array($data["part_photos_{$index}"]) && !empty($data["part_photos_{$index}"])) {
@@ -190,9 +216,21 @@ class PropertyService
                         }
                     }
                 } else {
+                    $typeId = null;
+                    if (isset($partData['type_of_part_of_the_building_id'])) {
+                        $type = \App\Models\TypeOfPartOfTheBuilding::findOrFail($partData['type_of_part_of_the_building_id']);
+                        $typeId = $type->id;
+                        
+                    } elseif (isset($partData['type_name'])) {
+                        $type = \App\Models\TypeOfPartOfTheBuilding::firstOrCreate(
+                            ['name' => $partData['type_name']]
+                        );
+                        $typeId = $type->id;
+                    }                
                     $partOfBuilding = $property->partOfBuildings()->create([
                         'title' => $partData['title'],
                         'description' => $partData['description'] ?? null,
+                        'type_of_part_of_the_building_id' => $typeId,
                     ]);
 
                     if (isset($data["part_photos_{$index}"]) && is_array($data["part_photos_{$index}"])) {
@@ -240,7 +278,7 @@ class PropertyService
         }
 
         return $property->fresh([
-            'partOfBuildings',
+            'partOfBuildings.typeOfPartOfTheBuilding',
             'buildingFinance',
             'media',
             'location.address'

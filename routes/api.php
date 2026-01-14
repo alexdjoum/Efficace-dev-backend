@@ -69,6 +69,8 @@ Route::patch('products/{product}', [\App\Http\Controllers\ProductController::cla
 Route::get('/appointments', [\App\Http\Controllers\AppointmentController::class, 'index']);
 Route::post('/appointments', [\App\Http\Controllers\AppointmentController::class, 'store']);
 Route::patch('/appointments/{id}/status', [\App\Http\Controllers\AppointmentController::class, 'update']); 
+Route::post('/properties/{property}/operating-ratios', [\App\Http\Controllers\OperatingRatioExcludingTaxController::class, 'store']);
+Route::post('/properties/{property}/building-investments', [\App\Http\Controllers\BuildingInvestmentController::class, 'store']);
 Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::apiResource('customers', \App\Http\Controllers\CustomerController::class);
     Route::apiResource('roles', \App\Http\Controllers\RoleController::class);

@@ -108,4 +108,9 @@ class Property extends Model implements HasMedia
     {
         return $this->hasOne(BuildingFinance::class);
     }
+
+    public function operatingRatios()
+    {
+        return $this->hasMany(OperatingRatioExcludingTax::class);
+    }
 }

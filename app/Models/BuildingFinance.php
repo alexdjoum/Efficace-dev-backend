@@ -30,6 +30,8 @@ class BuildingFinance extends Model
         'cost_of_land' => 'decimal:2',
     ];
 
+    protected $hidden = ['created_at', 'updated_at'];
+
     protected $appends = ['total_building_finance'];
 
     public function property()
@@ -45,5 +47,10 @@ class BuildingFinance extends Model
             + (float) $this->finishing 
             + (float) $this->equipments 
             + (float) $this->cost_of_land;
+    }
+
+    public function buildingInvestments()
+    {
+        return $this->hasMany(BuildingInvestment::class);
     }
 }

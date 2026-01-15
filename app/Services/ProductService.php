@@ -2,12 +2,12 @@
 
 namespace App\Services;
 
-use App\Models\Land;
 use App\Models\Product;
-use App\Models\Virtual;
+use App\Models\Land;
 use App\Models\Property;
-use App\Models\RetailSpace;
 use App\Models\Accommodation;
+use App\Models\Virtual;
+use App\Models\RetailSpace;
 
 class ProductService
 {
@@ -45,14 +45,26 @@ class ProductService
         }
 
         $product->save();
-        return $product->fresh();
+        
+        if (isset($data['proposed_product_ids']) && is_array($data['proposed_product_ids'])) {
+            \App\Models\ProposedProduct::where('product_id', $product->id)->delete();
+            
+            foreach ($data['proposed_product_ids'] as $proposedProductId) {
+                \App\Models\ProposedProduct::create([
+                    'product_id' => $product->id,
+                    'proposed_product_id' => $proposedProductId,
+                ]);
+            }
+        }
+    
+        return $product->fresh(['productable', 'proposedProducts']);
     }
 
     public function update(Product $product, array $data)
     {
         $product->update($data);
-
-        return $product->fresh();
+        
+        return $product->fresh(['productable']);
     }
 
     private function validateProposedItemsAreProducts($model, $proposableType, $itemName)

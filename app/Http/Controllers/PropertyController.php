@@ -19,7 +19,7 @@ class PropertyController extends Controller
     {
         $query = Property::with([
             'partOfBuildings.typeOfPartOfTheBuilding',
-            'buildingFinance.buildingInvestments',
+            'buildingFinance.buildingInvestment',
             'operatingRatios',
         ]);
 
@@ -79,9 +79,9 @@ class PropertyController extends Controller
                     $growthInMarketValue = 0;
                     $annualExpense = 0;
                     
-                    if ($property->buildingFinance->buildingInvestments->isNotEmpty()) {
-                        $investment = $property->buildingFinance->buildingInvestments->first();
-                        $growthInMarketValue = round((float) $investment->growth_in_market_value * 100, 2);
+                    if ($property->buildingFinance->buildingInvestment) {
+                        $investment = $property->buildingFinance->buildingInvestment;
+                        $growthInMarketValue = round((float) $investment->growth_in_market_value, 2);
                         $annualExpense = round((float) $investment->annual_expense, 2);
                     }
                     
@@ -197,11 +197,147 @@ class PropertyController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Property $property)
+    public function show($id)
     {
+        $property = Property::with([
+            'partOfBuildings.typeOfPartOfTheBuilding',
+            'buildingFinance.buildingInvestment',
+            'operatingRatios',
+            'location.address',
+            'location.media',
+            'proposedSites.proposable' => function ($query) {
+                $query->with([
+                    'location.address',
+                    'location.media',
+                    'fragments',
+                    'videoLands'
+                ]);
+            }
+        ])->findOrFail($id);
+
+        if ($property->buildingFinance) {
+            $property->total_building_finance = round(
+                (float) $property->buildingFinance->project_study 
+                + (float) $property->buildingFinance->building_permit 
+                + (float) $property->buildingFinance->structural_work 
+                + (float) $property->buildingFinance->finishing 
+                + (float) $property->buildingFinance->equipments 
+                + (float) $property->buildingFinance->cost_of_land,
+                2
+            );
+            
+            $property->buildingFinance->makeHidden(['created_at', 'updated_at']);
+        }
+        
+        if ($property->type === 'building' && $property->partOfBuildings->isNotEmpty()) {
+            
+            $typeCounts = $property->partOfBuildings
+                ->filter(function ($part) {
+                    return $part->typeOfPartOfTheBuilding !== null;
+                })
+                ->groupBy('typeOfPartOfTheBuilding.id')
+                ->map(function ($parts) {
+                    $firstPart = $parts->first();
+                    return [
+                        'type_id' => $firstPart->typeOfPartOfTheBuilding->id,
+                        'type_name' => $firstPart->typeOfPartOfTheBuilding->name,
+                        'count' => $parts->count()
+                    ];
+                })
+                ->values();
+            
+            $property->overall_program = $typeCounts;
+            
+            if ($property->buildingFinance) {
+                
+                $investmentCost = round(
+                    (float) $property->buildingFinance->project_study 
+                    + (float) $property->buildingFinance->building_permit 
+                    + (float) $property->buildingFinance->structural_work 
+                    + (float) $property->buildingFinance->finishing 
+                    + (float) $property->buildingFinance->equipments 
+                    + (float) $property->buildingFinance->cost_of_land,
+                    2
+                );
+                
+                $growthInMarketValue = 0;
+                $annualExpense = 0;
+                
+                if ($property->buildingFinance->buildingInvestment) {
+                    $investment = $property->buildingFinance->buildingInvestment;
+                    $growthInMarketValue = round((float) $investment->growth_in_market_value, 2);
+                    $annualExpense = round((float) $investment->annual_expense, 2);
+                }
+                
+                $mountIncome = 0;
+                
+                foreach ($property->operatingRatios as $ratio) {
+                    $typeCount = $typeCounts->firstWhere('type_name', $ratio->type);
+                    $count = $typeCount ? $typeCount['count'] : 0;
+                    
+                    $mountIncome += (float) $ratio->montant * $count;
+                }
+                
+                $mountIncome = round($mountIncome, 2);
+                $percentIncome = $investmentCost > 0 ? round(($mountIncome * 100) / $investmentCost, 2) : 0;
+                
+                $mountMargin = round($mountIncome - $annualExpense, 2);
+                $percentMargin = $investmentCost > 0 ? round(($mountMargin * 100) / $investmentCost, 2) : 0;
+                
+                $annualInvestmentGrowth = round($percentMargin + $growthInMarketValue, 2);
+                
+                $returnOnInvestmentPeriod = ($percentMargin > 0) 
+                    ? round(100 / $percentMargin, 2) 
+                    : null;
+                
+                $property->investment = [
+                    'investment_cost' => $investmentCost,
+                    'growth_in_market_value' => $growthInMarketValue,
+                    'total_income' => [
+                        'mount_income' => $mountIncome,
+                        'percent' => $percentIncome
+                    ],
+                    'annual_expense' => $annualExpense,
+                    'annual_net_operating_margin' => [
+                        'mount_margin' => $mountMargin,
+                        'percent_margin' => $percentMargin
+                    ],
+                    'annual_investment_growth' => $annualInvestmentGrowth,
+                    'return_on_investment_period' => $returnOnInvestmentPeriod
+                ];
+                
+                $property->buildingFinance->makeHidden(['created_at', 'updated_at']);
+            }
+            
+            $property->partOfBuildings->each(function ($part) {
+                $part->makeHidden(['media', 'created_at', 'updated_at']);
+                
+                if ($part->typeOfPartOfTheBuilding) {
+                    $part->typeOfPartOfTheBuilding->makeHidden(['created_at', 'updated_at']);
+                }
+            });
+        } else {
+            $property->overall_program = [];
+        }
+
+        if ($property->type === 'building') {
+            $property->makeHidden(['bedrooms', 'bathrooms', 'number_of_salons']);
+        } else {
+            $property->makeHidden(['number_of_appartements', 'part_of_buildings', 'building_finance']);
+        }
+        
+        $property->makeHidden([
+            'proposed_sites',
+            'accommodations',
+            'retail_spaces',
+            'operating_ratios',
+            'created_at',
+            'updated_at'
+        ]);
+
         return response()->json([
             'success' => true,
-            'message' => 'Details de la propriété',
+            'message' => 'Détails de la propriété',
             'data' => $property
         ]);
     }

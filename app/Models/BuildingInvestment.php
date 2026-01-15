@@ -11,7 +11,6 @@ class BuildingInvestment extends Model
 
     protected $fillable = [
         'building_finance_id',
-        'operating_ratio_excluding_tax_id',
         'growth_in_market_value',
         'annual_expense',
     ];
@@ -28,8 +27,8 @@ class BuildingInvestment extends Model
         return $this->belongsTo(BuildingFinance::class);
     }
 
-    public function operatingRatio()
-    {
-        return $this->belongsTo(OperatingRatioExcludingTax::class, 'operating_ratio_excluding_tax_id');
-    }
+    // public function operatingRatio()
+    // {
+    //     return $this->belongsTo(OperatingRatioExcludingTax::class, 'operating_ratio_excluding_tax_id');
+    // }
 }

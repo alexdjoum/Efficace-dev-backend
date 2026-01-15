@@ -20,22 +20,22 @@ class BuildingInvestmentController extends Controller
         }
 
         $validated = $request->validate([
-            'operating_ratio_excluding_tax_id' => 'required|exists:operating_ratio_excluding_taxes,id',
-            'growth_in_market_value' => 'nullable|numeric|min:0',
-            'annual_expense' => 'nullable|numeric|min:0',
+            'growth_in_market_value' => 'required|numeric|min:0',
+            'annual_expense' => 'required|numeric|min:0',
         ]);
 
-        $investment = BuildingInvestment::create([
-            'building_finance_id' => $property->buildingFinance->id,
-            'operating_ratio_excluding_tax_id' => $validated['operating_ratio_excluding_tax_id'],
-            'growth_in_market_value' => $validated['growth_in_market_value'] ?? null,
-            'annual_expense' => $validated['annual_expense'] ?? null,
-        ]);
+        $investment = BuildingInvestment::updateOrCreate(
+            ['building_finance_id' => $property->buildingFinance->id],
+            [
+                'growth_in_market_value' => $validated['growth_in_market_value'],
+                'annual_expense' => $validated['annual_expense'],
+            ]
+        );
 
         return response()->json([
             'success' => true,
-            'message' => 'Investissement créé avec succès',
-            'data' => $investment->load(['buildingFinance', 'operatingRatio'])
+            'message' => 'Investissement créé/mis à jour avec succès',
+            'data' => $investment->load('buildingFinance')
         ], 201);
     }
 }

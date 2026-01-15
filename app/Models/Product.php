@@ -31,4 +31,24 @@ class Product extends Model
     {
         return $this->hasMany(Appointment::class);
     }
+
+    public function proposedProducts()
+    {
+        return $this->belongsToMany(
+            Product::class,
+            'proposed_products',
+            'product_id',
+            'proposed_product_id'
+        )->withTimestamps();
+    }
+
+    public function proposingProducts()
+    {
+        return $this->belongsToMany(
+            Product::class,
+            'proposed_products',
+            'proposed_product_id',
+            'product_id'
+        )->withTimestamps();
+    }
 }

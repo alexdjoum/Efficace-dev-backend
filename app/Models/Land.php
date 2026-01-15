@@ -27,7 +27,7 @@ class Land extends Model implements HasMedia
 
     protected $hidden = ['media', 'created_at', 'updated_at'];
 
-    protected $appends = ['images'];
+    protected $appends = ['images', 'kml_file'];
 
     // protected $with = ['location', 'fragments', 'videoLands'];
     protected $with = [];
@@ -71,6 +71,18 @@ class Land extends Model implements HasMedia
     public function appointments()
     {
         return $this->morphMany(Appointment::class, 'appointable');
+    }
+
+    public function getKmlFileAttribute()
+    {
+        $kmlMedia = $this->getFirstMedia('kml');
+        
+        return $kmlMedia ? [
+            'url' => $kmlMedia->getUrl(),
+            'name' => $kmlMedia->file_name,
+            'size' => $kmlMedia->size,
+            'mime_type' => $kmlMedia->mime_type,
+        ] : null;
     }
     
 }

@@ -49,8 +49,9 @@ class BuildingFinance extends Model
             + (float) $this->cost_of_land;
     }
 
-    public function buildingInvestments()
+
+    public function buildingInvestment() 
     {
-        return $this->hasMany(BuildingInvestment::class);
+        return $this->hasOne(BuildingInvestment::class);
     }
 }

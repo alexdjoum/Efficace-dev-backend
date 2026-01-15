@@ -13,9 +13,6 @@ return new class extends Migration
             $table->foreignId('building_finance_id')
                 ->constrained('building_finances')
                 ->onDelete('cascade');
-            $table->foreignId('operating_ratio_excluding_tax_id')
-                ->constrained('operating_ratio_excluding_taxes')
-                ->onDelete('cascade');
             $table->decimal('growth_in_market_value', 15, 2)->nullable();
             $table->decimal('annual_expense', 15, 2)->nullable();
             $table->timestamps();

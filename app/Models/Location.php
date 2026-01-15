@@ -26,9 +26,7 @@ class Location extends Model implements HasMedia
         return $this->morphOne(Address::class, 'addressable');
     }
 
-    /**
-     * Collection KML
-     */
+
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('kml');

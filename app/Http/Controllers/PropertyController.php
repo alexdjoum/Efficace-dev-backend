@@ -8,6 +8,8 @@ use App\Models\Property;
 use App\Services\PropertyService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
+use App\Models\TypeOfPartOfTheBuilding;
+use App\Models\PartOfBuilding;
 
 
 class PropertyController extends Controller
@@ -373,5 +375,63 @@ class PropertyController extends Controller
             'message' => 'Propriété supprimée avec succès.',
             'data' => null
         ]);
+    }
+
+    public function add_parts(Request $request, $propertyId)
+    {
+        $property = Property::findOrFail($propertyId);
+
+        if ($property->type !== 'building') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Parts can only be added to buildings' 
+            ], 400);
+        }
+
+        $validated = $request->validate([
+            'parts' => 'required|array',
+            'parts.*.title' => 'required|string',
+            'parts.*.description' => 'nullable|string',
+            'parts.*.type_of_part_of_the_building_id' => 'nullable|exists:type_of_part_of_the_buildings,id',
+            'parts.*.type_name' => 'nullable|string',
+        ]);
+
+        $createdParts = [];
+
+        foreach ($validated['parts'] as $index => $partData) {
+            $typeId = null;
+            if (isset($partData['type_of_part_of_the_building_id'])) {
+                $type = TypeOfPartOfTheBuilding::findOrFail($partData['type_of_part_of_the_building_id']);
+                $typeId = $type->id;
+            } elseif (isset($partData['type_name'])) {
+                $type = TypeOfPartOfTheBuilding::firstOrCreate(['name' => $partData['type_name']]);
+                $typeId = $type->id;
+            }
+
+            $part = PartOfBuilding::create([
+                'property_id' => $property->id,
+                'title' => $partData['title'],
+                'description' => $partData['description'] ?? null,
+                'type_of_part_of_the_building_id' => $typeId,
+            ]);
+
+            $photoKey = "part_photos_{$index}";
+            if ($request->hasFile($photoKey)) {
+                foreach ($request->file($photoKey) as $photo) {
+                    $part->addMedia($photo)->toMediaCollection('part_photos');
+                }
+            }
+
+            $part->load('typeOfPartOfTheBuilding');
+            $part->makeHidden(['media', 'created_at', 'updated_at']);
+            
+            $createdParts[] = $part;
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => count($createdParts) . ' part(s) added successfully',
+            'data' => $createdParts
+        ], 201);
     }
 }

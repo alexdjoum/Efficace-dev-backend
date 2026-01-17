@@ -75,6 +75,8 @@ Route::post('/properties/{property}/operating-ratios', [\App\Http\Controllers\Op
 Route::post('/properties/{property}/building-investments', [\App\Http\Controllers\BuildingInvestmentController::class, 'store']);
 Route::post('/properties/{property}/building-finance', [\App\Http\Controllers\BuildingFinanceController::class, 'store']);
 Route::post('/properties/{property}/parts', [\App\Http\Controllers\PropertyController::class, 'add_parts']);
+Route::patch('/properties/{property}/parts/{part}', [\App\Http\Controllers\PropertyController::class, 'update_part']);
+Route::delete('/properties/{property}/parts/{part}', [\App\Http\Controllers\PropertyController::class, 'delete_part']);
 Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::apiResource('customers', \App\Http\Controllers\CustomerController::class);
     Route::apiResource('roles', \App\Http\Controllers\RoleController::class);

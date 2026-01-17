@@ -434,4 +434,77 @@ class PropertyController extends Controller
             'data' => $createdParts
         ], 201);
     }
+
+    public function update_one_part(Request $request, $propertyId, $partId)
+    {
+        $property = Property::findOrFail($propertyId);
+        
+        $part = PartOfBuilding::where('property_id', $property->id)
+            ->where('id', $partId)
+            ->firstOrFail();
+
+        $validated = $request->validate([
+            'title' => 'sometimes|string',
+            'description' => 'sometimes|string',
+            'type_of_part_of_the_building_id' => 'nullable|exists:type_of_part_of_the_buildings,id',
+            'type_name' => 'nullable|string',
+            'photos' => 'nullable|array',
+            'photos.*' => 'image|mimes:jpeg,png,jpg,gif|max:5120',
+            'replace_photos' => 'nullable|boolean', 
+        ]);
+
+        if (isset($validated['title'])) {
+            $part->title = $validated['title'];
+        }
+        if (isset($validated['description'])) {
+            $part->description = $validated['description'];
+        }
+
+        if (isset($validated['type_of_part_of_the_building_id'])) {
+            $type = TypeOfPartOfTheBuilding::findOrFail($validated['type_of_part_of_the_building_id']);
+            $part->type_of_part_of_the_building_id = $type->id;
+        } elseif (isset($validated['type_name'])) {
+            $type = TypeOfPartOfTheBuilding::firstOrCreate(['name' => $validated['type_name']]);
+            $part->type_of_part_of_the_building_id = $type->id;
+        }
+
+        $part->save();
+
+        if ($request->hasFile('photos')) {
+            $replacePhotos = $request->input('replace_photos', true);
+            
+            if ($replacePhotos) {
+                $part->clearMediaCollection('part_photos');
+            }
+            
+            foreach ($request->file('photos') as $photo) {
+                $part->addMedia($photo)->toMediaCollection('part_photos');
+            }
+        }
+
+        $part->load('typeOfPartOfTheBuilding');
+        $part->makeHidden(['media', 'created_at', 'updated_at']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Partie mise à jour avec succès',
+            'data' => $part
+        ]);
+    }
+
+    public function delete_part($propertyId, $partId)
+    {
+        $property = Property::findOrFail($propertyId);
+        
+        $part = PartOfBuilding::where('property_id', $property->id)
+            ->where('id', $partId)
+            ->firstOrFail();
+
+        $part->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Part deleted successfully'
+        ]);
+    }
 }

@@ -15,11 +15,17 @@ class PartOfBuilding extends Model implements HasMedia
         'title',
         'description',
         'property_id',
-        'type_of_part_of_the_building_id'
+        'type_of_part_of_the_building_id',
+        'mount_of_part', 
+        'number_of_part', 
     ];
 
     protected $appends = ['photos'];
     protected $hidden = ['media'];
+    protected $casts = [
+        'mount_of_part' => 'decimal:2',
+        'number_of_part' => 'integer',
+    ];
 
     public function property()
     {

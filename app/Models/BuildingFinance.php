@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 class BuildingFinance extends Model
 {
     use HasFactory;
+    const TYPE_HIGH = 'high';
+    const TYPE_MEDIUM = 'medium';
+    const TYPE_LOW = 'low';
 
     protected $fillable = [
         'property_id',
@@ -16,8 +19,8 @@ class BuildingFinance extends Model
         'structural_work',
         'finishing',
         'equipments',
-        'total_excluding_field',
         'cost_of_land',
+        'type_of_standing',
     ];
 
     protected $casts = [
@@ -26,27 +29,37 @@ class BuildingFinance extends Model
         'structural_work' => 'decimal:2',
         'finishing' => 'decimal:2',
         'equipments' => 'decimal:2',
-        'total_excluding_field' => 'decimal:2',
         'cost_of_land' => 'decimal:2',
     ];
 
     protected $hidden = ['created_at', 'updated_at'];
 
-    protected $appends = ['total_building_finance'];
+    protected $appends = ['total_excluding_field', 'total_building_finance'];
 
     public function property()
     {
         return $this->belongsTo(Property::class);
     }
 
-    public function getTotalBuildingFinanceAttribute()
+    public function getTotalExcludingFieldAttribute()
     {
-        return (float) $this->project_study 
+        return round(
+            (float) $this->project_study 
             + (float) $this->building_permit 
             + (float) $this->structural_work 
             + (float) $this->finishing 
-            + (float) $this->equipments 
-            + (float) $this->cost_of_land;
+            + (float) $this->equipments,
+            2
+        );
+    }
+
+    public function getTotalBuildingFinanceAttribute()
+    {
+        return round(
+            (float) $this->cost_of_land 
+            + (float) $this->total_excluding_field,
+            2
+        );
     }
 
 

@@ -104,13 +104,33 @@ class Property extends Model implements HasMedia
         return $this->morphMany(Appointment::class, 'appointable');
     }
 
-    public function buildingFinance()
+    // public function buildingFinance()
+    // {
+    //     return $this->hasOne(BuildingFinance::class);
+    // }
+
+    public function buildingFinances()
     {
-        return $this->hasOne(BuildingFinance::class);
+        return $this->hasMany(BuildingFinance::class);
     }
 
     public function operatingRatios()
     {
         return $this->hasMany(OperatingRatioExcludingTax::class);
+    }
+
+    public function buildingFinanceHigh()
+    {
+        return $this->hasOne(BuildingFinance::class)->where('type_of_standing', BuildingFinance::TYPE_HIGH);
+    }
+
+    public function buildingFinanceMedium()
+    {
+        return $this->hasOne(BuildingFinance::class)->where('type_of_standing', BuildingFinance::TYPE_MEDIUM);
+    }
+
+    public function buildingFinanceLow()
+    {
+        return $this->hasOne(BuildingFinance::class)->where('type_of_standing', BuildingFinance::TYPE_LOW);
     }
 }

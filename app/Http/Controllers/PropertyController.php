@@ -21,8 +21,10 @@ class PropertyController extends Controller
     {
         $query = Property::with([
             'partOfBuildings.typeOfPartOfTheBuilding',
-            'buildingFinance.buildingInvestment',
-            'operatingRatios',
+            // 'buildingFinance.buildingInvestment',
+            'buildingFinances.buildingInvestment',
+            // 'operatingRatios',
+            'location.address',
         ]);
 
         if ($request->has('type') && in_array($request->type, ['villa', 'building'])) {
@@ -64,54 +66,49 @@ class PropertyController extends Controller
                     ->values();
                 
                 $property->overall_program = $typeCounts;
+                $mediumFinance = $property->buildingFinances->firstWhere('type_of_standing', 'medium');
                 
-                if ($property->buildingFinance) {
+                if ($mediumFinance) {
                     
-                    // Investment Cost
                     $investmentCost = round(
-                        (float) $property->buildingFinance->project_study 
-                        + (float) $property->buildingFinance->building_permit 
-                        + (float) $property->buildingFinance->structural_work 
-                        + (float) $property->buildingFinance->finishing 
-                        + (float) $property->buildingFinance->equipments 
-                        + (float) $property->buildingFinance->cost_of_land,
+                        (float) $mediumFinance->project_study 
+                        + (float) $mediumFinance->building_permit 
+                        + (float) $mediumFinance->structural_work 
+                        + (float) $mediumFinance->finishing 
+                        + (float) $mediumFinance->equipments 
+                        + (float) $mediumFinance->cost_of_land,
                         2
                     );
                     
                     $growthInMarketValue = 0;
                     $annualExpense = 0;
                     
-                    if ($property->buildingFinance->buildingInvestment) {
-                        $investment = $property->buildingFinance->buildingInvestment;
+                    if ($mediumFinance->buildingInvestment) {
+                        $investment = $mediumFinance->buildingInvestment;
                         $growthInMarketValue = round((float) $investment->growth_in_market_value, 2);
                         $annualExpense = round((float) $investment->annual_expense, 2);
                     }
                     
                     $mountIncome = 0;
                     
-                    foreach ($property->operatingRatios as $ratio) {
-                        $typeCount = $typeCounts->firstWhere('type_name', $ratio->type);
-                        $count = $typeCount ? $typeCount['count'] : 0;
-                        
-                        $mountIncome += (float) $ratio->montant * $count;
+                    foreach ($property->partOfBuildings as $part) {
+                        if ($part->mount_of_part && $part->number_of_part) {
+                            $mountIncome += (float) $part->mount_of_part * (int) $part->number_of_part;
+                        }
                     }
                     
                     $mountIncome = round($mountIncome, 2);
                     $percentIncome = $investmentCost > 0 ? round(($mountIncome * 100) / $investmentCost, 2) : 0;
                     
-                    // Annual Net Operating Margin
-                    $mountMargin = round($mountIncome - $annualExpense, 2);
-                    $percentMargin = $investmentCost > 0 ? round(($mountMargin * 100) / $investmentCost, 2) : 0;
+                    $mountMargin = round($investmentCost - $annualExpense, 2);
+                    $percentMargin = $investmentCost > 0 ? round(($mountMargin) / $investmentCost, 2) : 0;
                     
-                    // Annual Investment Growth
                     $annualInvestmentGrowth = round($percentMargin + $growthInMarketValue, 2);
                     
-                    // Return on Investment Period
                     $returnOnInvestmentPeriod = ($percentMargin > 0) 
                         ? round(100 / $percentMargin, 2) 
                         : null; 
                     
-                    // object investment
                     $property->investment = [
                         'investment_cost' => $investmentCost,
                         'growth_in_market_value' => $growthInMarketValue,
@@ -127,7 +124,13 @@ class PropertyController extends Controller
                         'annual_investment_growth' => $annualInvestmentGrowth,
                         'return_on_investment_period' => $returnOnInvestmentPeriod
                     ];
+                }else {
+                    $property->investment = null;
                 }
+
+                $property->buildingFinances->each(function ($finance) {
+                    $finance->makeHidden(['created_at', 'updated_at']);
+                });
                 
                 $property->partOfBuildings->each(function ($part) {
                     $part->makeHidden(['media', 'created_at', 'updated_at']);
@@ -154,6 +157,10 @@ class PropertyController extends Controller
                 'updated_at',
                 'operating_ratios'
             ]);
+
+            if ($property->location) {
+                $property->location->makeHidden(['media', 'created_at', 'updated_at']);
+            }
         });
 
         return response()->json([
@@ -203,7 +210,7 @@ class PropertyController extends Controller
     {
         $property = Property::with([
             'partOfBuildings.typeOfPartOfTheBuilding',
-            'buildingFinance.buildingInvestment',
+            'buildingFinances.buildingInvestment',
             'operatingRatios',
             'location.address',
             'location.media',
@@ -249,24 +256,25 @@ class PropertyController extends Controller
                 ->values();
             
             $property->overall_program = $typeCounts;
+            $mediumFinance = $property->buildingFinances->firstWhere('type_of_standing', 'medium');
             
-            if ($property->buildingFinance) {
+            if ($mediumFinance) {
                 
                 $investmentCost = round(
-                    (float) $property->buildingFinance->project_study 
-                    + (float) $property->buildingFinance->building_permit 
-                    + (float) $property->buildingFinance->structural_work 
-                    + (float) $property->buildingFinance->finishing 
-                    + (float) $property->buildingFinance->equipments 
-                    + (float) $property->buildingFinance->cost_of_land,
+                    (float) $mediumFinance->project_study 
+                    + (float) $mediumFinance->building_permit 
+                    + (float) $mediumFinance->structural_work 
+                    + (float) $mediumFinance->finishing 
+                    + (float) $mediumFinance->equipments 
+                    + (float) $mediumFinance->cost_of_land,
                     2
                 );
                 
                 $growthInMarketValue = 0;
                 $annualExpense = 0;
                 
-                if ($property->buildingFinance->buildingInvestment) {
-                    $investment = $property->buildingFinance->buildingInvestment;
+                if ($mediumFinance->buildingInvestment) {
+                    $investment = $mediumFinance->buildingInvestment;
                     $growthInMarketValue = round((float) $investment->growth_in_market_value, 2);
                     $annualExpense = round((float) $investment->annual_expense, 2);
                 }
@@ -310,6 +318,10 @@ class PropertyController extends Controller
                 
                 $property->buildingFinance->makeHidden(['created_at', 'updated_at']);
             }
+
+            $property->buildingFinances->each(function ($finance) {
+                $finance->makeHidden(['created_at', 'updated_at']);
+            });
             
             $property->partOfBuildings->each(function ($part) {
                 $part->makeHidden(['media', 'created_at', 'updated_at']);
@@ -342,6 +354,7 @@ class PropertyController extends Controller
             'message' => 'Détails de la propriété',
             'data' => $property
         ]);
+        // return response()->json($property);
     }
 
     /**
@@ -394,6 +407,8 @@ class PropertyController extends Controller
             'parts.*.description' => 'nullable|string',
             'parts.*.type_of_part_of_the_building_id' => 'nullable|exists:type_of_part_of_the_buildings,id',
             'parts.*.type_name' => 'nullable|string',
+            'parts.*.mount_of_part' => 'nullable|numeric|min:0', 
+            'parts.*.number_of_part' => 'nullable|integer|min:1'
         ]);
 
         $createdParts = [];
@@ -413,6 +428,8 @@ class PropertyController extends Controller
                 'title' => $partData['title'],
                 'description' => $partData['description'] ?? null,
                 'type_of_part_of_the_building_id' => $typeId,
+                'mount_of_part' => $partData['mount_of_part'] ?? null, 
+                'number_of_part' => $partData['number_of_part'] ?? 1,
             ]);
 
             $photoKey = "part_photos_{$index}";
@@ -437,8 +454,9 @@ class PropertyController extends Controller
 
     public function update_one_part(Request $request, $propertyId, $partId)
     {
+        \Log::info('All Request Data:', $request->all());
+        \Log::info('Request Method: ' . $request->method());
         $property = Property::findOrFail($propertyId);
-        
         $part = PartOfBuilding::where('property_id', $property->id)
             ->where('id', $partId)
             ->firstOrFail();
@@ -451,6 +469,8 @@ class PropertyController extends Controller
             'photos' => 'nullable|array',
             'photos.*' => 'image|mimes:jpeg,png,jpg,gif|max:5120',
             'replace_photos' => 'nullable|boolean', 
+            'mount_of_part' => 'nullable|numeric|min:0', 
+            'number_of_part' => 'nullable|integer|min:1', 
         ]);
 
         if (isset($validated['title'])) {
@@ -458,6 +478,12 @@ class PropertyController extends Controller
         }
         if (isset($validated['description'])) {
             $part->description = $validated['description'];
+        }
+        if (isset($validated['mount_of_part'])) { 
+        $part->mount_of_part = $validated['mount_of_part'];
+        }
+        if (isset($validated['number_of_part'])) { 
+            $part->number_of_part = $validated['number_of_part'];
         }
 
         if (isset($validated['type_of_part_of_the_building_id'])) {

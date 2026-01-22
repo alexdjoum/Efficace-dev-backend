@@ -20,19 +20,29 @@ class BuildingFinanceController extends Controller
         }
 
         $validated = $request->validate([
-            'project_study' => 'required|numeric|min:0',
-            'building_permit' => 'required|numeric|min:0',
-            'structural_work' => 'required|numeric|min:0',
-            'finishing' => 'required|numeric|min:0',
-            'equipments' => 'required|numeric|min:0',
-            'total_excluding_field' => 'required|numeric|min:0',
-            'cost_of_land' => 'required|numeric|min:0',
+            'finances' => 'required|array|min:1|max:3',
+            'finances.*.project_study' => 'required|numeric|min:0',
+            'finances.*.building_permit' => 'required|numeric|min:0',
+            'finances.*.structural_work' => 'required|numeric|min:0',
+            'finances.*.finishing' => 'required|numeric|min:0',
+            'finances.*.equipments' => 'required|numeric|min:0',
+            'finances.*.cost_of_land' => 'required|numeric|min:0',
+            'finances.*.type_of_standing' => 'required|string|in:high,medium,low|distinct',
         ]);
 
-        $buildingFinance = BuildingFinance::updateOrCreate(
-            ['property_id' => $property->id],
-            $validated
-        );
+        $createdFinances = [];
+
+        foreach ($validated['finances'] as $financeData) {
+            $buildingFinance = BuildingFinance::updateOrCreate(
+                [
+                    'property_id' => $property->id,
+                    'type_of_standing' => $financeData['type_of_standing']
+                ],
+                $financeData
+            );
+
+            $createdFinances[] = $buildingFinance;
+        }
 
         $buildingFinance->total_building_finance = round(
             (float) $buildingFinance->project_study 

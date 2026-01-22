@@ -41,8 +41,25 @@ class PropertyService
             ? ($data['number_of_appartements'] ?? null)
             : null, 
             'estimated_payment' => $data['estimated_payment'] ?? null,
+            'type_of_standing' => $data['building_finance']['type_of_standing'] ?? null,
         ]);
 
+        if (isset($data['country']) || isset($data['city']) || isset($data['street']) || isset($data['coordinate_link'])) {
+            $location = \App\Models\Location::create([
+                'coordinate_link' => $data['coordinate_link'] ?? null,
+            ]);
+            
+            \App\Models\Address::create([
+                'street' => $data['street'] ?? null,
+                'city' => $data['city'] ?? null,
+                'country' => $data['country'] ?? null,
+                'addressable_type' => \App\Models\Location::class,
+                'addressable_id' => $location->id,
+            ]);
+            
+            $property->location_id = $location->id;
+            $property->save();
+        }
 
         if ($data['type'] === Property::TYPE_BUILDING) {
             if ($data['type'] === Property::TYPE_BUILDING && isset($data['parts_of_building']) && is_array($data['parts_of_building'])) {
@@ -106,6 +123,7 @@ class PropertyService
             'partOfBuildings.typeOfPartOfTheBuilding',
             'buildingFinance',
             'partOfBuildings.photos',
+            'location.address',
             'proposedSites.proposable' => function ($query) {
                 $query->with([
                     'location.address',   
@@ -126,6 +144,9 @@ class PropertyService
         $data = is_array($data) ? $data : [];
         
         $typeToUpdate = $data['type'] ?? $property->type;
+
+        \Log::info('Data received:', $data);
+        \Log::info('Has coordinate_link:', ['has' => isset($data['coordinate_link'])]);
         
         if ($typeToUpdate === Property::TYPE_BUILDING) {
             $data['bedrooms'] = null;
@@ -152,7 +173,50 @@ class PropertyService
             'number_of_salons' => $data['number_of_salons'] ?? $property->number_of_salons,
             'number_of_appartements' => $data['number_of_appartements'] ?? $property->number_of_appartements, 
             'estimated_payment' => $data['estimated_payment'] ?? $property->estimated_payment,
+            'type_of_standing' => $data['building_finance']['type_of_standing'] ?? $property->buildingFinance->type_of_standing,
         ]);
+
+        if (isset($data['country']) || isset($data['city']) || isset($data['street']) || isset($data['coordinate_link'])) {
+            if ($property->location) {
+                if (isset($data['coordinate_link'])) {
+                    $property->location->update([
+                        'coordinate_link' => $data['coordinate_link']
+                    ]);
+                }
+            
+                if ($property->location->address) {
+                    $property->location->address->update([
+                        'street' => $data['street'] ?? $property->location->address->street,
+                        'city' => $data['city'] ?? $property->location->address->city,
+                        'country' => $data['country'] ?? $property->location->address->country,
+                    ]);
+                } else {
+                    \App\Models\Address::create([
+                        'street' => $data['street'] ?? null,
+                        'city' => $data['city'] ?? null,
+                        'country' => $data['country'] ?? null,
+                        'addressable_type' => \App\Models\Location::class,
+                        'addressable_id' => $property->location->id,
+                    ]);
+                }
+            } else {
+                $location = \App\Models\Location::create([
+                    'coordinate_link' => $data['coordinate_link'] ?? null,
+                ]);
+                
+                \App\Models\Address::create([
+                    'street' => $data['street'] ?? null,
+                    'city' => $data['city'] ?? null,
+                    'country' => $data['country'] ?? null,
+                    'addressable_type' => \App\Models\Location::class,
+                    'addressable_id' => $location->id,
+                ]);
+                
+                $property->location_id = $location->id;
+                $property->save();
+            }
+        }
+
 
         if (isset($data['images']) && is_array($data['images'])) {
             $property->clearMediaCollection('property');

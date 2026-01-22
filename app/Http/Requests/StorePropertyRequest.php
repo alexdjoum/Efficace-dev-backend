@@ -35,6 +35,7 @@ class StorePropertyRequest extends FormRequest
             'basement_area' => 'sometimes|numeric|min:0',
             'ground_floor_area' => 'sometimes|numeric|min:0',
             'type' => 'required|string',
+            'coordinate_link' => 'nullable|string',
             'description' => 'required|string',
             'number_of_salons' => 'sometimes|integer|min:0',
             'images' => 'array',

@@ -42,6 +42,7 @@ class UpdatePropertyRequest extends FormRequest
             'estimated_payment' => 'sometimes|numeric',
             'images' => 'sometimes|array',
             'images.*' => 'image|mimes:jpeg,png,jpg,gif',
+            'coordinate_link' => 'nullable|string',
         ];
     }
 }

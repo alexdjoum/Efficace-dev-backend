@@ -12,6 +12,7 @@ class BuildingFinance extends Model
     const TYPE_MEDIUM = 'medium';
     const TYPE_LOW = 'low';
 
+
     protected $fillable = [
         'property_id',
         'project_study',
@@ -62,9 +63,13 @@ class BuildingFinance extends Model
         );
     }
 
-
     public function buildingInvestment() 
     {
         return $this->hasOne(BuildingInvestment::class);
+    }
+
+    public function getTranslatedStandingAttribute()
+    {
+        return __('attributes.' . $this->type_of_standing);
     }
 }

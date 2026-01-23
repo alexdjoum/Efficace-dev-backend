@@ -133,4 +133,9 @@ class Property extends Model implements HasMedia
     {
         return $this->hasOne(BuildingFinance::class)->where('type_of_standing', BuildingFinance::TYPE_LOW);
     }
+
+    public function getTranslatedTypeAttribute()
+    {
+        return __('attributes.' . $this->type);
+    }
 }

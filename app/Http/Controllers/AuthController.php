@@ -6,12 +6,13 @@ use App\Models\Employee;
 use App\Models\OTP;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Auth\Events\Login;
 use App\Services\CustomerService;
 use App\Services\EmployeeService;
 use Illuminate\Auth\Events\Failed;
-use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use App\Http\Resources\UserResource;
 use Spatie\Activitylog\Models\Activity;
 
 class AuthController extends Controller
@@ -76,6 +77,7 @@ class AuthController extends Controller
             'data' => $customer
         ], 201);
     }
+
     // authenticate the user
     public function login(Request $request)
     {
@@ -109,7 +111,7 @@ class AuthController extends Controller
             }
             return response()->json([
                 'success' => false,
-                'message' => 'Email ou mot de passe incorrect.',
+                'message' => __('messages.invalid_credentials'),
                 'data' => null
             ], 401);
         }
@@ -124,16 +126,11 @@ class AuthController extends Controller
         
         return response()->json([
             'success' => true,
-            'message' => 'Utilisateur connecté avec succès.',
+            'message' => __('messages.login_success'),
             'data' => [
                 'email_verified_at' => $user->email_verified_at,
                 'token' => $user->createToken("token")->plainTextToken,
-                'user' => [
-                    'id' => $user->id,
-                    'email' => $user->email,
-                    'roles' => $user->roles,
-                    'profile' => $user->userable,
-                ]
+                'user' => new UserResource($user),
             ]
         ]);
     }

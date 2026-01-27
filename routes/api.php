@@ -77,6 +77,14 @@ Route::post('/properties/{property}/building-finance', [\App\Http\Controllers\Bu
 Route::post('/properties/{property}/parts', [\App\Http\Controllers\PropertyController::class, 'add_parts']);
 Route::patch('/properties/{property}/parts/{part}', [\App\Http\Controllers\PropertyController::class, 'update_one_part']);
 Route::delete('/properties/{property}/parts/{part}', [\App\Http\Controllers\PropertyController::class, 'delete_part']);
+Route::delete('/projects/{project}/images/{image}', [\App\Http\Controllers\ProjectController::class, 'deleteImage']);
+Route::delete('/projects/{project}/files/{file}', [\App\Http\Controllers\ProjectController::class, 'deleteFile']);
+Route::post('/projects', [\App\Http\Controllers\ProjectController::class, 'store']);
+Route::get('/projects', [\App\Http\Controllers\ProjectController::class, 'index']);
+Route::patch('/projects/{project}', [\App\Http\Controllers\ProjectController::class, 'update']);
+Route::delete('/projects/{project}', [\App\Http\Controllers\ProjectController::class, 'destroy']);
+Route::post('/cache/clear', [\App\Http\Controllers\ProductController::class, 'clearCache']);
+Route::get('/cache/stats', [\App\Http\Controllers\ProductController::class, 'cacheStats']);
 Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::apiResource('customers', \App\Http\Controllers\CustomerController::class);
     Route::apiResource('roles', \App\Http\Controllers\RoleController::class);

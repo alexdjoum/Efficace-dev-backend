@@ -9,23 +9,44 @@ use App\Models\Product;
 use App\Services\ProductService;
 use Illuminate\Support\Facades\DB;
 use App\Http\Resources\ProductResource;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Redis;
 
 class ProductController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    const CACHE_TAG = 'products';
+    const CACHE_TTL = 3600*5; 
+    public function index(Request $request)
     {
-        $products = Product::with([
-            'productable', // Charger le productable de base
+        $locale = app()->getLocale();
+        $cacheKey = "products_list_{$locale}";
+        
+        // Utiliser les tags pour un contrôle granulaire
+        $products = Cache::tags([self::CACHE_TAG])->remember($cacheKey, self::CACHE_TTL, function () {
+            return $this->loadProducts();
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => __('messages.product_list'),
+            'data' => ProductResource::collection($products),
+            'cached' => true,
+            'cache_expires_in' => Cache::tags([self::CACHE_TAG])->get($cacheKey . '_expires'),
+        ]);
+    }
+
+    protected function loadProducts()
+    {
+        return Product::with([
+            'productable',
             'proposedProducts.productable',
         ])
         ->orderBy('created_at', 'desc')
-        ->get();
-
-        // Charger les relations conditionnellement après
-        $products->each(function ($product) {
+        ->get()
+        ->each(function ($product) {
             if ($product->productable_type === 'App\\Models\\Land') {
                 $product->productable->load([
                     'location.address',
@@ -40,7 +61,6 @@ class ProductController extends Controller
                 ]);
             }
 
-            // Même chose pour les proposed products
             $product->proposedProducts->each(function ($proposedProduct) {
                 if ($proposedProduct->productable_type === 'App\\Models\\Land') {
                     $proposedProduct->productable->load([
@@ -57,13 +77,13 @@ class ProductController extends Controller
                 }
             });
         });
-
-        return response()->json([
-            'success' => true,
-            'message' => __('messages.product_list'),
-            'data' => ProductResource::collection($products)
-        ]);
     }
+
+    protected function clearProductsCache()
+    {
+        Cache::tags([self::CACHE_TAG])->flush();
+    }
+
 
     /**
      * Store a newly created resource in storage.
@@ -167,5 +187,29 @@ class ProductController extends Controller
             'message' => 'Produit supprimé avec succès',
             'data' => null
         ]);
+    }
+
+    public function cacheStats()
+    {
+        $stats = [
+            'driver' => config('cache.default'),
+            'products_cache_fr_exists' => Cache::tags([self::CACHE_TAG])->has('products_list_fr'),
+            'products_cache_en_exists' => Cache::tags([self::CACHE_TAG])->has('products_list_en'),
+            'redis_info' => [],
+        ];
+
+        try {
+            $redis = Redis::connection('cache'); 
+            $info = $redis->info();
+            $stats['redis_info'] = [
+                'used_memory' => $info['used_memory_human'] ?? 'N/A',
+                'connected_clients' => $info['connected_clients'] ?? 'N/A',
+                'total_commands_processed' => $info['total_commands_processed'] ?? 'N/A',
+            ];
+        } catch (\Exception $e) {
+            $stats['redis_error'] = $e->getMessage();
+        }
+
+        return response()->json($stats);
     }
 }

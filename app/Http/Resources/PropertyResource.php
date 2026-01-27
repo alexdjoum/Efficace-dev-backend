@@ -39,10 +39,10 @@ class PropertyResource extends JsonResource
 
         if ($this->type === 'building') {
             $data['number_of_appartements'] = $this->number_of_appartements;
-            $data['overall_program'] = $this->getOverallProgram();
+            $data['overall_program'] = $this->getOverallProgram($shouldTranslate);
             $data['investment'] = $this->getInvestment();
             $data['building_finances'] = $this->getBuildingFinances();
-            $data['part_of_buildings'] = $this->getPartOfBuildings();
+            $data['part_of_buildings'] = $this->getPartOfBuildings($shouldTranslate);
         } else {
             $data['bedrooms'] = $this->bedrooms;
             $data['bathrooms'] = $this->bathrooms;
@@ -68,7 +68,7 @@ class PropertyResource extends JsonResource
         return $data;
     }
 
-    protected function getOverallProgram()
+    protected function getOverallProgram($shouldTranslate = false)
     {
         if ($this->partOfBuildings->isEmpty()) {
             return [];
@@ -77,8 +77,10 @@ class PropertyResource extends JsonResource
         return $this->partOfBuildings
             ->filter(fn($part) => $part->typeOfPartOfTheBuilding !== null)
             ->groupBy('typeOfPartOfTheBuilding.id')
-            ->map(function ($parts) {
+            ->map(function ($parts) use ($shouldTranslate) {
                 $firstPart = $parts->first();
+                $typeName = $firstPart->typeOfPartOfTheBuilding->name;
+                
                 return [
                     'type_id' => $firstPart->typeOfPartOfTheBuilding->id,
                     'type_name' => $shouldTranslate ? $this->translator->translate($typeName) : $typeName,
@@ -170,9 +172,9 @@ class PropertyResource extends JsonResource
         });
     }
 
-    protected function getPartOfBuildings()
+    protected function getPartOfBuildings($shouldTranslate = false)
     {
-        return $this->partOfBuildings->map(function ($part) {
+        return $this->partOfBuildings->map(function ($part) use ($shouldTranslate) {
             return [
                 'id' => $part->id,
                 'title' => $shouldTranslate ? $this->translator->translate($part->title) : $part->title,

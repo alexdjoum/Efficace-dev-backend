@@ -10,6 +10,7 @@
         "laravel/framework": "^10.10",
         "laravel/sanctum": "^3.3",
         "laravel/tinker": "^2.8",
+        "predis/predis": "^3.3",
         "rappasoft/laravel-authentication-log": "^4.0",
         "spatie/laravel-activitylog": "^4.8",
         "spatie/laravel-backup": "^8.6",

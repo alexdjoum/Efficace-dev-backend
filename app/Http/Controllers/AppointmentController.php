@@ -49,17 +49,10 @@ class AppointmentController extends Controller
         
         $isAdmin = $user->roles()
             ->where(function($query) {
-                $query->where('name', 'Administrateur')
-                    ->orWhere('slug', 'administrateur');
+                $query->where('name', 'admin')
+                    ->orWhere('slug', 'admin');
             })
             ->exists();
-        
-        \Log::info('User check:', [
-            'user_id' => $user->id,
-            'email' => $user->email,
-            'is_admin' => $isAdmin,
-            'roles' => $user->roles->pluck('name')
-        ]);
         
         $query = Appointment::with([
             'product.productable',

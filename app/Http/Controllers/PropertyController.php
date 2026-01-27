@@ -2,15 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\StorePropertyRequest;
-use App\Http\Requests\UpdatePropertyRequest;
 use App\Models\Property;
+use Illuminate\Http\Request;
+use App\Models\PartOfBuilding;
 use App\Services\PropertyService;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Redis;
 use App\Models\TypeOfPartOfTheBuilding;
-use App\Models\PartOfBuilding;
 use App\Http\Resources\PropertyResource;
+use App\Http\Requests\StorePropertyRequest;
+use App\Http\Requests\UpdatePropertyRequest;
 
 
 class PropertyController extends Controller
@@ -20,6 +21,25 @@ class PropertyController extends Controller
      */
     public function index(Request $request)
     {
+        $locale = app()->getLocale();
+        $type = $request->input('type');
+        $cacheKey = "properties:list:{$locale}:" . ($type ?? 'all');
+
+        try {
+            $cachedProperties = Redis::get($cacheKey);
+
+            if ($cachedProperties) {
+                return response()->json([
+                    'success' => true,
+                    'message' => __('messages.property_list'),
+                    'data' => json_decode($cachedProperties, true),
+                    'from_cache' => true,
+                ]);
+            }
+        } catch (\Exception $e) {
+            \Log::warning('Redis cache read failed: ' . $e->getMessage());
+        }
+
         $query = Property::with([
             'partOfBuildings.typeOfPartOfTheBuilding',
             'buildingFinances.buildingInvestment',
@@ -32,10 +52,19 @@ class PropertyController extends Controller
 
         $properties = $query->orderBy('created_at', 'desc')->get();
 
+        $propertiesResource = PropertyResource::collection($properties);
+
+        try {
+            Redis::setex($cacheKey, 864008, json_encode($propertiesResource));
+        } catch (\Exception $e) {
+            \Log::warning('Redis cache write failed: ' . $e->getMessage());
+        }
+
         return response()->json([
             'success' => true,
             'message' => __('messages.property_list'),
-            'data' => PropertyResource::collection($properties)
+            'data' => $propertiesResource,
+            'from_cache' => false, 
         ]);
     }
 

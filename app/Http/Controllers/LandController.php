@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 // use App\Http\Requests\StoreLandRequest;
-use Illuminate\Http\Request;
-use App\Http\Requests\UpdateLandRequest;
 use App\Models\Land;
+use Illuminate\Http\Request;
 use App\Services\LandService;
 use Illuminate\Support\Facades\DB;
+use App\Http\Resources\LandResource;
+use Illuminate\Support\Facades\Redis;
+use App\Http\Requests\UpdateLandRequest;
 
 class LandController extends Controller
 {
@@ -16,105 +18,96 @@ class LandController extends Controller
      */
     public function index()
     {
+        $locale = app()->getLocale();
+        $cacheKey = "lands:list:{$locale}";
+
+        try {
+            $cachedLands = Redis::get($cacheKey);
+
+            if ($cachedLands) {
+                return response()->json([
+                    'success' => true,
+                    'message' => __('messages.lands_list'),
+                    'data' => json_decode($cachedLands, true),
+                    'from_cache' => true, 
+                ]);
+            }
+        } catch (\Exception $e) {
+            \Log::warning('Redis cache read failed: ' . $e->getMessage());
+        }
+
         $lands = Land::with([
-            // Sélectionner uniquement les champs nécessaires pour fragments
-            'fragments:id,area',
-            // Sélectionner uniquement les champs nécessaires pour videoLands
-            'videoLands:land_id,videoLink',
-            // Charger location avec address, mais seulement coordinate_link et address fields
-            'location:id,coordinate_link',
-            'location.address:id,addressable_id,street,city,country'
-        ])->get()->map(function ($land) {
-            // Transformer les images pour ne renvoyer que les URLs
-            $land->images = $land->getMedia('land')->map(fn($media) => $media->getUrl());
+            'fragments',
+            'videoLands',
+            'location.address',
+        ])->get();
 
-            // Replacer location.address pour ne garder que les champs demandés
-            if ($land->location && $land->location->address) {
-                $land->location->address = [
-                    'street' => $land->location->address->street,
-                    'city' => $land->location->address->city,
-                    'country' => $land->location->address->country,
-                ];
-            }
+        $landsResource = LandResource::collection($lands);
 
-            // Replacer location pour ne garder que address et coordinate_link
-            if ($land->location) {
-                $land->location = [
-                    'coordinate_link' => $land->location->coordinate_link,
-                    'address' => $land->location->address
-                ];
-            }
-
-            return $land;
-        });
+        try {
+            Redis::setex($cacheKey, 86400, json_encode($landsResource));
+        } catch (\Exception $e) {
+            \Log::warning('Redis cache write failed: ' . $e->getMessage());
+        }
 
         return response()->json([
             'success' => true,
-            'message' => 'Liste des terrains',
-            'data' => $lands
+            'message' => __('messages.lands_list'),
+            'data' => $landsResource,
+            'from_cache' => false, 
         ]);
     }
 
 
     public function store(Request $request, LandService $landService)
-{
-    try {
-        // 🔍 Log pour déboguer
-        \Log::info('=== CONTROLLER STORE ===');
-        \Log::info('Request has file?', [
-            'hasFile_file' => $request->hasFile('file'),
-            'hasFile_images' => $request->hasFile('images'),
-            'file_from_request' => $request->file('file') ? get_class($request->file('file')) : 'NULL',
-            'images_from_request' => $request->file('images') ? 'ARRAY' : 'NULL',
-        ]);
+    {
+        try {
 
-        $data = $request->except(['images', 'file']);
-        
-        if ($request->hasFile('file')) {
-            $data['file'] = $request->file('file');
-            \Log::info('File ajouté à data', ['type' => get_class($data['file'])]);
+            $data = $request->except(['images', 'file']);
+            
+            if ($request->hasFile('file')) {
+                $data['file'] = $request->file('file');
+            }
+            
+            if ($request->hasFile('images')) {
+                $data['images'] = $request->file('images');
+            }
+
+            $land = $landService->create($data);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Terrain créé avec succès',
+                'data' => $land
+            ], 201);
+        } catch (\Exception $e) {
+            \Log::error('Erreur création land', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la création du terrain',
+                'error' => $e->getMessage()
+            ], 500);
         }
-        
-        if ($request->hasFile('images')) {
-            $data['images'] = $request->file('images');
-            \Log::info('Images ajoutées à data', ['count' => count($data['images'])]);
-        }
-
-        \Log::info('Data avant service', [
-            'has_file' => isset($data['file']),
-            'has_images' => isset($data['images']),
-        ]);
-
-        $land = $landService->create($data);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Terrain créé avec succès',
-            'data' => $land
-        ], 201);
-    } catch (\Exception $e) {
-        \Log::error('Erreur création land', [
-            'message' => $e->getMessage(),
-            'trace' => $e->getTraceAsString()
-        ]);
-        
-        return response()->json([
-            'success' => false,
-            'message' => 'Erreur lors de la création du terrain',
-            'error' => $e->getMessage()
-        ], 500);
     }
-}
 
         /**
          * Display the specified resource.
          */
-    public function show(Land $land)
+    public function show($id)
     {
+        $land = Land::with([
+            'fragments',
+            'videoLands',
+            'location.address',
+        ])->findOrFail($id);
+
         return response()->json([
             'success' => true,
-            'message' => 'Détails du terrain',
-            'data' => $land
+            'data' => new LandResource($land)
         ]);
     }
 

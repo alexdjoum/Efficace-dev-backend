@@ -138,4 +138,9 @@ class Property extends Model implements HasMedia
     {
         return __('attributes.' . $this->type);
     }
+
+    public function buildingFinance()
+    {
+        return $this->hasOne(BuildingFinance::class);
+    }
 }

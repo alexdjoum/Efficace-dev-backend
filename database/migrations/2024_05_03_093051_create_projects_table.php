@@ -14,12 +14,11 @@ return new class extends Migration
         Schema::create('projects', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->double('amount');
-            $table->double('amount_raised')->default(0);
-            $table->double('current_value')->default(0);
-            $table->string('category');
-            $table->string('status');
-            $table->string('description')->nullable();
+            $table->decimal('amount', 15, 2);
+            $table->decimal('amount_raised', 15, 2)->default(0);
+            $table->boolean('accepted')->default(false);
+            $table->enum('status', ['published', 'unpublished'])->default('unpublished');
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->timestamps();
         });
     }

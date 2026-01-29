@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('projects', function (Blueprint $table) {
             $table->id();
+            $table->string('uuid')->unique();
             $table->string('name');
             $table->decimal('amount', 15, 2);
             $table->decimal('amount_raised', 15, 2)->default(0);

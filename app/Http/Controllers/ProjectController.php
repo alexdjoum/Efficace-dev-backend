@@ -4,18 +4,26 @@ namespace App\Http\Controllers;
 
 use App\Models\Project;
 use App\Models\ProjectFile;
-use Illuminate\Http\Request;
 use App\Models\ProjectImage;  
+use Illuminate\Http\Request;
 use App\Models\PaymentProject;
+use App\Services\ProjectSaleService;
+use App\Models\IntentionToSellProject;
 
 class ProjectController extends Controller
 {
+    protected $projectSaleService;
+
+    public function __construct(ProjectSaleService $projectSaleService)
+    {
+        $this->projectSaleService = $projectSaleService;
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
             'name' => 'required|string',
-            'accepted' => 'boolean',
-            'status' => 'required|in:published,unpublished',
+            'accepted' => 'sometimes|in:0,1',
             'description' => 'nullable|string',
             'images' => 'nullable|array|max:5',
             'images.*' => 'image|mimes:png,jpg,jpeg|max:5120',
@@ -26,7 +34,6 @@ class ProjectController extends Controller
         $project = Project::create([
             'name' => $validated['name'],
             'accepted' => $validated['accepted'] ?? false,
-            'status' => $validated['status'],
             'user_id' => auth()->id(),
             'description' => $validated['description'] ?? null,
         ]);
@@ -198,6 +205,55 @@ class ProjectController extends Controller
             'success' => true,
             'message' => __('messages.file_deleted'),
         ]);
+    }
+
+    public function createProjectSale(Request $request, $projectId)
+    {
+        $validated = $request->validate([
+            'amount_project' => 'required|numeric|min:0',
+            'amount_to_be_collected' => 'nullable|numeric|min:0',
+            'is_sold' => 'nullable|boolean',
+            'status' => 'required|in:published,unpublished',
+        ]);
+
+        if ($validated['amount_project'] <= 0) {
+            return response()->json([
+                'success' => false,
+                'message' => __('messages.amount_project_must_be_positive'),
+            ], 422);
+        }
+
+        $amountToBeCollected = $validated['amount_to_be_collected'] ?? 0;
+
+        if ($amountToBeCollected < 0) {
+            return response()->json([
+                'success' => false,
+                'message' => __('messages.amount_to_be_collected_must_be_positive'),
+            ], 422);
+        }
+
+        if ($amountToBeCollected >= $validated['amount_project']) {
+            return response()->json([
+                'success' => false,
+                'message' => __('messages.amount_to_be_collected_must_be_less_than_amount_project'),
+            ], 422);
+        }
+
+        try {
+            $projectSale = $this->projectSaleService->createProjectSale($projectId, $validated);
+
+            return response()->json([
+                'success' => true,
+                'message' => __('messages.project_sale_created'),
+                'data' => $projectSale
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => __('messages.error_creating_project_sale'),
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
 }

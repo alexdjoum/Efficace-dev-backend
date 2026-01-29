@@ -45,4 +45,25 @@ return [
     'land_created' => 'Terrain créé avec succès',
     'land_updated' => 'Terrain mis à jour avec succès',
     'land_deleted' => 'Terrain supprimé avec succès',
+
+    'intention_created' => 'Intention de vente créée avec succès',
+    'intention_updated' => 'Intention de vente mise à jour avec succès',
+    'intention_deleted' => 'Intention de vente supprimée avec succès',
+    'intention_already_exists' => 'Une intention de vente existe déjà pour ce projet',
+    'intention_not_found' => 'Intention de vente non trouvée',
+
+    'project_sale_created' => 'Vente de projet créée avec succès',
+    'sale_status_updated' => 'Statut de la vente mis à jour avec succès',
+    'project_sale_deleted' => 'Vente de projet supprimée avec succès',
+    'intention_updated' => 'Intention de vente mise à jour avec succès',
+
+    'amount_project_must_be_positive' => 'Le montant du projet doit être positif',
+    'amount_to_be_collected_must_be_positive' => 'Le montant à collecter doit être positif ou nul',
+    'amount_to_be_collected_must_be_less_than_amount_project' => 'Le montant à collecter doit être inférieur au montant du projet',
+
+    'error_creating_project_sale' => 'Erreur lors de la création de la vente',
+    'error_updating_status' => 'Erreur lors de la mise à jour du statut',
+    'error_updating_intention' => 'Erreur lors de la mise à jour de l\'intention',
+    'error_deleting_project_sale' => 'Erreur lors de la suppression de la vente',
+    'intention_not_found' => 'Intention de vente non trouvée',
 ];

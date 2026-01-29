@@ -39,4 +39,25 @@ return [
     'land_created' => 'Land created successfully',
     'land_updated' => 'Land updated successfully',
     'land_deleted' => 'Land deleted successfully',
+
+    'intention_created' => 'Intention to sell created successfully',
+    'intention_updated' => 'Intention to sell updated successfully',
+    'intention_deleted' => 'Intention to sell deleted successfully',
+    'intention_already_exists' => 'An intention to sell already exists for this project',
+    'intention_not_found' => 'Intention to sell not found',
+
+    'project_sale_created' => 'Project sale created successfully',
+    'sale_status_updated' => 'Sale status updated successfully',
+    'project_sale_deleted' => 'Project sale deleted successfully',
+    'intention_updated' => 'Intention to sell updated successfully',
+
+    'amount_project_must_be_positive' => 'Project amount must be positive',
+    'amount_to_be_collected_must_be_positive' => 'Amount to be collected must be positive or zero',
+    'amount_to_be_collected_must_be_less_than_amount_project' => 'Amount to be collected must be less than project amount',
+
+    'error_creating_project_sale' => 'Error creating project sale',
+    'error_updating_status' => 'Error updating status',
+    'error_updating_intention' => 'Error updating intention',
+    'error_deleting_project_sale' => 'Error deleting project sale',
+    'intention_not_found' => 'Intention to sell not found',
 ];

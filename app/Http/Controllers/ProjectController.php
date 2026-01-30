@@ -7,22 +7,24 @@ use App\Models\ProjectFile;
 use App\Models\ProjectImage;  
 use Illuminate\Http\Request;
 use App\Models\PaymentProject;
-use App\Services\ProjectSaleService;
-use App\Models\IntentionToSellProject;
+use App\Services\ProjectSoldService;
 
 class ProjectController extends Controller
 {
-    protected $projectSaleService;
+    protected $projectSoldService;
 
-    public function __construct(ProjectSaleService $projectSaleService)
+    public function __construct(ProjectSoldService $projectSoldService)
     {
-        $this->projectSaleService = $projectSaleService;
+        $this->projectSoldService = $projectSoldService;
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
             'name' => 'required|string',
+            'amount' => 'required|numeric|min:0',
+            'amount_to_perceive' => 'nullable|numeric|min:0',
+            'status' => 'required|in:published,unpublished',
             'accepted' => 'sometimes|in:0,1',
             'description' => 'nullable|string',
             'images' => 'nullable|array|max:5',
@@ -31,8 +33,19 @@ class ProjectController extends Controller
             'files.*' => 'file|mimes:pdf,mp4,zip,dwg|max:51200',
         ]);
 
+        $amountToPerceive = $validated['amount_to_perceive'] ?? 0;
+        if ($amountToPerceive >= $validated['amount']) {
+            return response()->json([
+                'success' => false,
+                'message' => __('messages.amount_to_perceive_must_be_less_than_amount'),
+            ], 422);
+        }
+
         $project = Project::create([
             'name' => $validated['name'],
+            'amount' => $validated['amount'],
+            'amount_to_perceive' => $amountToPerceive,
+            'status' => $validated['status'],
             'accepted' => $validated['accepted'] ?? false,
             'user_id' => auth()->id(),
             'description' => $validated['description'] ?? null,
@@ -207,53 +220,30 @@ class ProjectController extends Controller
         ]);
     }
 
-    public function createProjectSale(Request $request, $projectId)
+    public function createProjectSold(Request $request, $projectId)
     {
         $validated = $request->validate([
-            'amount_project' => 'required|numeric|min:0',
-            'amount_to_be_collected' => 'nullable|numeric|min:0',
-            'is_sold' => 'nullable|boolean',
-            'status' => 'required|in:published,unpublished',
+            'customer_of_name' => 'required|string|max:255',
         ]);
 
-        if ($validated['amount_project'] <= 0) {
-            return response()->json([
-                'success' => false,
-                'message' => __('messages.amount_project_must_be_positive'),
-            ], 422);
-        }
-
-        $amountToBeCollected = $validated['amount_to_be_collected'] ?? 0;
-
-        if ($amountToBeCollected < 0) {
-            return response()->json([
-                'success' => false,
-                'message' => __('messages.amount_to_be_collected_must_be_positive'),
-            ], 422);
-        }
-
-        if ($amountToBeCollected >= $validated['amount_project']) {
-            return response()->json([
-                'success' => false,
-                'message' => __('messages.amount_to_be_collected_must_be_less_than_amount_project'),
-            ], 422);
-        }
-
         try {
-            $projectSale = $this->projectSaleService->createProjectSale($projectId, $validated);
+            $projectSold = $this->projectSoldService->createProjectSold(
+                $projectId, 
+                $validated['customer_of_name']
+            );
 
             return response()->json([
                 'success' => true,
-                'message' => __('messages.project_sale_created'),
-                'data' => $projectSale
+                'message' => __('messages.project_sold_created'),
+                'data' => $projectSold
             ], 201);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => __('messages.error_creating_project_sale'),
-                'error' => $e->getMessage()
-            ], 500);
+                'message' => $e->getMessage(),
+            ], 422);
         }
     }
+    
 
 }

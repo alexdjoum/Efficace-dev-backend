@@ -46,10 +46,11 @@ return [
     'intention_already_exists' => 'An intention to sell already exists for this project',
     'intention_not_found' => 'Intention to sell not found',
 
-    'project_sale_created' => 'Project sale created successfully',
-    'sale_status_updated' => 'Sale status updated successfully',
-    'project_sale_deleted' => 'Project sale deleted successfully',
-    'intention_updated' => 'Intention to sell updated successfully',
+    'project_sold_created' => 'Project sold created successfully',
+    'project_sold_deleted' => 'Sale deleted successfully',
+    'project_solds_list' => 'Sales list',
+    'no_amount_to_perceive' => 'No amount to receive for this project',
+    'amount_to_perceive_must_be_less_than_amount' => 'Amount to receive must be less than project amount',
 
     'amount_project_must_be_positive' => 'Project amount must be positive',
     'amount_to_be_collected_must_be_positive' => 'Amount to be collected must be positive or zero',

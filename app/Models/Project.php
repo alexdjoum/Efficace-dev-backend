@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
 
 class Project extends Model
@@ -9,13 +10,17 @@ class Project extends Model
     protected $fillable = [
         'name',
         'uuid',
-        'accepted',
+        'amount',
+        'amount_to_perceive',
         'status',
+        'accepted',
         'user_id',
-        'description'
+        'description',
     ];
 
     protected $casts = [
+        'amount' => 'decimal:2',
+        'amount_to_perceive' => 'decimal:2',
         'accepted' => 'boolean',
     ];
 
@@ -55,19 +60,9 @@ class Project extends Model
         return $this->hasMany(ProjectFile::class);
     }
 
-    public function intentionToSell()
+    public function projectSolds()
     {
-        return $this->hasOne(IntentionToSellProject::class);
-    }
-
-    public function projectSales()
-    {
-        return $this->hasMany(ProjectSale::class);
-    }
-
-    public function currentSale()
-    {
-        return $this->hasOne(ProjectSale::class)->latest();
+        return $this->hasMany(ProjectSold::class);
     }
 
 }

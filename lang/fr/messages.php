@@ -52,10 +52,11 @@ return [
     'intention_already_exists' => 'Une intention de vente existe déjà pour ce projet',
     'intention_not_found' => 'Intention de vente non trouvée',
 
-    'project_sale_created' => 'Vente de projet créée avec succès',
-    'sale_status_updated' => 'Statut de la vente mis à jour avec succès',
-    'project_sale_deleted' => 'Vente de projet supprimée avec succès',
-    'intention_updated' => 'Intention de vente mise à jour avec succès',
+    'project_sold_created' => 'Vente de projet créée avec succès',
+    'project_sold_deleted' => 'Vente supprimée avec succès',
+    'project_solds_list' => 'Liste des ventes',
+    'no_amount_to_perceive' => 'Aucun montant à percevoir pour ce projet',
+    'amount_to_perceive_must_be_less_than_amount' => 'Le montant à percevoir doit être inférieur au montant du projet',
 
     'amount_project_must_be_positive' => 'Le montant du projet doit être positif',
     'amount_to_be_collected_must_be_positive' => 'Le montant à collecter doit être positif ou nul',

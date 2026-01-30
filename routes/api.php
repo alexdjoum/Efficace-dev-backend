@@ -85,10 +85,9 @@ Route::patch('/projects/{project}', [\App\Http\Controllers\ProjectController::cl
 Route::delete('/projects/{project}', [\App\Http\Controllers\ProjectController::class, 'destroy']);
 Route::post('/cache/clear', [\App\Http\Controllers\ProductController::class, 'clearCache']);
 Route::get('/cache/stats', [\App\Http\Controllers\ProductController::class, 'cacheStats']);
-Route::post('/projects/{project}/sales', [\App\Http\Controllers\ProjectController::class, 'createProjectSale']);
-Route::post('/projects/{project}/intention-to-sell', [\App\Http\Controllers\ProjectController::class, 'createIntentionToSell']);
-Route::patch('/projects/{project}/intention-to-sell', [\App\Http\Controllers\ProjectController::class, 'updateIntentionToSell']);
-Route::delete('/projects/{project}/intention-to-sell', [\App\Http\Controllers\ProjectController::class, 'deleteIntentionToSell']);
+Route::post('/projects/{project}/solds', [\App\Http\Controllers\ProjectController::class, 'createProjectSold']);
+Route::get('/projects/{project}/solds', [\App\Http\Controllers\ProjectController::class, 'getProjectSolds']);
+Route::delete('/projects/{project}/solds/{sold}', [\App\Http\Controllers\ProjectController::class, 'deleteProjectSold']);
 Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::apiResource('customers', \App\Http\Controllers\CustomerController::class);
     Route::apiResource('roles', \App\Http\Controllers\RoleController::class);

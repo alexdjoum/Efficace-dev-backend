@@ -27,10 +27,12 @@ use Illuminate\Support\Facades\Route;
 //     //Route::apiResource('products', \App\Http\Controllers\ProductController::class);
 //     //Route::apiResource('lands', \App\Http\Controllers\LandController::class);
 // });
+Route::post('/registerWorker', [\App\Http\Controllers\AuthController::class, 'registerWorker']);
 
 Route::controller(\App\Http\Controllers\AuthController::class)->group(function () {
     Route::post('register', 'register');
     Route::post('login', 'login');
+    Route::post('loginWorker', 'loginWorker');
     Route::post('resend-code', 'resendCode')->name('resend-code');
     Route::post('get-reset-code', 'getResetCode')->name('get-reset-code');
     Route::post('verify-reset-code', 'verifyResetCode')->name('verify-reset-code');
@@ -88,6 +90,8 @@ Route::get('/cache/stats', [\App\Http\Controllers\ProductController::class, 'cac
 Route::post('/projects/{project}/solds', [\App\Http\Controllers\ProjectController::class, 'createProjectSold']);
 Route::get('/projects/{project}/solds', [\App\Http\Controllers\ProjectController::class, 'getProjectSolds']);
 Route::delete('/projects/{project}/solds/{sold}', [\App\Http\Controllers\ProjectController::class, 'deleteProjectSold']);
+Route::get('/lots', [\App\Http\Controllers\LotController::class, 'index']);
+
 Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::apiResource('customers', \App\Http\Controllers\CustomerController::class);
     Route::apiResource('roles', \App\Http\Controllers\RoleController::class);

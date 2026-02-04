@@ -22,9 +22,9 @@ class ProjectController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string',
-            'amount' => 'required|numeric|min:0',
+            'amount' => 'nullable|numeric|min:0',
             'amount_to_perceive' => 'nullable|numeric|min:0',
-            'status' => 'required|in:published,unpublished',
+            'status' => 'nullable|in:published,unpublished',
             'accepted' => 'sometimes|in:0,1',
             'description' => 'nullable|string',
             'images' => 'nullable|array|max:5',
@@ -33,19 +33,21 @@ class ProjectController extends Controller
             'files.*' => 'file|mimes:pdf,mp4,zip,dwg|max:51200',
         ]);
 
-        $amountToPerceive = $validated['amount_to_perceive'] ?? 0;
-        if ($amountToPerceive >= $validated['amount']) {
-            return response()->json([
-                'success' => false,
-                'message' => __('messages.amount_to_perceive_must_be_less_than_amount'),
-            ], 422);
+        if (isset($validated['amount']) && isset($validated['amount_to_perceive'])) {
+            $amountToPerceive = $validated['amount_to_perceive'];
+            if ($amountToPerceive >= $validated['amount']) {
+                return response()->json([
+                    'success' => false,
+                    'message' => __('messages.amount_to_perceive_must_be_less_than_amount'),
+                ], 422);
+            }
         }
 
         $project = Project::create([
             'name' => $validated['name'],
-            'amount' => $validated['amount'],
-            'amount_to_perceive' => $amountToPerceive,
-            'status' => $validated['status'],
+            'amount' => $validated['amount'] ?? 0,
+            'amount_to_perceive' => $amountToPerceive ?? 0,
+            'status' => $validated['status'] ?? 'unpublished',
             'accepted' => $validated['accepted'] ?? false,
             'user_id' => auth()->id(),
             'description' => $validated['description'] ?? null,
@@ -82,7 +84,15 @@ class ProjectController extends Controller
 
     public function index()
     {
-        $projects = Project::with('user', 'projectImages', 'projectFiles')->get();
+        $user = auth()->user();
+        
+        if ($user->hasRole('admin')) {
+            $projects = Project::with('user', 'projectImages', 'projectFiles', 'projectSolds')->get();
+        } else {
+            $projects = Project::with('user', 'projectImages', 'projectFiles', 'projectSolds')
+                ->where('user_id', $user->id)
+                ->get();
+        }
 
         return response()->json([
             'success' => true,
@@ -91,10 +101,17 @@ class ProjectController extends Controller
                 return [
                     'id' => $project->id,
                     'name' => $project->name,
+                    'uuid' => $project->uuid,
+                    'amount' => $project->amount,
+                    'amount_to_perceive' => $project->amount_to_perceive,
                     'description' => $project->description,
                     'accepted' => $project->accepted,
                     'status' => $project->status,
-                    'user' => $project->user,
+                    'user' => [
+                        'id' => $project->user->id,
+                        'email' => $project->user->email,
+                    ],
+                    'project_solds' => $project->projectSolds,
                     'images' => $project->projectImages->map(function ($img) {
                         return [
                             'id' => $img->id,

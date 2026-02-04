@@ -33,6 +33,7 @@ class User extends Authenticatable implements HasMedia
         'email_verified_at',
         'userable_type',
         'userable_id',
+        'privacy_policy',
     ];
 
     /**
@@ -75,6 +76,7 @@ class User extends Authenticatable implements HasMedia
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+        'privacy_policy' => 'boolean',
     ];
 
     /**
@@ -118,5 +120,20 @@ class User extends Authenticatable implements HasMedia
             ->useFallbackUrl(asset('/assets/images/no_profile.jpeg'))
             ->useFallbackPath(public_path('/assets/images/no_profile.jpeg'))
             ->singleFile();
+    }
+
+    public function contact()
+    {
+        return $this->hasOne(Contact::class);
+    }
+
+    public function accountType()
+    {
+        return $this->hasOne(AccountType::class);
+    }
+
+    public function enterpriseDocument()
+    {
+        return $this->hasOne(EnterpriseDocument::class);
     }
 }

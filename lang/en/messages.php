@@ -61,4 +61,12 @@ return [
     'error_updating_intention' => 'Error updating intention',
     'error_deleting_project_sale' => 'Error deleting project sale',
     'intention_not_found' => 'Intention to sell not found',
+
+    'invalid_credentials' => 'Invalid credentials',
+    'login_success' => 'Login successful',
+    'not_a_worker_account' => 'This account is not a worker account',
+
+    'commercial_register_required' => 'Commercial register is required for enterprises',
+    'immigration_certificate_required' => 'Immigration certificate is required for enterprises',
+    'certificate_of_compliance_required' => 'Certificate of compliance is required for enterprises',
 ];

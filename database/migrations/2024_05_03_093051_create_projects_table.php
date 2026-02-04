@@ -18,7 +18,7 @@ return new class extends Migration
             $table->decimal('amount', 15, 2);
             $table->decimal('amount_to_perceive', 15, 2)->default(0);
             $table->enum('status', ['published', 'unpublished'])->default('unpublished');
-            $table->string('description')->nullable();
+            $table->text('description')->nullable();
             $table->boolean('accepted')->default(false);
             $table->enum('status', ['published', 'unpublished'])->default('unpublished');
             $table->foreignId('user_id')->constrained()->onDelete('cascade');

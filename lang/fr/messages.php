@@ -67,4 +67,12 @@ return [
     'error_updating_intention' => 'Erreur lors de la mise à jour de l\'intention',
     'error_deleting_project_sale' => 'Erreur lors de la suppression de la vente',
     'intention_not_found' => 'Intention de vente non trouvée',
+
+    'invalid_credentials' => 'Identifiants invalides',
+    'login_success' => 'Connexion réussie',
+    'not_a_worker_account' => 'Ce compte n\'est pas un compte worker',
+
+    'commercial_register_required' => 'Le registre de commerce est requis pour les entreprises',
+    'immigration_certificate_required' => 'Le certificat d\'immigration est requis pour les entreprises',
+    'certificate_of_compliance_required' => 'Le certificat de conformité est requis pour les entreprises',
 ];

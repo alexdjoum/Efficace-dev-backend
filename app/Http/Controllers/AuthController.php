@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Employee;
 use App\Models\OTP;
 use App\Models\User;
+use App\Models\Contact;
 use Illuminate\Http\Request;
 use Illuminate\Auth\Events\Login;
 use App\Services\CustomerService;
@@ -23,9 +24,11 @@ class AuthController extends Controller
             'login', 
             'register', 
             'resendCode', 
+            'loginWorker',
             'getResetCode', 
             'verifyResetCode', 
-            'resetPassword'
+            'resetPassword',
+            'registerWorker'
         ]);
     }
     public function register(Request $request, CustomerService $customerService)
@@ -147,7 +150,6 @@ class AuthController extends Controller
         ]);
     }
 
-    // logout from all device
     public function logoutAll(Request $request)
     {
         $request->user()->tokens()->delete();
@@ -187,7 +189,6 @@ class AuthController extends Controller
         ]);
     }
 
-    // get the current user
     public function current(Request $request)
     {
         return response()->json([
@@ -198,8 +199,6 @@ class AuthController extends Controller
             ]
         ]);
     }
-
-    // update customer profile
 
     public function updateProfile(Request $request, CustomerService $customerService, EmployeeService $employeeService)
     {
@@ -409,5 +408,140 @@ class AuthController extends Controller
             'message' => 'Code de validation envoyé avec succès à ' . $request->email,
             'data' => null
         ]);
+    }
+
+    public function registerWorker(Request $request)
+    {
+        $rules = [
+            'email' => 'required|string|email|max:255|unique:contacts,email',
+            'password' => 'required|string|min:8|confirmed',
+            'privacy_policy' => 'required|boolean|accepted',
+            
+            'phoneNumber' => 'required|string|max:20',
+            'firstName' => 'required|string|max:255',
+            'lastName' => 'required|string|max:255',
+            'worker' => 'required|in:architect,technical_director,site_supervisor,site_manager,engineer',
+            'years_of_experience' => 'required|integer|min:0',
+            'presentation' => 'nullable|string|max:5000',
+            
+            'is_enterprise' => 'required|boolean',
+        ];
+
+        if ($request->input('is_enterprise') == false || $request->input('is_enterprise') == '0') {
+            $rules['lot_id'] = 'required|exists:lots,id';
+        } else {
+            $rules['lot_id'] = 'nullable|exists:lots,id';
+        }
+
+        if ($request->input('is_enterprise') == true || $request->input('is_enterprise') == '1') {
+            $rules['commercial_register'] = 'required|file|mimes:pdf|max:10240';
+            $rules['immigration_certificate'] = 'required|file|mimes:pdf|max:10240';
+            $rules['certificate_of_compliance'] = 'required|file|mimes:pdf|max:10240';
+            $rules['approval'] = 'nullable|file|mimes:pdf|max:10240';
+            $rules['patent'] = 'nullable|file|mimes:pdf|max:10240';
+        }
+
+        $validated = $request->validate($rules);
+
+        $user = User::create([
+            'password' => Hash::make($validated['password']),
+            'privacy_policy' => $validated['privacy_policy'],
+        ]);
+
+        $user->assignRole('user');
+
+        $user->contact()->create([
+            'phoneNumber' => $validated['phoneNumber'],
+            'firstName' => $validated['firstName'],
+            'lastName' => $validated['lastName'],
+            'email' => $validated['email'],
+        ]);
+
+        $user->accountType()->create([
+            'lot_id' => $validated['lot_id'] ?? null, 
+            'worker' => $validated['worker'],
+            'is_enterprise' => $validated['is_enterprise'],
+            'years_of_experience' => $validated['years_of_experience'],
+            'presentation' => $validated['presentation'] ?? null,
+        ]);
+
+        if ($validated['is_enterprise']) {
+            $documents = [];
+
+            if ($request->hasFile('commercial_register')) {
+                $documents['commercial_register'] = $request->file('commercial_register')
+                    ->store('enterprise_documents/commercial_registers', 'public');
+            }
+
+            if ($request->hasFile('immigration_certificate')) {
+                $documents['immigration_certificate'] = $request->file('immigration_certificate')
+                    ->store('enterprise_documents/immigration_certificates', 'public');
+            }
+
+            if ($request->hasFile('certificate_of_compliance')) {
+                $documents['certificate_of_compliance'] = $request->file('certificate_of_compliance')
+                    ->store('enterprise_documents/certificates_of_compliance', 'public');
+            }
+
+            if ($request->hasFile('approval')) {
+                $documents['approval'] = $request->file('approval')
+                    ->store('enterprise_documents/approvals', 'public');
+            }
+
+            if ($request->hasFile('patent')) {
+                $documents['patent'] = $request->file('patent')
+                    ->store('enterprise_documents/patents', 'public');
+            }
+
+            $user->enterpriseDocument()->create($documents);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => __('messages.register_success'),
+            'user' => $user->load('contact', 'accountType.lot', 'enterpriseDocument', 'roles')
+        ], 201);
+    }
+
+    public function loginWorker(Request $request)
+    {
+        $validated = $request->validate([
+            'email' => 'required|email',
+            'password' => 'required',
+        ]);
+
+        $contact = \App\Models\Contact::where('email', $validated['email'])->first();
+
+        if (!$contact) {
+            return response()->json([
+                'success' => false,
+                'message' => __('messages.invalid_credentials'),
+            ], 401);
+        }
+
+        $user = $contact->user;
+
+        if (!$user || !\Hash::check($validated['password'], $user->password)) {
+            return response()->json([
+                'success' => false,
+                'message' => __('messages.invalid_credentials'),
+            ], 401);
+        }
+
+        if (!$user->accountType) {
+            return response()->json([
+                'success' => false,
+                'message' => __('messages.not_a_worker_account'),
+            ], 403);
+        }
+
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        return response()->json([
+            'success' => true,
+            'message' => __('messages.login_success'),
+            'token' => $token,
+            'user' => $user->load('contact', 'accountType', 'roles')
+        ], 200);
     }
 }

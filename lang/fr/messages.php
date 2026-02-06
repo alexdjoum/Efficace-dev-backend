@@ -55,6 +55,8 @@ return [
     'project_sold_created' => 'Vente de projet créée avec succès',
     'project_sold_deleted' => 'Vente supprimée avec succès',
     'project_solds_list' => 'Liste des ventes',
+    'project_must_be_accepted_before_selling' => 'Le projet doit être accepté avant de pouvoir être vendu',
+    'amounts_must_be_set_before_selling' => 'Les montants du projet doivent être fixés avant de pouvoir le vendre',
     'no_amount_to_perceive' => 'Aucun montant à percevoir pour ce projet',
     'amount_to_perceive_must_be_less_than_amount' => 'Le montant à percevoir doit être inférieur au montant du projet',
 
@@ -75,4 +77,19 @@ return [
     'commercial_register_required' => 'Le registre de commerce est requis pour les entreprises',
     'immigration_certificate_required' => 'Le certificat d\'immigration est requis pour les entreprises',
     'certificate_of_compliance_required' => 'Le certificat de conformité est requis pour les entreprises',
+
+    'unauthorized_access' => 'Vous n\'avez pas accès à ce projet',
+
+    'unauthorized_action' => 'Vous n\'êtes pas autorisé à effectuer cette action',
+    'project_not_accepted' => 'Le projet doit être accepté avant de fixer les montants',
+    'project_amounts_updated' => 'Montants du projet mis à jour avec succès',
+
+    'observation_created' => 'Observation ajoutée avec succès',
+    'observation_updated' => 'Observation mise à jour avec succès',
+    'observation_deleted' => 'Observation supprimée avec succès',
+    'cannot_add_observation_to_accepted_project' => 'Impossible d\'ajouter une observation à un projet accepté',
+    'cannot_add_observation_with_amounts_set' => 'Impossible d\'ajouter une observation si les montants sont déjà fixés',
+
+    'published_projects_list' => 'Liste des projets publiés',
+
 ];

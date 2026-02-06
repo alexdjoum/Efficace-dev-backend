@@ -65,4 +65,9 @@ class Project extends Model
         return $this->hasMany(ProjectSold::class);
     }
 
+    public function observations()
+    {
+        return $this->hasMany(Observation::class);
+    }
+
 }

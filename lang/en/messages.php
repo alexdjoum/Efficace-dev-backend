@@ -48,6 +48,8 @@ return [
 
     'project_sold_created' => 'Project sold created successfully',
     'project_sold_deleted' => 'Sale deleted successfully',
+    'project_must_be_accepted_before_selling' => 'Project must be accepted before it can be sold',
+    'amounts_must_be_set_before_selling' => 'Project amounts must be set before it can be sold',
     'project_solds_list' => 'Sales list',
     'no_amount_to_perceive' => 'No amount to receive for this project',
     'amount_to_perceive_must_be_less_than_amount' => 'Amount to receive must be less than project amount',
@@ -69,4 +71,18 @@ return [
     'commercial_register_required' => 'Commercial register is required for enterprises',
     'immigration_certificate_required' => 'Immigration certificate is required for enterprises',
     'certificate_of_compliance_required' => 'Certificate of compliance is required for enterprises',
+
+    'unauthorized_access' => 'You do not have access to this project',
+
+    'unauthorized_action' => 'You are not authorized to perform this action',
+    'project_not_accepted' => 'Project must be accepted before setting amounts',
+    'project_amounts_updated' => 'Project amounts updated successfully',
+
+    'observation_created' => 'Observation added successfully',
+    'observation_updated' => 'Observation updated successfully',
+    'observation_deleted' => 'Observation deleted successfully',
+    'cannot_add_observation_to_accepted_project' => 'Cannot add observation to an accepted project',
+    'cannot_add_observation_with_amounts_set' => 'Cannot add observation when amounts are already set',
+
+    'published_projects_list' => 'Published projects list',
 ];

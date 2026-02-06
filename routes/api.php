@@ -91,7 +91,19 @@ Route::post('/projects/{project}/solds', [\App\Http\Controllers\ProjectControlle
 Route::get('/projects/{project}/solds', [\App\Http\Controllers\ProjectController::class, 'getProjectSolds']);
 Route::delete('/projects/{project}/solds/{sold}', [\App\Http\Controllers\ProjectController::class, 'deleteProjectSold']);
 Route::get('/lots', [\App\Http\Controllers\LotController::class, 'index']);
+Route::get('/projects/{project}', [\App\Http\Controllers\ProjectController::class, 'show']);
 
+Route::middleware(['auth', 'verified', 'role:admin,validator'])->group(function () {
+    Route::patch('/projects/{project}/set-amounts', [\App\Http\Controllers\ProjectController::class, 'setProjectAmounts']);
+    Route::patch('/projects/{project}/accept', [\App\Http\Controllers\ProjectController::class, 'acceptProject']);
+    Route::post('/projects/{project}/observations', [\App\Http\Controllers\ObservationController::class, 'store']);
+    Route::get('/projects/{project}/observations', [\App\Http\Controllers\ObservationController::class, 'index']);
+    Route::patch('/projects/{project}/observations/{observation}', [\App\Http\Controllers\ObservationController::class, 'update']);
+    Route::delete('/projects/{project}/observations/{observation}', [\App\Http\Controllers\ObservationController::class, 'destroy']);
+
+});
+Route::get('/public/projects', [\App\Http\Controllers\ProjectController::class, 'publicIndex']);
+Route::get('/public/projects/{project}', [\App\Http\Controllers\ProjectController::class, 'publicShow']);
 Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::apiResource('customers', \App\Http\Controllers\CustomerController::class);
     Route::apiResource('roles', \App\Http\Controllers\RoleController::class);

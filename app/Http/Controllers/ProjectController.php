@@ -243,16 +243,39 @@ class ProjectController extends Controller
             'customer_of_name' => 'required|string|max:255',
         ]);
 
+        $project = Project::findOrFail($projectId);
+
+        if (!$project->accepted) {
+            return response()->json([
+                'success' => false,
+                'message' => __('messages.project_must_be_accepted_before_selling'),
+            ], 422);
+        }
+
+        if ($project->amount <= 0 || $project->amount_to_perceive <= 0) {
+            return response()->json([
+                'success' => false,
+                'message' => __('messages.amounts_must_be_set_before_selling'),
+            ], 422);
+        }
+
         try {
             $projectSold = $this->projectSoldService->createProjectSold(
                 $projectId, 
                 $validated['customer_of_name']
             );
 
+            if ($project->status !== 'published') {
+                $project->update(['status' => 'published']);
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => __('messages.project_sold_created'),
-                'data' => $projectSold
+                'data' => [
+                    'project_sold' => $projectSold,
+                    'project_published' => $project->status === 'published', 
+                ]
             ], 201);
         } catch (\Exception $e) {
             return response()->json([
@@ -261,6 +284,235 @@ class ProjectController extends Controller
             ], 422);
         }
     }
-    
 
+    public function show($id)
+    {
+        $user = auth()->user();
+        
+        $project = Project::with([
+            'user.contact',
+            'projectImages',
+            'projectFiles',
+            'projectSolds',
+            'observations.user.contact' 
+        ])->findOrFail($id);
+
+        if (!$user->hasRole('admin') && $project->user_id !== $user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => __('messages.unauthorized_access'),
+            ], 403);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'id' => $project->id,
+                'name' => $project->name,
+                'uuid' => $project->uuid,
+                'amount' => $project->amount,
+                'amount_to_perceive' => $project->amount_to_perceive,
+                'status' => $project->status,
+                'description' => $project->description,
+                'accepted' => $project->accepted,
+                'user' => [
+                    'id' => $project->user->id,
+                    'contact' => $project->user->contact,
+                ],
+                'observations' => $project->observations->map(function ($obs) {
+                    return [
+                        'id' => $obs->id,
+                        'name' => $obs->name,
+                        'description' => $obs->description,
+                        'critical' => $obs->critical,
+                        'user' => [
+                            'id' => $obs->user->id,
+                            'contact' => $obs->user->contact,
+                        ],
+                        'created_at' => $obs->created_at,
+                    ];
+                }),
+                'project_solds' => $project->projectSolds,
+                'images' => $project->projectImages->map(fn($img) => [
+                    'id' => $img->id,
+                    'url' => asset('storage/' . $img->path_image),
+                ]),
+                'files' => $project->projectFiles->map(fn($file) => [
+                    'id' => $file->id,
+                    'url' => asset('storage/' . $file->path_file),
+                    'filename' => basename($file->path_file),
+                ]),
+                'created_at' => $project->created_at,
+                'updated_at' => $project->updated_at,
+            ]
+        ]);
+    }
+    
+    public function setProjectAmounts(Request $request, $projectId)
+    {
+        $user = auth()->user();
+
+        if (!$user->hasRole('admin') && !$user->hasRole('validator')) {
+            return response()->json([
+                'success' => false,
+                'message' => __('messages.unauthorized_action'),
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'amount' => 'required|numeric|min:0',
+            'amount_to_perceive' => 'required|numeric|min:0',
+        ]);
+
+        $project = Project::findOrFail($projectId);
+
+        if (!$project->accepted) {
+            return response()->json([
+                'success' => false,
+                'message' => __('messages.project_not_accepted'),
+            ], 422);
+        }
+
+        if ($validated['amount_to_perceive'] >= $validated['amount']) {
+            return response()->json([
+                'success' => false,
+                'message' => __('messages.amount_to_perceive_must_be_less_than_amount'),
+            ], 422);
+        }
+
+        $project->update([
+            'amount' => $validated['amount'],
+            'amount_to_perceive' => $validated['amount_to_perceive'],
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => __('messages.project_amounts_updated'),
+            'data' => $project->fresh()->load('user.contact', 'projectImages', 'projectFiles', 'projectSolds')
+        ]);
+    }
+
+    public function acceptProject(Request $request, $projectId)
+    {
+        $user = auth()->user();
+
+        if (!$user->hasRole('admin') && !$user->hasRole('validator')) {
+            return response()->json([
+                'success' => false,
+                'message' => __('messages.unauthorized_action'),
+            ], 403);
+        }
+
+        $project = Project::findOrFail($projectId);
+
+        $project->update(['accepted' => true]);
+
+        return response()->json([
+            'success' => true,
+            'message' => __('messages.project_accepted'),
+            'data' => $project
+        ]);
+    }
+
+
+    public function publicIndex()
+    {
+        $projects = Project::with([
+            'user.contact',
+            'projectImages',
+            'projectFiles',
+        ])
+        ->where('status', 'published')
+        ->orderBy('created_at', 'desc')
+        ->paginate(10); 
+
+        return response()->json([
+            'success' => true,
+            'message' => __('messages.published_projects_list'),
+            'data' => $projects->map(function ($project) {
+                return [
+                    'id' => $project->id,
+                    'name' => $project->name,
+                    'uuid' => $project->uuid,
+                    'amount' => $project->amount,
+                    'amount_to_perceive' => $project->amount_to_perceive,
+                    'description' => $project->description,
+                    'accepted' => $project->accepted,
+                    'status' => $project->status,
+                    'user' => [
+                        'id' => $project->user->id,
+                        'contact' => $project->user->contact ? [
+                            'firstName' => $project->user->contact->firstName,
+                            'lastName' => $project->user->contact->lastName,
+                        ] : null,
+                    ],
+                    'images' => $project->projectImages->map(function ($img) {
+                        return [
+                            'id' => $img->id,
+                            'url' => asset('storage/' . $img->path_image),
+                        ];
+                    }),
+                    'files' => $project->projectFiles->map(function ($file) {
+                        return [
+                            'id' => $file->id,
+                            'url' => asset('storage/' . $file->path_file),
+                            'filename' => basename($file->path_file),
+                        ];
+                    }),
+                    'created_at' => $project->created_at,
+                    'updated_at' => $project->updated_at,
+                ];
+            }),
+            'pagination' => [
+                'total' => $projects->total(),
+                'per_page' => $projects->perPage(),
+                'current_page' => $projects->currentPage(),
+                'last_page' => $projects->lastPage(),
+            ]
+        ]);
+    }
+
+    public function publicShow($id)
+    {
+        $project = Project::with([
+            'user.contact',
+            'projectImages',
+            'projectFiles',
+        ])
+        ->where('status', 'published')
+        ->findOrFail($id);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'id' => $project->id,
+                'name' => $project->name,
+                'uuid' => $project->uuid,
+                'amount' => $project->amount,
+                'amount_to_perceive' => $project->amount_to_perceive,
+                'status' => $project->status,
+                'description' => $project->description,
+                'accepted' => $project->accepted,
+                'user' => [
+                    'id' => $project->user->id,
+                    'contact' => $project->user->contact ? [
+                        'firstName' => $project->user->contact->firstName,
+                        'lastName' => $project->user->contact->lastName,
+                        'phoneNumber' => $project->user->contact->phoneNumber,
+                    ] : null,
+                ],
+                'images' => $project->projectImages->map(fn($img) => [
+                    'id' => $img->id,
+                    'url' => asset('storage/' . $img->path_image),
+                ]),
+                'files' => $project->projectFiles->map(fn($file) => [
+                    'id' => $file->id,
+                    'url' => asset('storage/' . $file->path_file),
+                    'filename' => basename($file->path_file),
+                ]),
+                'created_at' => $project->created_at,
+                'updated_at' => $project->updated_at,
+            ]
+        ]);
+    }
 }

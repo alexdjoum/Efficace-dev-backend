@@ -65,7 +65,8 @@ class User extends Authenticatable implements HasMedia
     protected $appends = [
         "profile",
         "all_permissions",
-        "logs"
+        "logs",
+        'role'
     ];
 
     /**
@@ -135,5 +136,10 @@ class User extends Authenticatable implements HasMedia
     public function enterpriseDocument()
     {
         return $this->hasOne(EnterpriseDocument::class);
+    }
+
+    public function getRoleAttribute()
+    {
+        return $this->roles->first()->name ?? null;
     }
 }

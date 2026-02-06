@@ -4,16 +4,20 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Contact extends Model
+class Observation extends Model
 {
     protected $fillable = [
+        'project_id',
         'user_id',
-        'phoneNumber',
-        'firstName',
-        'lastName',
-        'email',
-        'localisation',
+        'name',
+        'description',
+        'critical',
     ];
+
+    public function project()
+    {
+        return $this->belongsTo(Project::class);
+    }
 
     public function user()
     {

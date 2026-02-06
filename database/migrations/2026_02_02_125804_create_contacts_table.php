@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('firstName');
             $table->string('lastName');
             $table->string('email');
+            $table->string('localisation')->nullable();
             $table->timestamps();
         });
     }

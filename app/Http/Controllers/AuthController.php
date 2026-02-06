@@ -420,6 +420,7 @@ class AuthController extends Controller
             'phoneNumber' => 'required|string|max:20',
             'firstName' => 'required|string|max:255',
             'lastName' => 'required|string|max:255',
+            'localisation' => 'nullable|string|max:255',
             'worker' => 'required|in:architect,technical_director,site_supervisor,site_manager,engineer',
             'years_of_experience' => 'required|integer|min:0',
             'presentation' => 'nullable|string|max:5000',
@@ -448,13 +449,18 @@ class AuthController extends Controller
             'privacy_policy' => $validated['privacy_policy'],
         ]);
 
-        $user->assignRole('user');
+        if (in_array($validated['worker'], ['architect', 'engineer'])) {
+            $user->assignRole('corrector');
+        } else {
+            $user->assignRole('user');
+        }
 
         $user->contact()->create([
             'phoneNumber' => $validated['phoneNumber'],
             'firstName' => $validated['firstName'],
             'lastName' => $validated['lastName'],
             'email' => $validated['email'],
+            'localisation' => $validated['localisation'] ?? null,
         ]);
 
         $user->accountType()->create([
@@ -528,20 +534,33 @@ class AuthController extends Controller
             ], 401);
         }
 
-        if (!$user->accountType) {
-            return response()->json([
-                'success' => false,
-                'message' => __('messages.not_a_worker_account'),
-            ], 403);
-        }
+        // if (!$user->accountType) {
+        //     return response()->json([
+        //         'success' => false,
+        //         'message' => __('messages.not_a_worker_account'),
+        //     ], 403);
+        // }
 
         $token = $user->createToken('auth_token')->plainTextToken;
+
+        $user->load('contact', 'accountType.lot', 'enterpriseDocument');
 
         return response()->json([
             'success' => true,
             'message' => __('messages.login_success'),
             'token' => $token,
-            'user' => $user->load('contact', 'accountType', 'roles')
+            'user' => [
+                'id' => $user->id,
+                'email' => $user->email,
+                'privacy_policy' => $user->privacy_policy,
+                'profile' => $user->profile,
+                'role' => $user->role, 
+                'account_type' => $user->accountType,
+                'contact' => $user->contact,
+                'enterprise_document' => $user->enterpriseDocument,
+                'created_at' => $user->created_at,
+                'updated_at' => $user->updated_at,
+            ]
         ], 200);
     }
 }

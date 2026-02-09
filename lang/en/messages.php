@@ -85,4 +85,7 @@ return [
     'cannot_add_observation_with_amounts_set' => 'Cannot add observation when amounts are already set',
 
     'published_projects_list' => 'Published projects list',
+
+    'image_does_not_belong_to_project' => 'This image does not belong to the project',
+    'file_does_not_belong_to_project' => 'This file does not belong to the project',
 ];

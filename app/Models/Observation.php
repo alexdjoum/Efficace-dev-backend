@@ -12,6 +12,14 @@ class Observation extends Model
         'name',
         'description',
         'critical',
+        'document_type',
+        'project_image_id',
+        'project_file_id',
+        'coordinates',
+    ];
+
+    protected $casts = [
+        'coordinates' => 'array', 
     ];
 
     public function project()
@@ -22,5 +30,15 @@ class Observation extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function projectImage()
+    {
+        return $this->belongsTo(ProjectImage::class);
+    }
+
+    public function projectFile()
+    {
+        return $this->belongsTo(ProjectFile::class);
     }
 }

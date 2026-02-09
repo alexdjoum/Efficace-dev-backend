@@ -17,6 +17,19 @@ class ObservationController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'required|string|max:5000',
             'critical' => 'required|in:accepted,warning,rejected',
+            
+            'document_type' => 'required|in:image,pdf,dwg,bim',
+            'project_image_id' => 'required_if:document_type,image|nullable|exists:project_images,id',
+            'project_file_id' => 'required_if:document_type,pdf,dwg,bim|nullable|exists:project_files,id',
+            
+            'coordinates' => 'required|array',
+            'coordinates.x' => 'required|numeric|min:0',
+            'coordinates.y' => 'required|numeric|min:0',
+            'coordinates.width' => 'nullable|numeric|min:0',
+            'coordinates.height' => 'nullable|numeric|min:0',
+            'coordinates.page' => 'nullable|integer|min:1', 
+            'coordinates.layer' => 'nullable|string', 
+            'coordinates.element_id' => 'nullable|string', 
         ]);
 
         $project = Project::findOrFail($projectId);
@@ -35,18 +48,48 @@ class ObservationController extends Controller
             ], 422);
         }
 
+        if ($validated['document_type'] === 'image' && $validated['project_image_id']) {
+            $image = ProjectImage::where('id', $validated['project_image_id'])
+                ->where('project_id', $projectId)
+                ->first();
+            
+            if (!$image) {
+                return response()->json([
+                    'success' => false,
+                    'message' => __('messages.image_does_not_belong_to_project'),
+                ], 422);
+            }
+        }
+
+        if (in_array($validated['document_type'], ['pdf', 'dwg', 'bim']) && $validated['project_file_id']) {
+            $file = ProjectFile::where('id', $validated['project_file_id'])
+                ->where('project_id', $projectId)
+                ->first();
+            
+            if (!$file) {
+                return response()->json([
+                    'success' => false,
+                    'message' => __('messages.file_does_not_belong_to_project'),
+                ], 422);
+            }
+        }
+
         $observation = Observation::create([
             'project_id' => $project->id,
             'user_id' => $user->id,
             'name' => $validated['name'],
             'description' => $validated['description'],
             'critical' => $validated['critical'],
+            'document_type' => $validated['document_type'],
+            'project_image_id' => $validated['project_image_id'] ?? null,
+            'project_file_id' => $validated['project_file_id'] ?? null,
+            'coordinates' => $validated['coordinates'],
         ]);
 
         return response()->json([
             'success' => true,
             'message' => __('messages.observation_created'),
-            'data' => $observation->load('user.contact')
+            'data' => $observation->load('user.contact', 'projectImage', 'projectFile')
         ], 201);
     }
 
@@ -55,7 +98,7 @@ class ObservationController extends Controller
         $project = Project::findOrFail($projectId);
 
         $observations = $project->observations()
-            ->with('user.contact')
+            ->with('user.contact', 'projectImage', 'projectFile')
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -67,13 +110,27 @@ class ObservationController extends Controller
                     'name' => $observation->name,
                     'description' => $observation->description,
                     'critical' => $observation->critical,
+                    'document_type' => $observation->document_type,
+                    'coordinates' => $observation->coordinates,
+                    'document' => $observation->document_type === 'image' 
+                        ? [
+                            'id' => $observation->projectImage?->id,
+                            'url' => $observation->projectImage 
+                                ? asset('storage/' . $observation->projectImage->path_image) 
+                                : null,
+                        ]
+                        : [
+                            'id' => $observation->projectFile?->id,
+                            'url' => $observation->projectFile 
+                                ? asset('storage/' . $observation->projectFile->path_file) 
+                                : null,
+                            'filename' => $observation->projectFile 
+                                ? basename($observation->projectFile->path_file) 
+                                : null,
+                        ],
                     'user' => [
                         'id' => $observation->user->id,
-                        'contact' => $observation->user->contact ? [
-                            'firstName' => $observation->user->contact->firstName,
-                            'lastName' => $observation->user->contact->lastName,
-                            'email' => $observation->user->contact->email,
-                        ] : null,
+                        'contact' => $observation->user->contact,
                     ],
                     'created_at' => $observation->created_at,
                     'updated_at' => $observation->updated_at,

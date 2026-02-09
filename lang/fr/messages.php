@@ -92,4 +92,7 @@ return [
 
     'published_projects_list' => 'Liste des projets publiés',
 
+    'image_does_not_belong_to_project' => 'Cette image n\'appartient pas au projet',
+    'file_does_not_belong_to_project' => 'Ce fichier n\'appartient pas au projet',
+
 ];

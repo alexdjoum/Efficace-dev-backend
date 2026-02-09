@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Employee;
 use App\Models\OTP;
 use App\Models\User;
 use App\Models\Contact;
+use App\Models\Employee;
 use Illuminate\Http\Request;
 use Illuminate\Auth\Events\Login;
 use App\Services\CustomerService;

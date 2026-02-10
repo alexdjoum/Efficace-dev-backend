@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Project;
 use App\Models\Observation;
+use App\Models\ProjectFile;   
 use Illuminate\Http\Request;
+use App\Models\ProjectImage;  
 
 class ObservationController extends Controller
 {

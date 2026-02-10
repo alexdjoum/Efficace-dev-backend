@@ -20,6 +20,14 @@ class ProjectController extends Controller
 
     public function store(Request $request)
     {
+        \Log::info('=== DEBUG STORE ===');
+        \Log::info('Content-Type: ' . $request->header('Content-Type'));
+        \Log::info('Method: ' . $request->method());
+        \Log::info('All inputs: ' . json_encode($request->all()));
+        \Log::info('Has name: ' . ($request->has('name') ? 'OUI' : 'NON'));
+        \Log::info('Name value: ' . $request->input('name'));
+        \Log::info('Files: ' . json_encode(array_keys($request->allFiles())));
+        \Log::info('=== FIN DEBUG ===');
         $validated = $request->validate([
             'name' => 'required|string',
             'amount' => 'nullable|numeric|min:0',
@@ -30,7 +38,7 @@ class ProjectController extends Controller
             'images' => 'nullable|array|max:5',
             'images.*' => 'image|mimes:png,jpg,jpeg|max:5120',
             'files' => 'nullable|array|max:5',
-            'files.*' => 'file|mimes:pdf,mp4,zip,dwg|max:51200',
+            'files.*' => 'file|mimes:pdf,mp4,zip,dwg|max:102400',
         ]);
 
         if (isset($validated['amount']) && isset($validated['amount_to_perceive'])) {
@@ -115,13 +123,13 @@ class ProjectController extends Controller
                     'images' => $project->projectImages->map(function ($img) {
                         return [
                             'id' => $img->id,
-                            'url' => asset('storage/' . $img->path_image),
+                            'url' => url('/api/file/' . $img->path_image),
                         ];
                     }),
                     'files' => $project->projectFiles->map(function ($file) {
                         return [
                             'id' => $file->id,
-                            'url' => asset('storage/' . $file->path_file),
+                            'url' => url('/api/file/' . $file->path_file),
                             'filename' => basename($file->path_file),
                         ];
                     }),
@@ -267,6 +275,7 @@ class ProjectController extends Controller
 
             if ($project->status !== 'published') {
                 $project->update(['status' => 'published']);
+                $project->refresh(); 
             }
 
             return response()->json([
@@ -335,11 +344,11 @@ class ProjectController extends Controller
                 'project_solds' => $project->projectSolds,
                 'images' => $project->projectImages->map(fn($img) => [
                     'id' => $img->id,
-                    'url' => asset('storage/' . $img->path_image),
+                    'url' => url('/api/file/' . $img->path_image),
                 ]),
                 'files' => $project->projectFiles->map(fn($file) => [
                     'id' => $file->id,
-                    'url' => asset('storage/' . $file->path_file),
+                    'url' => url('/api/file/' . $file->path_file),
                     'filename' => basename($file->path_file),
                 ]),
                 'created_at' => $project->created_at,
@@ -449,13 +458,13 @@ class ProjectController extends Controller
                     'images' => $project->projectImages->map(function ($img) {
                         return [
                             'id' => $img->id,
-                            'url' => asset('storage/' . $img->path_image),
+                            'url' => url('/api/file/' . $img->path_image),
                         ];
                     }),
                     'files' => $project->projectFiles->map(function ($file) {
                         return [
                             'id' => $file->id,
-                            'url' => asset('storage/' . $file->path_file),
+                            'url' => url('/api/file/' . $file->path_file),
                             'filename' => basename($file->path_file),
                         ];
                     }),
@@ -503,11 +512,11 @@ class ProjectController extends Controller
                 ],
                 'images' => $project->projectImages->map(fn($img) => [
                     'id' => $img->id,
-                    'url' => asset('storage/' . $img->path_image),
+                    'url' => url('/api/file/' . $img->path_image),
                 ]),
                 'files' => $project->projectFiles->map(fn($file) => [
                     'id' => $file->id,
-                    'url' => asset('storage/' . $file->path_file),
+                    'url' => url('/api/file/' . $file->path_file),
                     'filename' => basename($file->path_file),
                 ]),
                 'created_at' => $project->created_at,

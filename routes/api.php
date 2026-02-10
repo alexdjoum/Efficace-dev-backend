@@ -104,6 +104,16 @@ Route::middleware(['auth', 'verified', 'role:admin,validator'])->group(function 
 });
 Route::get('/public/projects', [\App\Http\Controllers\ProjectController::class, 'publicIndex']);
 Route::get('/public/projects/{project}', [\App\Http\Controllers\ProjectController::class, 'publicShow']);
+Route::get('/file/{path}', [\App\Http\Controllers\FileController::class, 'serve'])
+    ->where('path', '.*');
+
+Route::options('/file/{path}', function() {
+    return response('', 200)
+        ->header('Access-Control-Allow-Origin', 'http://localhost:5173')
+        ->header('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS')
+        ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
+        ->header('Access-Control-Allow-Credentials', 'true');
+})->where('path', '.*');
 Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::apiResource('customers', \App\Http\Controllers\CustomerController::class);
     Route::apiResource('roles', \App\Http\Controllers\RoleController::class);

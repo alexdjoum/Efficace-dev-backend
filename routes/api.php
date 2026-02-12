@@ -92,6 +92,7 @@ Route::get('/projects/{project}/solds', [\App\Http\Controllers\ProjectController
 Route::delete('/projects/{project}/solds/{sold}', [\App\Http\Controllers\ProjectController::class, 'deleteProjectSold']);
 Route::get('/lots', [\App\Http\Controllers\LotController::class, 'index']);
 Route::get('/projects/{project}', [\App\Http\Controllers\ProjectController::class, 'show']);
+Route::get('/worker/accepted-projects', [\App\Http\Controllers\ProjectController::class, 'workerAcceptedProjects']);
 
 Route::middleware(['auth', 'verified', 'role:admin,validator'])->group(function () {
     Route::patch('/projects/{project}/set-amounts', [\App\Http\Controllers\ProjectController::class, 'setProjectAmounts']);
@@ -102,6 +103,7 @@ Route::middleware(['auth', 'verified', 'role:admin,validator'])->group(function 
     Route::delete('/projects/{project}/observations/{observation}', [\App\Http\Controllers\ObservationController::class, 'destroy']);
 
 });
+Route::get('/worker/stats', [\App\Http\Controllers\ProjectController::class, 'workerStats']);
 Route::get('/public/projects', [\App\Http\Controllers\ProjectController::class, 'publicIndex']);
 Route::get('/public/projects/{project}', [\App\Http\Controllers\ProjectController::class, 'publicShow']);
 Route::get('/file/{path}', [\App\Http\Controllers\FileController::class, 'serve'])

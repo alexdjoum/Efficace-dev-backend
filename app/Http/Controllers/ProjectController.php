@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Project;
 use App\Models\ProjectFile;
+use App\Models\ProjectSold;
 use App\Models\ProjectImage;  
 use Illuminate\Http\Request;
 use App\Models\PaymentProject;
@@ -20,14 +21,6 @@ class ProjectController extends Controller
 
     public function store(Request $request)
     {
-        \Log::info('=== DEBUG STORE ===');
-        \Log::info('Content-Type: ' . $request->header('Content-Type'));
-        \Log::info('Method: ' . $request->method());
-        \Log::info('All inputs: ' . json_encode($request->all()));
-        \Log::info('Has name: ' . ($request->has('name') ? 'OUI' : 'NON'));
-        \Log::info('Name value: ' . $request->input('name'));
-        \Log::info('Files: ' . json_encode(array_keys($request->allFiles())));
-        \Log::info('=== FIN DEBUG ===');
         $validated = $request->validate([
             'name' => 'required|string',
             'amount' => 'nullable|numeric|min:0',
@@ -522,6 +515,79 @@ class ProjectController extends Controller
                 'created_at' => $project->created_at,
                 'updated_at' => $project->updated_at,
             ]
+        ]);
+    }
+
+    public function workerStats()
+    {
+        $user = auth()->user();
+
+        $projects = Project::where('user_id', $user->id)->get();
+
+        $acceptedProjects = $projects->where('accepted', true)->count();
+
+        $rejectedProjects = $projects->where('accepted', false)
+            ->where('status', 'unpublished')
+            ->count();
+
+        $totalAmountReceived = ProjectSold::whereIn('project_id', $projects->pluck('id'))
+            ->sum('amount_received');
+
+        $totalAmount = $projects->sum('amount');
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'accepted_projects' => $acceptedProjects,
+                'rejected_projects' => $rejectedProjects,
+                'total_amount_received' => $totalAmountReceived,
+                'total_amount' => $totalAmount,
+                'total_projects' => $projects->count(),
+            ]
+        ]);
+    }
+
+    public function workerAcceptedProjects()
+    {
+        $user = auth()->user();
+
+        $projects = Project::where('user_id', $user->id)
+            ->where('accepted', true)
+            ->with(['projectSolds'])
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $projects->flatMap(function ($project) {
+
+                if ($project->projectSolds->isEmpty()) {
+                    return [[
+                        'id' => $project->id,
+                        'uuid' => $project->uuid,
+                        'name' => $project->name,
+                        'current_amount' => $project->amount,
+                        'amount_to_perceive' => $project->amount_to_perceive,
+                        'total_sales' => 0,
+                        'total_amount_received' => 0,
+                        'amount_set_at' => $project->updated_at,
+                        'sold_at' => null, 
+                    ]];
+                }
+
+                return $project->projectSolds->map(function ($sold) use ($project) {
+                    return [
+                        'id' => $project->id,
+                        'uuid' => $project->uuid,
+                        'name' => $project->name,
+                        'current_amount' => $sold->amount,
+                        'amount_to_perceive' => $project->amount_to_perceive,
+                        'total_sales' => $project->projectSolds->count(),
+                        'total_amount_received' => $sold->amount_received,
+                        'amount_set_at' => $sold->created_at,
+                        'sold_at' => $sold->created_at, 
+                    ];
+                })->toArray();
+            })
         ]);
     }
 }

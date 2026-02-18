@@ -109,6 +109,25 @@ Route::get('/public/projects/{project}', [\App\Http\Controllers\ProjectControlle
 Route::get('/file/{path}', [\App\Http\Controllers\FileController::class, 'serve'])
     ->where('path', '.*');
 
+Route::post('/worker/availabilities', [\App\Http\Controllers\WorkerAvailabilityController::class, 'store']);
+Route::get('/worker/availabilities', [\App\Http\Controllers\WorkerAvailabilityController::class, 'index']);
+Route::post('/worker/availabilities/filter', [\App\Http\Controllers\WorkerAvailabilityController::class, 'index']);
+Route::patch('/worker/availabilities/{id}', [\App\Http\Controllers\WorkerAvailabilityController::class, 'update']);
+Route::delete('/worker/availabilities/{id}', [\App\Http\Controllers\WorkerAvailabilityController::class, 'destroy']);
+
+Route::get('/jobs/{jobId}/available-workers', [\App\Http\Controllers\JobController::class, 'availableWorkers']);
+Route::post('/jobs', [\App\Http\Controllers\JobController::class, 'store']);
+Route::get('/jobs', [\App\Http\Controllers\JobController::class, 'index']);
+Route::get('/jobs/{id}', [\App\Http\Controllers\JobController::class, 'show']);
+Route::delete('/jobs/{id}', [\App\Http\Controllers\JobController::class, 'destroy']);
+
+Route::patch('/jobs/workers/note', [\App\Http\Controllers\JobController::class, 'addNote']);
+
+Route::get('/localisation-workers', [\App\Http\Controllers\LocalisationWorkerController::class, 'index']);
+
+Route::get('/workers', [\App\Http\Controllers\UserController::class, 'listWorkers']);
+Route::post('/jobs/{jobId}/workers', [\App\Http\Controllers\JobController::class, 'addWorker']);
+
 Route::options('/file/{path}', function() {
     return response('', 200)
         ->header('Access-Control-Allow-Origin', 'http://localhost:5173')

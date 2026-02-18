@@ -3,8 +3,9 @@
 namespace App\Http\Requests;
 
 use App\Traits\FailValidation;
-use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Contracts\Validation\Validator;
 
 class StoreProductRequest extends FormRequest
 {

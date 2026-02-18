@@ -2,16 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\OTP;
+use App\Models\User;
+use App\Models\JobWorker;
 use Illuminate\Http\Request;
 use App\Services\CustomerService;
 use Illuminate\Support\Facades\DB;
-use App\Models\OTP;
 
 class UserController extends Controller
 {
-    /**
-     * Créer un utilisateur avec un rôle spécifique (Admin uniquement)
-     */
+
     public function createUser(Request $request, CustomerService $customerService)
     {
         $validator = validator()->make($request->all(), [
@@ -36,7 +36,6 @@ class UserController extends Controller
             $customer = DB::transaction(function () use ($request, $customerService) {
                 $customer = $customerService->create($request->all());
                 
-                // ✅ L'admin peut choisir n'importe quel rôle
                 $role = $request->input('role');
                 $customer->user->assignRole($role);
                 
@@ -65,5 +64,63 @@ class UserController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+    public function listWorkers()
+    {
+        $workers = User::whereHas('roles', function ($query) {
+                $query->whereNotIn('name', ['admin', 'validator']);
+            })
+            ->with([
+                'contact.localisationWorker',
+                'accountType.lot',
+                'jobWorkers',
+            ])
+            ->get()
+            ->map(function ($worker) {
+
+                $notes = $worker->jobWorkers
+                    ->whereNotNull('note')
+                    ->pluck('note')
+                    ->map(fn($note) => is_numeric($note) ? (float) $note : null)
+                    ->filter()
+                    ->values();
+
+                $average = $notes->isNotEmpty()
+                    ? round($notes->avg(), 2)
+                    : null;
+
+                return [
+                    'id' => $worker->id,
+                    'firstName' => $worker->contact?->firstName,
+                    'lastName' => $worker->contact?->lastName,
+                    'email' => $worker->contact?->email,
+                    'phone' => $worker->contact?->phoneNumber,
+                    'localisation' => $worker->contact?->localisationWorker?->name,
+                    'worker' => $worker->accountType?->worker,
+                    'lot' => $worker->accountType?->lot?->name,
+                    'years_of_experience' => $worker->accountType?->years_of_experience,
+                    'total_jobs' => $worker->jobWorkers->count(),
+                    'average_note' => $average,
+                ];
+            })
+            ->sortBy([
+                fn($a, $b) => match(true) {
+                    $a['average_note'] !== null && $b['average_note'] !== null 
+                        => $b['average_note'] <=> $a['average_note'], 
+                    $a['average_note'] !== null 
+                        => -1, 
+                    $b['average_note'] !== null 
+                        => 1,  
+                    default 
+                        => strcmp($a['firstName'], $b['firstName']), 
+                }
+            ])
+            ->values();
+
+        return response()->json([
+            'success' => true,
+            'data' => $workers
+        ]);
     }
 }

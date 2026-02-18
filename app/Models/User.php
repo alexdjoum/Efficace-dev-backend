@@ -142,4 +142,24 @@ class User extends Authenticatable implements HasMedia
     {
         return $this->roles->first()->name ?? null;
     }
+
+    public function localisationWorker()
+    {
+        return $this->belongsTo(LocalisationWorker::class, 'localisation_worker_id');
+    }
+
+    public function workerAvailabilities()
+    {
+        return $this->hasMany(WorkerAvailability::class);
+    }
+
+    public function jobWorkers()
+    {
+        return $this->hasMany(JobWorker::class);
+    }
+
+    public function jobs()
+    {
+        return $this->hasMany(Job::class);
+    }
 }

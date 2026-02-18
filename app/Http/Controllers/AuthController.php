@@ -12,6 +12,7 @@ use App\Services\CustomerService;
 use App\Services\EmployeeService;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Support\Facades\DB;
+use App\Models\LocalisationWorker;
 use Illuminate\Support\Facades\Hash;
 use App\Http\Resources\UserResource;
 use Spatie\Activitylog\Models\Activity;
@@ -81,7 +82,30 @@ class AuthController extends Controller
         ], 201);
     }
 
-    // authenticate the user
+    /**
+ * @OA\Post(
+ *     path="/api/loginWorker",
+ *     summary="Connexion d'un travailleur",
+ *     tags={"Authentification"},
+ *     @OA\RequestBody(
+ *         required=true,
+ *         @OA\JsonContent(
+ *             required={"email","password"},
+ *             @OA\Property(property="email", type="string", example="worker@example.com"),
+ *             @OA\Property(property="password", type="string", example="password123")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=200,
+ *         description="Connexion réussie",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="success", type="boolean", example=true),
+ *             @OA\Property(property="token", type="string", example="4|rRyQ76Jaqy0..."),
+ *         )
+ *     ),
+ *     @OA\Response(response=401, description="Non autorisé")
+ * )
+ */
     public function login(Request $request)
     {
         $data = $request->all();
@@ -420,8 +444,10 @@ class AuthController extends Controller
             'phoneNumber' => 'required|string|max:20',
             'firstName' => 'required|string|max:255',
             'lastName' => 'required|string|max:255',
-            'localisation' => 'nullable|string|max:255',
-            'worker' => 'required|in:architect,technical_director,site_supervisor,site_manager,engineer',
+            'localisation_worker_id' => 'nullable|exists:localisation_workers,id',
+            'localisation_name' => 'nullable|string|max:255',
+            
+            'worker' => 'required|in:architect,technical_director,site_supervisor,site_manager,engineer,worker',
             'years_of_experience' => 'required|integer|min:0',
             'presentation' => 'nullable|string|max:5000',
             
@@ -455,12 +481,23 @@ class AuthController extends Controller
             $user->assignRole('user');
         }
 
+        $localisationWorkerId = null;
+
+        if (!empty($validated['localisation_worker_id'])) {
+            $localisationWorkerId = $validated['localisation_worker_id'];
+        } elseif (!empty($validated['localisation_name'])) {
+            $localisation = LocalisationWorker::firstOrCreate(
+                ['name' => $validated['localisation_name']]
+            );
+            $localisationWorkerId = $localisation->id;
+        }
+
         $user->contact()->create([
             'phoneNumber' => $validated['phoneNumber'],
             'firstName' => $validated['firstName'],
             'lastName' => $validated['lastName'],
             'email' => $validated['email'],
-            'localisation' => $validated['localisation'] ?? null,
+            'localisation_worker_id' => $localisationWorkerId,
         ]);
 
         $user->accountType()->create([
@@ -505,7 +542,13 @@ class AuthController extends Controller
         return response()->json([
             'success' => true,
             'message' => __('messages.register_success'),
-            'user' => $user->load('contact', 'accountType.lot', 'enterpriseDocument', 'roles')
+            'user' => $user->load(
+                'contact',
+                'accountType.lot',
+                'contact.localisationWorker',
+                'enterpriseDocument',
+                'roles'
+            )
         ], 201);
     }
 

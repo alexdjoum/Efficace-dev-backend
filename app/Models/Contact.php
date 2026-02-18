@@ -12,11 +12,16 @@ class Contact extends Model
         'firstName',
         'lastName',
         'email',
-        'localisation',
+        'localisation_worker_id',
     ];
 
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function localisationWorker()
+    {
+        return $this->belongsTo(LocalisationWorker::class);
     }
 }

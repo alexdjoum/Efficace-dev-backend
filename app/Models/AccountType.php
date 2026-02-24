@@ -9,7 +9,6 @@ class AccountType extends Model
     protected $fillable = [
         'user_id',
         'lot_id',
-        'worker',
         'is_enterprise',
         'years_of_experience',
         'presentation',

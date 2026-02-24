@@ -73,6 +73,711 @@
                 }
             }
         },
+        "/api/registerWorker": {
+            "post": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Inscription d'un travailleur ou d'une entreprise",
+                "operationId": "66914434c35d7d15c04282c0879af82e",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password",
+                                    "password_confirmation",
+                                    "privacy_policy",
+                                    "phoneNumber",
+                                    "firstName",
+                                    "lastName",
+                                    "years_of_experience",
+                                    "is_enterprise"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "description": "Email unique",
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "worker@example.com"
+                                    },
+                                    "password": {
+                                        "description": "Minimum 8 caractères",
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "password123"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "password123"
+                                    },
+                                    "privacy_policy": {
+                                        "description": "Acceptation obligatoire",
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "phoneNumber": {
+                                        "type": "string",
+                                        "example": "+237698765432"
+                                    },
+                                    "firstName": {
+                                        "type": "string",
+                                        "example": "Jean"
+                                    },
+                                    "lastName": {
+                                        "type": "string",
+                                        "example": "Dupont"
+                                    },
+                                    "localisation_worker_id": {
+                                        "description": "ID de la localisation (ou utiliser localisation_name)",
+                                        "type": "integer",
+                                        "example": 1,
+                                        "nullable": true
+                                    },
+                                    "localisation_name": {
+                                        "description": "Nom de la localisation (ou utiliser localisation_worker_id)",
+                                        "type": "string",
+                                        "example": "Douala",
+                                        "nullable": true
+                                    },
+                                    "years_of_experience": {
+                                        "description": "Années d'expérience",
+                                        "type": "integer",
+                                        "example": 5
+                                    },
+                                    "presentation": {
+                                        "type": "string",
+                                        "example": "Architecte spécialisé en bâtiments résidentiels",
+                                        "nullable": true
+                                    },
+                                    "is_enterprise": {
+                                        "description": "false pour travailleur, true pour entreprise",
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "lot_id": {
+                                        "description": "Requis si is_enterprise=false. Détermine le rôle: Site supervisor/Site manager/Technical director → manager, Architect/Engineer → corrector, autres → user",
+                                        "type": "integer",
+                                        "example": 1,
+                                        "nullable": true
+                                    },
+                                    "worker_ids[]": {
+                                        "description": "Requis si is_enterprise=true. Exactement 3 IDs de travailleurs (non-entreprises)",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "example": [
+                                            28,
+                                            30,
+                                            32
+                                        ]
+                                    },
+                                    "commercial_register": {
+                                        "description": "PDF requis si is_enterprise=true",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "immigration_certificate": {
+                                        "description": "PDF requis si is_enterprise=true",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "certificate_of_compliance": {
+                                        "description": "PDF requis si is_enterprise=true",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "approval": {
+                                        "description": "PDF optionnel si is_enterprise=true",
+                                        "type": "string",
+                                        "format": "binary",
+                                        "nullable": true
+                                    },
+                                    "patent": {
+                                        "description": "PDF optionnel si is_enterprise=true",
+                                        "type": "string",
+                                        "format": "binary",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Inscription réussie",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Inscription réussie"
+                                        },
+                                        "user": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 50
+                                                },
+                                                "contact": {
+                                                    "properties": {
+                                                        "firstName": {
+                                                            "type": "string",
+                                                            "example": "Jean"
+                                                        },
+                                                        "lastName": {
+                                                            "type": "string",
+                                                            "example": "Dupont"
+                                                        },
+                                                        "email": {
+                                                            "type": "string",
+                                                            "example": "worker@example.com"
+                                                        },
+                                                        "phoneNumber": {
+                                                            "type": "string",
+                                                            "example": "+237698765432"
+                                                        },
+                                                        "localisation_worker": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer",
+                                                                    "example": 1
+                                                                },
+                                                                "name": {
+                                                                    "type": "string",
+                                                                    "example": "Douala"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "account_type": {
+                                                    "properties": {
+                                                        "lot_id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "is_enterprise": {
+                                                            "type": "boolean",
+                                                            "example": false
+                                                        },
+                                                        "years_of_experience": {
+                                                            "type": "integer",
+                                                            "example": 5
+                                                        },
+                                                        "lot": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer",
+                                                                    "example": 1
+                                                                },
+                                                                "name": {
+                                                                    "type": "string",
+                                                                    "example": "architect"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "roles": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "corrector"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "worker_enterprises": {
+                                                    "description": "Présent uniquement si is_enterprise=true",
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "worker": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 28
+                                                                    },
+                                                                    "contact": {
+                                                                        "properties": {
+                                                                            "firstName": {
+                                                                                "type": "string",
+                                                                                "example": "Pierre"
+                                                                            },
+                                                                            "lastName": {
+                                                                                "type": "string",
+                                                                                "example": "Martin"
+                                                                            }
+                                                                        },
+                                                                        "type": "object"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Les travailleurs sélectionnés ne doivent pas être des entreprises"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur serveur lors de l'inscription",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Erreur lors de l'inscription"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/admin/create-user": {
+            "post": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Créer un utilisateur admin ou validator (admin seulement)",
+                "operationId": "892abd0026424c5adcfdc87fab4fc543",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password",
+                                    "password_confirmation",
+                                    "firstName",
+                                    "lastName",
+                                    "role"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "validator@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "password123"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "password123"
+                                    },
+                                    "firstName": {
+                                        "type": "string",
+                                        "example": "Marie"
+                                    },
+                                    "lastName": {
+                                        "type": "string",
+                                        "example": "Validator"
+                                    },
+                                    "phoneNumber": {
+                                        "type": "string",
+                                        "example": "+237698765432"
+                                    },
+                                    "role": {
+                                        "type": "string",
+                                        "enum": [
+                                            "admin",
+                                            "validator"
+                                        ],
+                                        "example": "validator"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Utilisateur créé avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Utilisateur créé avec succès"
+                                        },
+                                        "user": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 100
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "validator@example.com"
+                                                },
+                                                "role": {
+                                                    "type": "string",
+                                                    "example": "validator"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Non autorisé (seul admin peut créer)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Action non autorisée"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "L'email existe déjà"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/users": {
+            "get": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Lister tous les administrateurs et validators",
+                "operationId": "53e811f9958f590110a89290890ebca7",
+                "responses": {
+                    "200": {
+                        "description": "Liste des admins et validators",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "email": {
+                                                        "type": "string",
+                                                        "example": "admin@example.com"
+                                                    },
+                                                    "firstName": {
+                                                        "type": "string",
+                                                        "example": "John"
+                                                    },
+                                                    "lastName": {
+                                                        "type": "string",
+                                                        "example": "Doe"
+                                                    },
+                                                    "phoneNumber": {
+                                                        "type": "string",
+                                                        "example": "+237698765432"
+                                                    },
+                                                    "role": {
+                                                        "type": "string",
+                                                        "example": "admin"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Non autorisé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Action non autorisée"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/users/{id}": {
+            "patch": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Modifier un utilisateur admin ou validator",
+                "operationId": "922d208e658c567715ef85598ce9b1f1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 100
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "validator@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "newpassword123",
+                                        "nullable": true
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "newpassword123",
+                                        "nullable": true
+                                    },
+                                    "firstName": {
+                                        "type": "string",
+                                        "example": "Marie"
+                                    },
+                                    "lastName": {
+                                        "type": "string",
+                                        "example": "Validator"
+                                    },
+                                    "phoneNumber": {
+                                        "type": "string",
+                                        "example": "+237698765432"
+                                    },
+                                    "role": {
+                                        "type": "string",
+                                        "enum": [
+                                            "admin",
+                                            "validator"
+                                        ],
+                                        "example": "validator"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Utilisateur modifié avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Utilisateur modifié avec succès"
+                                        },
+                                        "user": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 100
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "validator@example.com"
+                                                },
+                                                "role": {
+                                                    "type": "string",
+                                                    "example": "validator"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Non autorisé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Action non autorisée"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Utilisateur non trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Utilisateur non trouvé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/jobs": {
             "get": {
                 "tags": [
@@ -681,6 +1386,271 @@
                     }
                 ]
             }
+        },
+        "/api/lots": {
+            "post": {
+                "tags": [
+                    "Lots"
+                ],
+                "summary": "Lister les lots enfants d'un lot principal",
+                "operationId": "77d0683bcbcce9a32b2f5e41f701dc6d",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "description": "Nom du lot principal",
+                                        "type": "string",
+                                        "example": "engineer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Liste des lots enfants",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 2
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "structure"
+                                                    },
+                                                    "role": {
+                                                        "type": "string",
+                                                        "example": "child"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Lot principal non trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Lot principal non trouvé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Le champ name est requis"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/lots/create": {
+            "post": {
+                "tags": [
+                    "Lots"
+                ],
+                "summary": "Créer un lot",
+                "operationId": "123fa90f0b21e08df6ffe8b7cd228662",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "role"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "structure"
+                                    },
+                                    "role": {
+                                        "type": "string",
+                                        "enum": [
+                                            "main",
+                                            "child"
+                                        ],
+                                        "example": "child"
+                                    },
+                                    "main_id": {
+                                        "description": "Requis si role=child",
+                                        "type": "integer",
+                                        "example": 1,
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Lot créé avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Lot créé avec succès"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 14
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "structure"
+                                                },
+                                                "role": {
+                                                    "type": "string",
+                                                    "example": "child"
+                                                },
+                                                "main_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Le main_id est requis pour un lot child"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/lots/main": {
+            "get": {
+                "tags": [
+                    "Lots"
+                ],
+                "summary": "Lister uniquement les lots principaux",
+                "operationId": "1b2b2013c424acd34a6fa1f1772aab4c",
+                "responses": {
+                    "200": {
+                        "description": "Liste des lots principaux",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "engineer"
+                                                    },
+                                                    "role": {
+                                                        "type": "string",
+                                                        "example": "main"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "components": {
@@ -698,8 +1668,16 @@
             "description": "Authentification"
         },
         {
+            "name": "Admin",
+            "description": "Admin"
+        },
+        {
             "name": "Jobs",
             "description": "Jobs"
+        },
+        {
+            "name": "Lots",
+            "description": "Lots"
         }
     ]
 }

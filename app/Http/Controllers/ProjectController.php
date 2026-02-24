@@ -87,7 +87,7 @@ class ProjectController extends Controller
     {
         $user = auth()->user();
         
-        if ($user->hasRole('admin')) {
+        if ($user->hasRole('admin') || $user->hasRole('validator')) {
             $projects = Project::with('user', 'projectImages', 'projectFiles', 'projectSolds')->get();
         } else {
             $projects = Project::with('user', 'projectImages', 'projectFiles', 'projectSolds')

@@ -94,6 +94,12 @@ Route::get('/lots', [\App\Http\Controllers\LotController::class, 'index']);
 Route::get('/projects/{project}', [\App\Http\Controllers\ProjectController::class, 'show']);
 Route::get('/worker/accepted-projects', [\App\Http\Controllers\ProjectController::class, 'workerAcceptedProjects']);
 
+Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+    Route::post('/admin/create-user', [\App\Http\Controllers\AuthController::class, 'createAdminUser']);
+    Route::get('/admin/users', [\App\Http\Controllers\AuthController::class, 'listAdminUsers']);
+    Route::patch('/admin/users/{id}', [\App\Http\Controllers\AuthController::class, 'updateAdminUser']);
+});
+
 Route::middleware(['auth', 'verified', 'role:admin,validator'])->group(function () {
     Route::patch('/projects/{project}/set-amounts', [\App\Http\Controllers\ProjectController::class, 'setProjectAmounts']);
     Route::patch('/projects/{project}/accept', [\App\Http\Controllers\ProjectController::class, 'acceptProject']);
@@ -127,6 +133,9 @@ Route::get('/localisation-workers', [\App\Http\Controllers\LocalisationWorkerCon
 
 Route::get('/workers', [\App\Http\Controllers\UserController::class, 'listWorkers']);
 Route::post('/jobs/{jobId}/workers', [\App\Http\Controllers\JobController::class, 'addWorker']);
+Route::post('/lots', [\App\Http\Controllers\LotController::class, 'index']);
+Route::post('/lots/create', [\App\Http\Controllers\LotController::class, 'store']);
+Route::get('/lots/main', [\App\Http\Controllers\LotController::class, 'mainLots']);
 
 Route::options('/file/{path}', function() {
     return response('', 200)

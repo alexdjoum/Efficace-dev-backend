@@ -8,7 +8,8 @@ class Lot extends Model
 {
     protected $fillable = [
         'name',
-        'description',
+        'role',
+        'main_id',
     ];
 
     public function accountTypes()
@@ -19,5 +20,26 @@ class Lot extends Model
     public function users()
     {
         return $this->hasManyThrough(User::class, AccountType::class);
+    }
+
+
+    public function parent()
+    {
+        return $this->belongsTo(Lot::class, 'main_id');
+    }
+
+    public function children()
+    {
+        return $this->hasMany(Lot::class, 'main_id');
+    }
+
+    public function scopeMain($query)
+    {
+        return $query->where('role', 'main');
+    }
+
+    public function scopeChild($query)
+    {
+        return $query->where('role', 'child');
     }
 }

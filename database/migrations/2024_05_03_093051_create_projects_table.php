@@ -22,6 +22,11 @@ return new class extends Migration
             $table->boolean('accepted')->default(false);
             $table->enum('status', ['published', 'unpublished'])->default('unpublished');
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->integer('deadline')->nullable()->comment('Nombre de semaines');
+            $table->enum('launch_status', ['pending', 'ongoing', 'onpause', 'onfinish', 'oncancel'])->default('pending');
+            $table->date('started_at')->nullable();
+            $table->date('ended_at')->nullable();
+            $table->foreignId('localisation_worker_id')->nullable()->constrained('localisation_workers')->onDelete('set null');
             $table->timestamps();
         });
     }

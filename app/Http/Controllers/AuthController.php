@@ -633,16 +633,21 @@ class AuthController extends Controller
             ]);
 
             if (!empty($validated['lot_id'])) {
-                $lot = Lot::find($validated['lot_id']);
+                $lot = Lot::with('parent')->find($validated['lot_id']);
                 
                 if ($lot) {
-                    $lotName = strtolower($lot->name);
+                    $lotName = strtolower(trim($lot->name));
+                    $parentLotName = $lot->parent ? strtolower(trim($lot->parent->name)) : null;
                     
-                    if (in_array($lotName, ['site supervisor', 'site manager', 'technical director'])) {
+                    if (in_array($lotName, ['site supervisor', 'site manager', 'technical director']) ||
+                        in_array($parentLotName, ['site supervisor', 'site manager', 'technical director'])) {
                         $user->assignRole('manager');
-                    } elseif (in_array($lotName, ['architect', 'engineer'])) {
+                    }
+                    elseif (in_array($lotName, ['architect', 'engineer']) ||
+                            in_array($parentLotName, ['architect', 'engineer'])) {
                         $user->assignRole('corrector');
-                    } else {
+                    }
+                    else {
                         $user->assignRole('user');
                     }
                 } else {

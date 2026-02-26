@@ -80,9 +80,6 @@ class User extends Authenticatable implements HasMedia
         'privacy_policy' => 'boolean',
     ];
 
-    /**
-     * Relation polymorphique
-     */
     public function userable()
     {
         return $this->morphTo();
@@ -96,25 +93,16 @@ class User extends Authenticatable implements HasMedia
         return $this->getFirstMediaUrl("profile");
     }
 
-    /**
-     * Permissions de l'utilisateur
-     */
     public function getAllPermissionsAttribute()
     {
         return $this->getAllPermissions();
     }
 
-    /**
-     * Logs de l'utilisateur
-     */
     public function getLogsAttribute()
     {
         return Activity::query()->where("causer_id", $this->id)->get();
     }
 
-    /**
-     * Collections de médias
-     */
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('profile')
@@ -171,5 +159,17 @@ class User extends Authenticatable implements HasMedia
     public function enterprises()
     {
         return $this->belongsToMany(User::class, 'worker_enterprises', 'worker_user_id', 'enterprise_user_id');
+    }
+
+    public function projectUsers()
+        {
+            return $this->hasMany(ProjectUser::class);
+        }
+
+    public function assignedProjects()
+    {
+        return $this->belongsToMany(Project::class, 'project_users')
+            ->withPivot('task', 'note', 'start_at', 'end_at')
+            ->withTimestamps();
     }
 }

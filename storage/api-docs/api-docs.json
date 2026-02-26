@@ -1651,6 +1651,776 @@
                     }
                 }
             }
+        },
+        "/api/projects/{id}/set-launch-info": {
+            "post": {
+                "tags": [
+                    "Projects"
+                ],
+                "summary": "Définir les informations de lancement du projet",
+                "operationId": "d45dc69642aae3e3c575f52af0d4eee0",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "deadline",
+                                    "started_at",
+                                    "launch_status",
+                                    "localisation_worker_id"
+                                ],
+                                "properties": {
+                                    "deadline": {
+                                        "description": "Nombre de semaines",
+                                        "type": "integer",
+                                        "example": 8
+                                    },
+                                    "started_at": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2026-03-01"
+                                    },
+                                    "launch_status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "pending",
+                                            "ongoing",
+                                            "onpause",
+                                            "onfinish",
+                                            "oncancel"
+                                        ],
+                                        "example": "ongoing"
+                                    },
+                                    "localisation_worker_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Informations de lancement définies",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Informations de lancement mises à jour"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/projects/{id}/update-launch-info": {
+            "patch": {
+                "tags": [
+                    "Projects"
+                ],
+                "summary": "Modifier les informations de lancement du projet",
+                "operationId": "0dec9e080af81bfac8e2a3a43f377b40",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "deadline": {
+                                        "type": "integer",
+                                        "example": 10
+                                    },
+                                    "started_at": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2026-03-05"
+                                    },
+                                    "launch_status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "pending",
+                                            "ongoing",
+                                            "onpause",
+                                            "onfinish",
+                                            "oncancel"
+                                        ],
+                                        "example": "onpause"
+                                    },
+                                    "localisation_worker_id": {
+                                        "type": "integer",
+                                        "example": 2
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Informations modifiées",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Informations de lancement modifiées"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/projects/{id}/delete-launch-info": {
+            "delete": {
+                "tags": [
+                    "Projects"
+                ],
+                "summary": "Supprimer les informations de lancement du projet",
+                "operationId": "8b09a5183889df3d9ef4a0aa28e9e39c",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Informations supprimées",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Informations de lancement supprimées"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/projects/{id}/set-end-date": {
+            "patch": {
+                "tags": [
+                    "Projects"
+                ],
+                "summary": "Définir la date de fin du projet",
+                "operationId": "83174bd6994a6afd1121f0ae36004b90",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "ended_at"
+                                ],
+                                "properties": {
+                                    "ended_at": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2026-05-01"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Date de fin définie",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Date de fin définie"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/projects/{projectId}/assign-user": {
+            "post": {
+                "tags": [
+                    "Project Users"
+                ],
+                "summary": "Assigner un utilisateur à un projet",
+                "operationId": "4b1e0a0d070cf1d183d34571116d8fae",
+                "parameters": [
+                    {
+                        "name": "projectId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "user_id"
+                                ],
+                                "properties": {
+                                    "user_id": {
+                                        "type": "integer",
+                                        "example": 28
+                                    },
+                                    "task": {
+                                        "type": "string",
+                                        "example": "Supervision des travaux"
+                                    },
+                                    "note": {
+                                        "type": "integer",
+                                        "example": 8,
+                                        "nullable": true
+                                    },
+                                    "start_at": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2026-03-01"
+                                    },
+                                    "end_at": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2026-05-01"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Utilisateur assigné",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Utilisateur assigné au projet"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/projects/{projectId}/assigned-users": {
+            "get": {
+                "tags": [
+                    "Project Users"
+                ],
+                "summary": "Lister les utilisateurs assignés à un projet",
+                "operationId": "637d5c681c6e18f4ea6b2f9547856fde",
+                "parameters": [
+                    {
+                        "name": "projectId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des utilisateurs assignés",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/project-users/{id}": {
+            "delete": {
+                "tags": [
+                    "Project Users"
+                ],
+                "summary": "Retirer un utilisateur d'un projet",
+                "operationId": "e19c04108b72919f71b21d547f6da3cc",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Utilisateur retiré",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Project Users"
+                ],
+                "summary": "Modifier l'assignation d'un utilisateur",
+                "operationId": "292027df812d21d537c824c7dadaf018",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "task": {
+                                        "type": "string",
+                                        "example": "Nouvelle tâche"
+                                    },
+                                    "note": {
+                                        "type": "integer",
+                                        "example": 9
+                                    },
+                                    "start_at": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2026-03-05"
+                                    },
+                                    "end_at": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2026-05-10"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Assignation modifiée",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/manager/my-projects": {
+            "post": {
+                "tags": [
+                    "Manager"
+                ],
+                "summary": "Récupérer les projets assignés au manager avec recherche et pagination",
+                "operationId": "332e3ebde9c9a6ae83acfd4ecca21c16",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "description": "Nom du projet ou nom/prénom d'un travailleur",
+                                        "type": "string",
+                                        "example": "Villa",
+                                        "nullable": true
+                                    },
+                                    "perPage": {
+                                        "description": "Nombre d'éléments par page",
+                                        "type": "integer",
+                                        "example": 10
+                                    },
+                                    "page": {
+                                        "description": "Numéro de la page",
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Liste paginée des projets",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Construction Villa"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "pagination": {
+                                            "properties": {
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 25
+                                                },
+                                                "perPage": {
+                                                    "type": "integer",
+                                                    "example": 10
+                                                },
+                                                "currentPage": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "lastPage": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/manager/projects/{id}/update-launch": {
+            "patch": {
+                "tags": [
+                    "Manager"
+                ],
+                "summary": "Lancer ou modifier les infos de lancement d'un projet (manager)",
+                "operationId": "7b734112f07cd80b28052a87d1efa7a6",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "deadline": {
+                                        "type": "integer",
+                                        "example": 10
+                                    },
+                                    "launch_status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "pending",
+                                            "ongoing",
+                                            "onpause",
+                                            "onfinish",
+                                            "oncancel"
+                                        ],
+                                        "example": "ongoing"
+                                    },
+                                    "started_at": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2026-03-01"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Projet mis à jour",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Projet mis à jour avec succès"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/manager/project-users/{id}/note": {
+            "patch": {
+                "tags": [
+                    "Manager"
+                ],
+                "summary": "Noter un travailleur sur un projet (manager)",
+                "operationId": "bddef7a810ac8f3486cd535a868b139b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de l'assignation (project_users.id)",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 5
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "note"
+                                ],
+                                "properties": {
+                                    "note": {
+                                        "type": "integer",
+                                        "maximum": 10,
+                                        "minimum": 0,
+                                        "example": 8
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Note ajoutée",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Note ajoutée avec succès"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
         }
     },
     "components": {
@@ -1678,6 +2448,18 @@
         {
             "name": "Lots",
             "description": "Lots"
+        },
+        {
+            "name": "Projects",
+            "description": "Projects"
+        },
+        {
+            "name": "Project Users",
+            "description": "Project Users"
+        },
+        {
+            "name": "Manager",
+            "description": "Manager"
         }
     ]
 }

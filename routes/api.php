@@ -108,6 +108,25 @@ Route::middleware(['auth', 'verified', 'role:admin,validator'])->group(function 
     Route::patch('/projects/{project}/observations/{observation}', [\App\Http\Controllers\ObservationController::class, 'update']);
     Route::delete('/projects/{project}/observations/{observation}', [\App\Http\Controllers\ObservationController::class, 'destroy']);
 
+    Route::post('/projects/{id}/set-launch-info', [\App\Http\Controllers\ProjectController::class, 'setLaunchInfo']);
+    Route::patch('/projects/{id}/update-launch-info', [\App\Http\Controllers\ProjectController::class, 'updateLaunchInfo']);
+    Route::delete('/projects/{id}/delete-launch-info', [\App\Http\Controllers\ProjectController::class, 'deleteLaunchInfo']);
+    Route::patch('/projects/{id}/set-end-date', [\App\Http\Controllers\ProjectController::class, 'setEndDate']);
+
+
+    Route::post('/projects/{projectId}/assign-user', [\App\Http\Controllers\ProjectController::class, 'assignUser']);
+    Route::get('/projects/{projectId}/assigned-users', [\App\Http\Controllers\ProjectController::class, 'listAssignedUsers']);
+    Route::patch('/project-users/{id}', [\App\Http\Controllers\ProjectController::class, 'updateAssignment']);
+    Route::delete('/project-users/{id}', [\App\Http\Controllers\ProjectController::class, 'removeUser']);
+
+    Route::get('/projects/{projectId}/available-workers', [\App\Http\Controllers\ProjectController::class, 'availableWorkers']);
+
+});
+
+Route::middleware(['auth', 'verified', 'role:manager'])->group(function () {
+    Route::post('/manager/my-projects', [\App\Http\Controllers\ProjectUserController::class, 'myProjects']);
+    Route::patch('/manager/projects/{id}/update-launch', [\App\Http\Controllers\ProjectUserController::class, 'updateProjectLaunch']);
+    Route::patch('/manager/project-users/{id}/note', [\App\Http\Controllers\ProjectUserController::class, 'noteWorker']);
 });
 Route::get('/worker/stats', [\App\Http\Controllers\ProjectController::class, 'workerStats']);
 Route::get('/public/projects', [\App\Http\Controllers\ProjectController::class, 'publicIndex']);
@@ -172,51 +191,3 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::apiResource('contracts', \App\Http\Controllers\ContractController::class)->except('index', 'show');
 });
 
-
-
-
-
-// Routes accessibles uniquement par Admin
-// Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
-//     Route::post('/users', [UserController::class, 'store']);
-//     Route::delete('/users/{id}', [UserController::class, 'destroy']);
-//     Route::put('/users/{id}/assign-role', [UserController::class, 'assignRole']);
-// });
-
-// // Routes accessibles par Admin et Validator
-// Route::middleware(['auth', 'verified', 'role:admin,validator'])->group(function () {
-//     Route::post('/corrections/{id}/validate', [CorrectionController::class, 'validate']);
-//     Route::post('/corrections/{id}/reject', [CorrectionController::class, 'reject']);
-//     Route::get('/reports', [ReportController::class, 'index']);
-// });
-
-// // Routes accessibles par Admin, Validator et Corrector
-// Route::middleware(['auth', 'verified', 'role:admin,validator,corrector'])->group(function () {
-//     Route::get('/corrections', [CorrectionController::class, 'index']);
-//     Route::post('/corrections', [CorrectionController::class, 'store']);
-//     Route::put('/corrections/{id}', [CorrectionController::class, 'update']);
-//     Route::get('/corrections/{id}', [CorrectionController::class, 'show']);
-// });
-
-// // Routes accessibles par Admin et Manager
-// Route::middleware(['auth', 'verified', 'role:admin,manager'])->group(function () {
-//     Route::apiResource('resources', ResourceController::class);
-//     Route::get('/statistics', [StatisticsController::class, 'index']);
-// });
-
-// // Utilisation avec permissions spécifiques
-// Route::middleware(['auth', 'verified', 'permission:validate-correction'])->group(function () {
-//     Route::post('/corrections/{id}/validate', [CorrectionController::class, 'validate']);
-// });
-
-// // Utilisation avec niveau hiérarchique minimum
-// // Niveau 3 = Validator et au-dessus (Admin)
-// Route::middleware(['auth', 'verified', 'hierarchy:3'])->group(function () {
-//     Route::get('/admin/dashboard', [AdminController::class, 'dashboard']);
-//     Route::get('/admin/reports', [ReportController::class, 'adminReports']);
-// });
-
-// // Niveau 2 = Corrector et au-dessus (Validator, Admin)
-// Route::middleware(['auth', 'verified', 'hierarchy:2'])->group(function () {
-//     Route::get('/corrections/my-corrections', [CorrectionController::class, 'myCorrections']);
-// });

@@ -1414,4 +1414,141 @@ class ProjectController extends Controller
         ]);
     }
  
+    /**
+     * @OA\Get(
+     *     path="/api/manager/projects/{id}",
+     *     summary="Voir les détails d'un projet assigné au manager",
+     *     tags={"Manager"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Détails du projet",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Non autorisé",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Vous n'êtes pas assigné à ce projet")
+     *         )
+     *     )
+     * )
+     */
+    public function showProject($id)
+    {
+        $user = auth()->user();
+
+        if (!$user->hasRole('manager')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Action réservée aux managers',
+            ], 403);
+        }
+
+        $projectUser = ProjectUser::where('project_id', $id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if (!$projectUser) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Vous n\'êtes pas assigné à ce projet',
+            ], 403);
+        }
+
+        $project = Project::with([
+            'user.contact',
+            'localisationWorker',
+            'projectImages',
+            'projectFiles',
+            'projectSolds',
+            'observations.user.contact',
+            'projectUsers.user.contact',
+            'projectUsers.user.accountType.lot'
+        ])->findOrFail($id);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'id' => $project->id,
+                'name' => $project->name,
+                'uuid' => $project->uuid,
+                'description' => $project->description,
+                'amount' => $project->amount,
+                'amount_to_perceive' => $project->amount_to_perceive,
+                'status' => $project->status,
+                'accepted' => $project->accepted,
+                'deadline' => $project->deadline,
+                'started_at' => $project->started_at,
+                'launch_status' => $project->launch_status,
+                'ended_at' => $project->ended_at,
+                'owner' => [
+                    'id' => $project->user->id,
+                    'firstName' => $project->user->contact?->firstName,
+                    'lastName' => $project->user->contact?->lastName,
+                    'email' => $project->user->contact?->email,
+                ],
+                'localisation' => [
+                    'id' => $project->localisationWorker?->id,
+                    'name' => $project->localisationWorker?->name,
+                ],
+                'my_assignment' => [
+                    'task' => $projectUser->task,
+                    'note' => $projectUser->note,
+                    'start_at' => $projectUser->start_at,
+                    'end_at' => $projectUser->end_at,
+                ],
+                'assigned_workers' => $project->projectUsers->map(function ($pu) {
+                    return [
+                        'id' => $pu->id,
+                        'user_id' => $pu->user_id,
+                        'firstName' => $pu->user->contact?->firstName,
+                        'lastName' => $pu->user->contact?->lastName,
+                        'email' => $pu->user->contact?->email,
+                        'phoneNumber' => $pu->user->contact?->phoneNumber,
+                        'lot' => $pu->user->accountType?->lot?->name,
+                        'task' => $pu->task,
+                        'note' => $pu->note,
+                        'start_at' => $pu->start_at,
+                        'end_at' => $pu->end_at,
+                    ];
+                }),
+                'observations' => $project->observations->map(function ($obs) {
+                    return [
+                        'id' => $obs->id,
+                        'name' => $obs->name,
+                        'description' => $obs->description,
+                        'critical' => $obs->critical,
+                        'user' => [
+                            'id' => $obs->user->id,
+                            'firstName' => $obs->user->contact?->firstName,
+                            'lastName' => $obs->user->contact?->lastName,
+                        ],
+                        'created_at' => $obs->created_at,
+                    ];
+                }),
+                'project_solds' => $project->projectSolds,
+                'images' => $project->projectImages->map(fn($img) => [
+                    'id' => $img->id,
+                    'url' => url('/api/file/' . $img->path_image),
+                ]),
+                'files' => $project->projectFiles->map(fn($file) => [
+                    'id' => $file->id,
+                    'url' => url('/api/file/' . $file->path_file),
+                    'filename' => basename($file->path_file),
+                ]),
+                'created_at' => $project->created_at,
+                'updated_at' => $project->updated_at,
+            ]
+        ]);
+    }
 }

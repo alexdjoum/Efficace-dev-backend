@@ -7,11 +7,12 @@ use Illuminate\Database\Eloquent\Model;
 class AccountType extends Model
 {
     protected $fillable = [
-        'user_id',
         'lot_id',
+        'user_id',
+        'presentation',
         'is_enterprise',
         'years_of_experience',
-        'presentation',
+        'account_creation_request',
     ];
 
     protected $casts = [
@@ -27,5 +28,16 @@ class AccountType extends Model
     public function lot()
     {
         return $this->belongsTo(Lot::class);
+    }
+
+    public function accountTypeLots()
+    {
+        return $this->hasMany(AccountTypeLot::class);
+    }
+
+    public function lots()
+    {
+        return $this->belongsToMany(Lot::class, 'account_type_lots')
+            ->withTimestamps();
     }
 }

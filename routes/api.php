@@ -39,22 +39,6 @@ Route::controller(\App\Http\Controllers\AuthController::class)->group(function (
     Route::post('reset-password', 'resetPassword')->name('reset-password');
 });
 
-// Route::middleware(['auth:sanctum'])->get('/test-auth', function (Request $request) {
-//     return response()->json([
-//         'authenticated' => true,
-//         'user' => $request->user()->email,
-//         'roles' => $request->user()->roles->pluck('name'),
-//         'is_admin' => $request->user()->isAdmin(),
-//     ]);
-// });
-
-// Route::middleware(['auth:sanctum', 'role:admin'])->get('/test-admin', function (Request $request) {
-//     return response()->json([
-//         'message' => 'Vous êtes admin !',
-//         'user' => $request->user()->email,
-//     ]);
-// });
-
 Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     Route::post('/lands', [\App\Http\Controllers\LandController::class, 'store']);
     Route::delete('/lands/{id}', [\App\Http\Controllers\LandController::class, 'destroy']);
@@ -121,12 +105,16 @@ Route::middleware(['auth', 'verified', 'role:admin,validator'])->group(function 
 
     Route::get('/projects/{projectId}/available-workers', [\App\Http\Controllers\ProjectController::class, 'availableWorkers']);
 
+    Route::post('/admin/accounts', [\App\Http\Controllers\AuthController::class, 'listAccounts']);
+    Route::patch('/admin/users/{id}/update-account-status', [\App\Http\Controllers\AuthController::class, 'updateAccountStatus']);
+
 });
 
 Route::middleware(['auth', 'verified', 'role:manager'])->group(function () {
-    Route::post('/manager/my-projects', [\App\Http\Controllers\ProjectUserController::class, 'myProjects']);
-    Route::patch('/manager/projects/{id}/update-launch', [\App\Http\Controllers\ProjectUserController::class, 'updateProjectLaunch']);
-    Route::patch('/manager/project-users/{id}/note', [\App\Http\Controllers\ProjectUserController::class, 'noteWorker']);
+    Route::post('/manager/my-projects', [\App\Http\Controllers\ProjectController::class, 'myProjects']);
+    Route::get('/manager/projects/{id}', [\App\Http\Controllers\ProjectController::class, 'showProject']);
+    Route::patch('/manager/projects/{id}/update-launch', [\App\Http\Controllers\ProjectController::class, 'updateProjectLaunch']);
+    Route::patch('/manager/project-users/{id}/note', [\App\Http\Controllers\ProjectController::class, 'noteWorker']);
 });
 Route::get('/worker/stats', [\App\Http\Controllers\ProjectController::class, 'workerStats']);
 Route::get('/public/projects', [\App\Http\Controllers\ProjectController::class, 'publicIndex']);

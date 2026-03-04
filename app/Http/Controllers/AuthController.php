@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\Contact;
 use App\Models\Employee;
 use Illuminate\Http\Request;
+use App\Models\AccountTypeLot;
 use Illuminate\Auth\Events\Login;
 use App\Services\CustomerService;
 use App\Services\EmployeeService;
@@ -164,7 +165,6 @@ class AuthController extends Controller
         ]);
     }
 
-    // Revoke the current token
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
@@ -562,6 +562,7 @@ class AuthController extends Controller
      *     )
      * )
      */
+    
     public function registerWorker(Request $request)
     {
         $rules = [
@@ -582,7 +583,9 @@ class AuthController extends Controller
         ];
 
         if ($request->input('is_enterprise') == false || $request->input('is_enterprise') == '0') {
-            $rules['lot_id'] = 'required|exists:lots,id';
+            $rules['lot_id'] = 'nullable|exists:lots,id';
+            $rules['child_lot_ids'] = 'nullable|array';
+            $rules['child_lot_ids.*'] = 'exists:lots,id';
         } else {
             $rules['lot_id'] = 'nullable|exists:lots,id';
         }
@@ -632,30 +635,67 @@ class AuthController extends Controller
                 'privacy_policy' => $validated['privacy_policy'],
             ]);
 
-            if (!empty($validated['lot_id'])) {
+            $assignedRole = 'user';
+            $isCommercial = false;
+            $commercialParentId = null;
+            $finalLotId = null;
+
+            if (!empty($validated['child_lot_ids'])) {
+                $firstChildLot = Lot::with('parent')->find($validated['child_lot_ids'][0]);
+                
+                if ($firstChildLot && $firstChildLot->parent) {
+                    $parentLotName = strtolower(trim($firstChildLot->parent->name));
+                    
+                    if ($parentLotName === 'commercial') {
+                        $assignedRole = 'commercial';
+                        $isCommercial = true;
+                        $commercialParentId = $firstChildLot->parent->id;
+                        $finalLotId = $commercialParentId;
+                        
+                        foreach ($validated['child_lot_ids'] as $childId) {
+                            $childLot = Lot::find($childId);
+                            if (!$childLot || $childLot->main_id !== $commercialParentId) {
+                                DB::rollBack();
+                                return response()->json([
+                                    'success' => false,
+                                    'message' => 'Tous les lots enfants doivent appartenir au lot parent "commercial"',
+                                ], 422);
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (!empty($validated['lot_id']) && !$isCommercial) {
                 $lot = Lot::with('parent')->find($validated['lot_id']);
                 
                 if ($lot) {
                     $lotName = strtolower(trim($lot->name));
                     $parentLotName = $lot->parent ? strtolower(trim($lot->parent->name)) : null;
                     
-                    if (in_array($lotName, ['site supervisor', 'site manager', 'technical director']) ||
+                    if ($parentLotName === 'commercial') {
+                        $assignedRole = 'commercial';
+                        $isCommercial = true;
+                        $finalLotId = $lot->main_id; 
+                    }
+                    elseif (in_array($lotName, ['site supervisor', 'site manager', 'technical director']) ||
                         in_array($parentLotName, ['site supervisor', 'site manager', 'technical director'])) {
-                        $user->assignRole('manager');
+                        $assignedRole = 'manager';
+                        $finalLotId = $validated['lot_id'];
                     }
                     elseif (in_array($lotName, ['architect', 'engineer']) ||
                             in_array($parentLotName, ['architect', 'engineer'])) {
-                        $user->assignRole('corrector');
+                        $assignedRole = 'corrector';
+                        $finalLotId = $validated['lot_id'];
                     }
                     else {
-                        $user->assignRole('user');
+                        $assignedRole = 'user';
+                        $finalLotId = $validated['lot_id'];
                     }
-                } else {
-                    $user->assignRole('user');
                 }
-            } else {
-                $user->assignRole('user');
             }
+
+            $user->assignRole($assignedRole);
 
             $user->contact()->create([
                 'phoneNumber' => $validated['phoneNumber'],
@@ -665,12 +705,22 @@ class AuthController extends Controller
                 'localisation_worker_id' => $localisationWorkerId,
             ]);
 
-            $user->accountType()->create([
-                'lot_id' => $validated['lot_id'] ?? null, 
+            $accountType = $user->accountType()->create([
+                'lot_id' => $finalLotId,
                 'is_enterprise' => $validated['is_enterprise'],
                 'years_of_experience' => $validated['years_of_experience'],
                 'presentation' => $validated['presentation'] ?? null,
+                'account_creation_request' => 'pending',
             ]);
+
+            if ($isCommercial && !empty($validated['child_lot_ids'])) {
+                foreach ($validated['child_lot_ids'] as $childLotId) {
+                    AccountTypeLot::create([
+                        'account_type_id' => $accountType->id,
+                        'lot_id' => $childLotId,
+                    ]);
+                }
+            }
 
             if ($validated['is_enterprise']) {
                 $documents = [];
@@ -718,6 +768,7 @@ class AuthController extends Controller
                 'user' => $user->load(
                     'contact',
                     'accountType.lot',
+                    'accountType.lots',
                     'contact.localisationWorker',
                     'enterpriseDocument',
                     'workerEnterprises.worker.contact',
@@ -766,6 +817,13 @@ class AuthController extends Controller
             ], 401);
         }
 
+        if ($user->accountType && $user->accountType->account_creation_request === 'rejected') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Votre compte a été rejeté',
+            ], 403);
+        }
+
         $token = $user->createToken('auth_token')->plainTextToken;
 
         $user->load('contact', 'accountType.lot.parent', 'enterpriseDocument');
@@ -782,6 +840,7 @@ class AuthController extends Controller
                 'role' => $user->role,
                 'child_lot_name' => $childLotName,
                 'parent_lot_name' => $parentLotName,
+                'account_status' => $user->accountType?->account_creation_request,
             ]
         ], 200);
     }
@@ -1130,5 +1189,188 @@ class AuthController extends Controller
                 'message' => 'Erreur lors de la modification : ' . $e->getMessage(),
             ], 500);
         }
+    }
+
+
+    /**
+     * @OA\Patch(
+     *     path="/api/admin/users/{id}/update-account-status",
+     *     summary="Accepter ou rejeter une demande de compte",
+     *     tags={"Admin"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer", example=50)
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"status"},
+     *             @OA\Property(property="status", type="string", enum={"accepted","rejected"}, example="accepted")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Statut mis à jour",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Compte accepté")
+     *         )
+     *     )
+     * )
+     */
+    public function updateAccountStatus(Request $request, $id)
+    {
+        $user = auth()->user();
+
+        if (!$user->hasRole('admin') && !$user->hasRole('validator')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Action non autorisée',
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'status' => 'required|in:accepted,rejected',
+        ]);
+
+        $targetUser = User::with('accountType')->findOrFail($id);
+
+        if (!$targetUser->accountType) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cet utilisateur n\'a pas de compte type',
+            ], 404);
+        }
+
+        $targetUser->accountType->update([
+            'account_creation_request' => $validated['status']
+        ]);
+
+        $message = $validated['status'] === 'accepted' 
+            ? 'Compte accepté' 
+            : 'Compte rejeté';
+
+        return response()->json([
+            'success' => true,
+            'message' => $message,
+            'data' => [
+                'user_id' => $targetUser->id,
+                'account_status' => $validated['status']
+            ]
+        ]);
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/admin/accounts",
+     *     summary="Lister les comptes par statut avec recherche et pagination",
+     *     tags={"Admin"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", nullable=true, enum={"pending","accepted","rejected"}, example="pending", description="Statut du compte"),
+     *             @OA\Property(property="name", type="string", nullable=true, example="Jean", description="Recherche par nom ou prénom"),
+     *             @OA\Property(property="perPage", type="integer", example=10, description="Nombre d'éléments par page"),
+     *             @OA\Property(property="page", type="integer", example=1, description="Numéro de la page")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Liste des comptes filtrés",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="id", type="integer", example=50),
+     *                     @OA\Property(property="firstName", type="string", example="Jean"),
+     *                     @OA\Property(property="account_status", type="string", example="pending")
+     *                 )
+     *             ),
+     *             @OA\Property(
+     *                 property="pagination",
+     *                 type="object",
+     *                 @OA\Property(property="total", type="integer", example=25),
+     *                 @OA\Property(property="perPage", type="integer", example=10),
+     *                 @OA\Property(property="currentPage", type="integer", example=1),
+     *                 @OA\Property(property="lastPage", type="integer", example=3)
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function listAccounts(Request $request)
+    {
+        $user = auth()->user();
+
+        if (!$user->hasRole('admin') && !$user->hasRole('validator')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Action non autorisée',
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'status' => 'nullable|in:pending,accepted,rejected',
+            'name' => 'nullable|string|max:255',
+            'perPage' => 'nullable|integer|min:1|max:100',
+            'page' => 'nullable|integer|min:1',
+        ]);
+
+        $perPage = $validated['perPage'] ?? 10;
+        $page = $validated['page'] ?? 1;
+        $status = $validated['status'] ?? null;
+        $searchName = $validated['name'] ?? null;
+
+        $query = User::whereHas('accountType');
+
+        if ($status) {
+            $query->whereHas('accountType', function ($q) use ($status) {
+                $q->where('account_creation_request', $status);
+            });
+        }
+
+        if ($searchName) {
+            $query->whereHas('contact', function ($q) use ($searchName) {
+                $q->where('firstName', 'ILIKE', '%' . $searchName . '%')
+                ->orWhere('lastName', 'ILIKE', '%' . $searchName . '%');
+            });
+        }
+
+        $users = $query->with('contact', 'accountType.lot')
+            ->orderBy('created_at', 'desc')
+            ->paginate($perPage, ['*'], 'page', $page);
+
+        $data = $users->getCollection()->map(function ($user) {
+            return [
+                'id' => $user->id,
+                'firstName' => $user->contact?->firstName,
+                'lastName' => $user->contact?->lastName,
+                'email' => $user->contact?->email,
+                'phoneNumber' => $user->contact?->phoneNumber,
+                'lot' => $user->accountType?->lot?->name,
+                'years_of_experience' => $user->accountType?->years_of_experience,
+                'is_enterprise' => $user->accountType?->is_enterprise,
+                'account_status' => $user->accountType?->account_creation_request,
+                'created_at' => $user->created_at,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $data,
+            'pagination' => [
+                'total' => $users->total(),
+                'perPage' => $users->perPage(),
+                'currentPage' => $users->currentPage(),
+                'lastPage' => $users->lastPage(),
+                'from' => $users->firstItem(),
+                'to' => $users->lastItem(),
+            ]
+        ]);
     }
 }

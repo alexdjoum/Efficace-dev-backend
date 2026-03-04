@@ -778,6 +778,187 @@
                 ]
             }
         },
+        "/api/admin/users/{id}/update-account-status": {
+            "patch": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Accepter ou rejeter une demande de compte",
+                "operationId": "834e8c88f4a42d3bbe2e7363a9fb5417",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 50
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "status"
+                                ],
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "accepted",
+                                            "rejected"
+                                        ],
+                                        "example": "accepted"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Statut mis à jour",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Compte accepté"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/accounts": {
+            "post": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Lister les comptes par statut avec recherche et pagination",
+                "operationId": "c1b03b1c8fcfd3d1232136efc835aeed",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "status": {
+                                        "description": "Statut du compte",
+                                        "type": "string",
+                                        "enum": [
+                                            "pending",
+                                            "accepted",
+                                            "rejected"
+                                        ],
+                                        "example": "pending",
+                                        "nullable": true
+                                    },
+                                    "name": {
+                                        "description": "Recherche par nom ou prénom",
+                                        "type": "string",
+                                        "example": "Jean",
+                                        "nullable": true
+                                    },
+                                    "perPage": {
+                                        "description": "Nombre d'éléments par page",
+                                        "type": "integer",
+                                        "example": 10
+                                    },
+                                    "page": {
+                                        "description": "Numéro de la page",
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Liste des comptes filtrés",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 50
+                                                    },
+                                                    "firstName": {
+                                                        "type": "string",
+                                                        "example": "Jean"
+                                                    },
+                                                    "account_status": {
+                                                        "type": "string",
+                                                        "example": "pending"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "pagination": {
+                                            "properties": {
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 25
+                                                },
+                                                "perPage": {
+                                                    "type": "integer",
+                                                    "example": 10
+                                                },
+                                                "currentPage": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "lastPage": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/jobs": {
             "get": {
                 "tags": [
@@ -2407,6 +2588,69 @@
                                         "message": {
                                             "type": "string",
                                             "example": "Note ajoutée avec succès"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/manager/projects/{id}": {
+            "get": {
+                "tags": [
+                    "Manager"
+                ],
+                "summary": "Voir les détails d'un projet assigné au manager",
+                "operationId": "a140de8ffd59148ef8d72f6547c46866",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Détails du projet",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Non autorisé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Vous n'êtes pas assigné à ce projet"
                                         }
                                     },
                                     "type": "object"

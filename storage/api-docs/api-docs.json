@@ -959,6 +959,410 @@
                 ]
             }
         },
+        "/api/admin/commercials": {
+            "get": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Lister tous les commerciaux",
+                "operationId": "166046536033ced62e7c2aa168373432",
+                "responses": {
+                    "200": {
+                        "description": "Liste des commerciaux",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "email": {
+                                                        "type": "string",
+                                                        "example": "commercial@example.com"
+                                                    },
+                                                    "firstName": {
+                                                        "type": "string",
+                                                        "example": "Sophie"
+                                                    },
+                                                    "lastName": {
+                                                        "type": "string",
+                                                        "example": "Commercial"
+                                                    },
+                                                    "phoneNumber": {
+                                                        "type": "string",
+                                                        "example": "+237698765447"
+                                                    },
+                                                    "role": {
+                                                        "type": "string",
+                                                        "example": "commercial"
+                                                    },
+                                                    "account_type_id": {
+                                                        "type": "integer",
+                                                        "example": 5
+                                                    },
+                                                    "lots": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer",
+                                                                    "example": 18
+                                                                },
+                                                                "name": {
+                                                                    "type": "string",
+                                                                    "example": "Vente immobilier"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Non autorisé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Action non autorisée"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/commissions": {
+            "post": {
+                "tags": [
+                    "Commissions"
+                ],
+                "summary": "Créer une commission pour un commercial (Admin/Corrector uniquement)",
+                "operationId": "25a787dee3593df3a88b922f03e41e9c",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "project_sold_id",
+                                    "account_type_id",
+                                    "rate"
+                                ],
+                                "properties": {
+                                    "project_sold_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "account_type_id": {
+                                        "description": "ID du compte commercial",
+                                        "type": "integer",
+                                        "example": 5
+                                    },
+                                    "rate": {
+                                        "description": "Taux en pourcentage",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 5.5
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Commission créée",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/commissions/list": {
+            "post": {
+                "tags": [
+                    "Commissions"
+                ],
+                "summary": "Lister toutes les commissions avec pagination et recherche",
+                "operationId": "65a97e1e044af88140a6bc3c97723472",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "commercial_name": {
+                                        "description": "Nom ou prénom du commercial",
+                                        "type": "string",
+                                        "example": "Sophie",
+                                        "nullable": true
+                                    },
+                                    "perPage": {
+                                        "description": "Nombre d'éléments par page (défaut: 15)",
+                                        "type": "integer",
+                                        "example": 15
+                                    },
+                                    "page": {
+                                        "description": "Numéro de la page",
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Liste paginée des commissions",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "project_name": {
+                                                        "type": "string",
+                                                        "example": "Villa Tagidor"
+                                                    },
+                                                    "commission_amount": {
+                                                        "type": "number",
+                                                        "example": 27500
+                                                    },
+                                                    "total_paid": {
+                                                        "type": "number",
+                                                        "example": 10000
+                                                    },
+                                                    "remaining_amount": {
+                                                        "type": "number",
+                                                        "example": 17500
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "pagination": {
+                                            "properties": {
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 50
+                                                },
+                                                "perPage": {
+                                                    "type": "integer",
+                                                    "example": 15
+                                                },
+                                                "currentPage": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "lastPage": {
+                                                    "type": "integer",
+                                                    "example": 4
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/commissions/{id}": {
+            "delete": {
+                "tags": [
+                    "Commissions"
+                ],
+                "summary": "Supprimer une commission",
+                "operationId": "6b26d47fa1084831090ff51267275403",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Commission supprimée"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/commercial/my-commissions": {
+            "get": {
+                "tags": [
+                    "Commissions"
+                ],
+                "summary": "Voir toutes mes commissions (Commercial uniquement)",
+                "operationId": "22550545fc42d440692c41dffa9ba480",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "paid",
+                                "unpaid"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste de mes commissions",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "project_name": {
+                                                        "type": "string",
+                                                        "example": "Villa Tagidor"
+                                                    },
+                                                    "rate": {
+                                                        "type": "number",
+                                                        "example": 5.5
+                                                    },
+                                                    "commission_amount": {
+                                                        "type": "number",
+                                                        "example": 27500
+                                                    },
+                                                    "status": {
+                                                        "type": "string",
+                                                        "example": "unpaid"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "summary": {
+                                            "properties": {
+                                                "total_commissions": {
+                                                    "type": "number",
+                                                    "example": 150000
+                                                },
+                                                "total_paid": {
+                                                    "type": "number",
+                                                    "example": 80000
+                                                },
+                                                "total_unpaid": {
+                                                    "type": "number",
+                                                    "example": 70000
+                                                },
+                                                "count_paid": {
+                                                    "type": "integer",
+                                                    "example": 4
+                                                },
+                                                "count_unpaid": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/jobs": {
             "get": {
                 "tags": [
@@ -1833,6 +2237,145 @@
                 }
             }
         },
+        "/api/admin/payment-salespersons": {
+            "post": {
+                "tags": [
+                    "Payment Salespersons"
+                ],
+                "summary": "Créer un paiement pour un commercial (Admin/Corrector uniquement)",
+                "operationId": "b65ad602f1b0ec8c6fc66ff6eb704fab",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "commission_id",
+                                    "amount_paid"
+                                ],
+                                "properties": {
+                                    "commission_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "amount_paid": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 10000
+                                    },
+                                    "note": {
+                                        "type": "string",
+                                        "example": "Paiement partiel 1/3",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Paiement créé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/commissions/{commissionId}/payments": {
+            "get": {
+                "tags": [
+                    "Payment Salespersons"
+                ],
+                "summary": "Voir tous les paiements d'une commission",
+                "operationId": "68f7fe914862555abb70282f37dd034a",
+                "parameters": [
+                    {
+                        "name": "commissionId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Détails des paiements de la commission"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/commercial/my-payments": {
+            "get": {
+                "tags": [
+                    "Payment Salespersons"
+                ],
+                "summary": "Voir tous mes paiements (Commercial uniquement)",
+                "operationId": "156fa92d45c8c5d7f7fa1cd5254fafb4",
+                "responses": {
+                    "200": {
+                        "description": "Liste de mes paiements"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/payment-salespersons/{id}": {
+            "delete": {
+                "tags": [
+                    "Payment Salespersons"
+                ],
+                "summary": "Supprimer un paiement",
+                "operationId": "75985bd37ac316e75bf224a67c172cc7",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paiement supprimé"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/projects/{id}/set-launch-info": {
             "post": {
                 "tags": [
@@ -2686,12 +3229,20 @@
             "description": "Admin"
         },
         {
+            "name": "Commissions",
+            "description": "Commissions"
+        },
+        {
             "name": "Jobs",
             "description": "Jobs"
         },
         {
             "name": "Lots",
             "description": "Lots"
+        },
+        {
+            "name": "Payment Salespersons",
+            "description": "Payment Salespersons"
         },
         {
             "name": "Projects",

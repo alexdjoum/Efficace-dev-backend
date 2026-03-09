@@ -40,4 +40,9 @@ class AccountType extends Model
         return $this->belongsToMany(Lot::class, 'account_type_lots')
             ->withTimestamps();
     }
+
+    public function commissions()
+    {
+        return $this->hasMany(Commission::class);
+    }
 }

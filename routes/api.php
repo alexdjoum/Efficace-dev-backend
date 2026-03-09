@@ -81,6 +81,7 @@ Route::get('/worker/accepted-projects', [\App\Http\Controllers\ProjectController
 Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::post('/admin/create-user', [\App\Http\Controllers\AuthController::class, 'createAdminUser']);
     Route::get('/admin/users', [\App\Http\Controllers\AuthController::class, 'listAdminUsers']);
+    Route::get('/admin/commercials', [\App\Http\Controllers\AuthController::class, 'listCommercials']);
     Route::patch('/admin/users/{id}', [\App\Http\Controllers\AuthController::class, 'updateAdminUser']);
 });
 
@@ -108,6 +109,20 @@ Route::middleware(['auth', 'verified', 'role:admin,validator'])->group(function 
     Route::post('/admin/accounts', [\App\Http\Controllers\AuthController::class, 'listAccounts']);
     Route::patch('/admin/users/{id}/update-account-status', [\App\Http\Controllers\AuthController::class, 'updateAccountStatus']);
 
+    Route::post('/admin/commissions', [\App\Http\Controllers\CommissionController::class, 'store']);
+    Route::post('/admin/commissions/list', [\App\Http\Controllers\CommissionController::class, 'index']);
+    Route::delete('/admin/commissions/{id}', [\App\Http\Controllers\CommissionController::class, 'destroy']);
+
+
+    Route::post('/admin/payment-salespersons', [\App\Http\Controllers\PaymentSalespersonController::class, 'store']);
+    Route::get('/admin/commissions/{commissionId}/payments', [\App\Http\Controllers\PaymentSalespersonController::class, 'commissionPayments']);
+    Route::delete('/admin/payment-salespersons/{id}', [\App\Http\Controllers\PaymentSalespersonController::class, 'destroy']);
+
+});
+
+Route::middleware(['auth:sanctum', 'role:commercial'])->group(function () {
+    Route::get('/commercial/my-commissions', [\App\Http\Controllers\CommissionController::class, 'myCommissions']);
+    Route::get('/commercial/my-payments', [\App\Http\Controllers\PaymentSalespersonController::class, 'myPayments']);
 });
 
 Route::middleware(['auth', 'verified', 'role:manager'])->group(function () {

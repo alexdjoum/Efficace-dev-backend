@@ -22,4 +22,9 @@ class ProjectSold extends Model
     {
         return $this->belongsTo(Project::class);
     }
+
+    public function commissions()
+    {
+        return $this->hasMany(Commission::class);
+    }
 }

@@ -69,5 +69,6 @@ class Kernel extends HttpKernel
         'permission' => \App\Http\Middleware\CheckPermission::class,
         'hierarchy' => \App\Http\Middleware\CheckHierarchy::class,
         'force.json' => \App\Http\Middleware\ForceJsonRequest::class,
+        'commercial' => \App\Http\Middleware\CheckCommercialRole::class,
     ];
 }

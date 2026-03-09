@@ -86,29 +86,29 @@ class AuthController extends Controller
     }
 
     /**
- * @OA\Post(
- *     path="/api/loginWorker",
- *     summary="Connexion d'un travailleur",
- *     tags={"Authentification"},
- *     @OA\RequestBody(
- *         required=true,
- *         @OA\JsonContent(
- *             required={"email","password"},
- *             @OA\Property(property="email", type="string", example="worker@example.com"),
- *             @OA\Property(property="password", type="string", example="password123")
- *         )
- *     ),
- *     @OA\Response(
- *         response=200,
- *         description="Connexion réussie",
- *         @OA\JsonContent(
- *             @OA\Property(property="success", type="boolean", example=true),
- *             @OA\Property(property="token", type="string", example="4|rRyQ76Jaqy0..."),
- *         )
- *     ),
- *     @OA\Response(response=401, description="Non autorisé")
- * )
- */
+     * @OA\Post(
+     *     path="/api/loginWorker",
+     *     summary="Connexion d'un travailleur",
+     *     tags={"Authentification"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"email","password"},
+     *             @OA\Property(property="email", type="string", example="worker@example.com"),
+     *             @OA\Property(property="password", type="string", example="password123")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Connexion réussie",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="token", type="string", example="4|rRyQ76Jaqy0..."),
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Non autorisé")
+     * )
+     */
     public function login(Request $request)
     {
         $data = $request->all();
@@ -562,7 +562,6 @@ class AuthController extends Controller
      *     )
      * )
      */
-    
     public function registerWorker(Request $request)
     {
         $rules = [
@@ -582,13 +581,9 @@ class AuthController extends Controller
             'is_enterprise' => 'required|boolean',
         ];
 
-        if ($request->input('is_enterprise') == false || $request->input('is_enterprise') == '0') {
-            $rules['lot_id'] = 'nullable|exists:lots,id';
-            $rules['child_lot_ids'] = 'nullable|array';
-            $rules['child_lot_ids.*'] = 'exists:lots,id';
-        } else {
-            $rules['lot_id'] = 'nullable|exists:lots,id';
-        }
+        $rules['lot_id'] = 'nullable|exists:lots,id';
+        $rules['lot_ids'] = 'nullable|array';
+        $rules['lot_ids.*'] = 'exists:lots,id';
 
         if ($request->input('is_enterprise') == true || $request->input('is_enterprise') == '1') {
             $rules['commercial_register'] = 'required|file|mimes:pdf|max:10240';
@@ -640,8 +635,8 @@ class AuthController extends Controller
             $commercialParentId = null;
             $finalLotId = null;
 
-            if (!empty($validated['child_lot_ids'])) {
-                $firstChildLot = Lot::with('parent')->find($validated['child_lot_ids'][0]);
+            if (!empty($validated['lot_ids'])) {
+                $firstChildLot = Lot::with('parent')->find($validated['lot_ids'][0]);
                 
                 if ($firstChildLot && $firstChildLot->parent) {
                     $parentLotName = strtolower(trim($firstChildLot->parent->name));
@@ -652,13 +647,13 @@ class AuthController extends Controller
                         $commercialParentId = $firstChildLot->parent->id;
                         $finalLotId = $commercialParentId;
                         
-                        foreach ($validated['child_lot_ids'] as $childId) {
+                        foreach ($validated['lot_ids'] as $childId) {
                             $childLot = Lot::find($childId);
                             if (!$childLot || $childLot->main_id !== $commercialParentId) {
                                 DB::rollBack();
                                 return response()->json([
                                     'success' => false,
-                                    'message' => 'Tous les lots enfants doivent appartenir au lot parent "commercial"',
+                                    'message' => 'Tous les lots doivent appartenir au lot parent "commercial"',
                                 ], 422);
                             }
                         }
@@ -676,7 +671,7 @@ class AuthController extends Controller
                     if ($parentLotName === 'commercial') {
                         $assignedRole = 'commercial';
                         $isCommercial = true;
-                        $finalLotId = $lot->main_id; 
+                        $finalLotId = $lot->main_id; // Parent commercial
                     }
                     elseif (in_array($lotName, ['site supervisor', 'site manager', 'technical director']) ||
                         in_array($parentLotName, ['site supervisor', 'site manager', 'technical director'])) {
@@ -695,7 +690,8 @@ class AuthController extends Controller
                 }
             }
 
-            $user->assignRole($assignedRole);
+            $role = \Spatie\Permission\Models\Role::findByName($assignedRole, 'api');
+            $user->roles()->attach($role->id);
 
             $user->contact()->create([
                 'phoneNumber' => $validated['phoneNumber'],
@@ -713,8 +709,8 @@ class AuthController extends Controller
                 'account_creation_request' => 'pending',
             ]);
 
-            if ($isCommercial && !empty($validated['child_lot_ids'])) {
-                foreach ($validated['child_lot_ids'] as $childLotId) {
+            if ($isCommercial && !empty($validated['lot_ids'])) {
+                foreach ($validated['lot_ids'] as $childLotId) {
                     AccountTypeLot::create([
                         'account_type_id' => $accountType->id,
                         'lot_id' => $childLotId,
@@ -794,7 +790,6 @@ class AuthController extends Controller
         }
     }
 
-    
     public function loginWorker(Request $request)
     {
         $validated = $request->validate([
@@ -1371,6 +1366,93 @@ class AuthController extends Controller
                 'from' => $users->firstItem(),
                 'to' => $users->lastItem(),
             ]
+        ]);
+    }
+
+
+    /**
+     * @OA\Get(
+     *     path="/api/admin/commercials",
+     *     summary="Lister tous les commerciaux",
+     *     tags={"Admin"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Liste des commerciaux",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="email", type="string", example="commercial@example.com"),
+     *                     @OA\Property(property="firstName", type="string", example="Sophie"),
+     *                     @OA\Property(property="lastName", type="string", example="Commercial"),
+     *                     @OA\Property(property="phoneNumber", type="string", example="+237698765447"),
+     *                     @OA\Property(property="role", type="string", example="commercial"),
+     *                     @OA\Property(property="account_type_id", type="integer", example=5),
+     *                     @OA\Property(
+     *                         property="lots",
+     *                         type="array",
+     *                         @OA\Items(
+     *                             @OA\Property(property="id", type="integer", example=18),
+     *                             @OA\Property(property="name", type="string", example="Vente immobilier")
+     *                         )
+     *                     )
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Non autorisé",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Action non autorisée")
+     *         )
+     *     )
+     * )
+     */
+    public function listCommercials()
+    {
+        $user = auth()->user();
+
+        if (!$user->hasRole('admin') && !$user->hasRole('corrector')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Action non autorisée',
+            ], 403);
+        }
+
+        $commercials = User::whereHas('roles', function ($query) {
+                $query->where('name', 'commercial');
+            })
+            ->with('contact', 'accountType.lots')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $commercials->map(function ($commercial) {
+                return [
+                    'id' => $commercial->id,
+                    'email' => $commercial->contact?->email,
+                    'firstName' => $commercial->contact?->firstName,
+                    'lastName' => $commercial->contact?->lastName,
+                    'phoneNumber' => $commercial->contact?->phoneNumber,
+                    'role' => $commercial->role,
+                    'account_type_id' => $commercial->accountType?->id,
+                    'is_enterprise' => $commercial->accountType?->is_enterprise,
+                    'years_of_experience' => $commercial->accountType?->years_of_experience,
+                    'lots' => $commercial->accountType?->lots->map(function ($lot) {
+                        return [
+                            'id' => $lot->id,
+                            'name' => $lot->name,
+                        ];
+                    }),
+                    'created_at' => $commercial->created_at,
+                ];
+            })
         ]);
     }
 }

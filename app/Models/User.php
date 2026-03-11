@@ -172,4 +172,9 @@ class User extends Authenticatable implements HasMedia
             ->withPivot('task', 'note', 'start_at', 'end_at')
             ->withTimestamps();
     }
+
+    public function requestForSales()
+    {
+        return $this->hasMany(RequestForSale::class);
+    }
 }

@@ -118,12 +118,27 @@ Route::middleware(['auth', 'verified', 'role:admin,validator'])->group(function 
     Route::get('/admin/commissions/{commissionId}/payments', [\App\Http\Controllers\PaymentSalespersonController::class, 'commissionPayments']);
     Route::delete('/admin/payment-salespersons/{id}', [\App\Http\Controllers\PaymentSalespersonController::class, 'destroy']);
 
+    Route::post('/admin/request-for-sales', [\App\Http\Controllers\RequestForSaleController::class, 'index']);
+    Route::patch('/admin/request-for-sales/{id}/status', [\App\Http\Controllers\RequestForSaleController::class, 'updateStatus']);
+
 });
 
 Route::middleware(['auth:sanctum', 'role:commercial'])->group(function () {
     Route::get('/commercial/my-commissions', [\App\Http\Controllers\CommissionController::class, 'myCommissions']);
     Route::get('/commercial/my-payments', [\App\Http\Controllers\PaymentSalespersonController::class, 'myPayments']);
 });
+
+// Routes pour les clients
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/request-for-sales', [\App\Http\Controllers\RequestForSaleController::class, 'store']);
+    Route::get('/request-for-sales/my-requests', [\App\Http\Controllers\RequestForSaleController::class, 'myRequests']);
+    Route::delete('/request-for-sales/{id}', [\App\Http\Controllers\RequestForSaleController::class, 'destroy']);
+});
+
+Route::get('/auth/google', [\App\Http\Controllers\GoogleAuthController::class, 'redirectToGoogle']);
+Route::get('/auth/google/callback', [\App\Http\Controllers\GoogleAuthController::class, 'handleGoogleCallback']);
+
+Route::middleware('auth:sanctum')->get('/auth/verify', [\App\Http\Controllers\GoogleAuthController::class, 'verifyToken']);
 
 Route::middleware(['auth', 'verified', 'role:manager'])->group(function () {
     Route::post('/manager/my-projects', [\App\Http\Controllers\ProjectController::class, 'myProjects']);

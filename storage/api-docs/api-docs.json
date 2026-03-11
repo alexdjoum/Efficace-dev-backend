@@ -1363,6 +1363,69 @@
                 ]
             }
         },
+        "/api/auth/google": {
+            "get": {
+                "tags": [
+                    "Authentification Google"
+                ],
+                "summary": "Rediriger vers Google pour l'authentification",
+                "operationId": "a3b3911838e50b47a87a4c67b9191683",
+                "responses": {
+                    "302": {
+                        "description": "Redirection vers Google"
+                    }
+                }
+            }
+        },
+        "/api/auth/verify": {
+            "get": {
+                "tags": [
+                    "Authentification Google"
+                ],
+                "summary": "Vérifier le token et obtenir les infos utilisateur",
+                "operationId": "38a4d644a689a16491aef1b87a0cb14a",
+                "responses": {
+                    "200": {
+                        "description": "Informations utilisateur",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "user": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "user@gmail.com"
+                                                },
+                                                "role": {
+                                                    "type": "string",
+                                                    "example": "client"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/jobs": {
             "get": {
                 "tags": [
@@ -3208,6 +3271,227 @@
                     }
                 ]
             }
+        },
+        "/api/request-for-sales": {
+            "post": {
+                "tags": [
+                    "Request For Sales"
+                ],
+                "summary": "Créer une demande de vente (Client)",
+                "operationId": "f563e01d1a4b92ebc8c56735720b29b4",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "description",
+                                    "type"
+                                ],
+                                "properties": {
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Je souhaite vendre mon terrain de 500m²"
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "land",
+                                            "villa",
+                                            "building"
+                                        ],
+                                        "example": "land"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Demande créée",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Demande de vente créée avec succès"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/request-for-sales/my-requests": {
+            "get": {
+                "tags": [
+                    "Request For Sales"
+                ],
+                "summary": "Voir mes demandes de vente (Client)",
+                "operationId": "40d5ca9a830de482f4d7f15afa6ab026",
+                "responses": {
+                    "200": {
+                        "description": "Liste de mes demandes"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/request-for-sales": {
+            "post": {
+                "tags": [
+                    "Request For Sales"
+                ],
+                "summary": "Lister toutes les demandes avec pagination (Admin)",
+                "operationId": "ffe4198dc3e6b8a1a71452f5b9271033",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "pending",
+                                            "accepted",
+                                            "rejected"
+                                        ],
+                                        "nullable": true
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "land",
+                                            "villa",
+                                            "building"
+                                        ],
+                                        "nullable": true
+                                    },
+                                    "perPage": {
+                                        "type": "integer",
+                                        "example": 15
+                                    },
+                                    "page": {
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Liste paginée des demandes"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/request-for-sales/{id}/status": {
+            "patch": {
+                "tags": [
+                    "Request For Sales"
+                ],
+                "summary": "Modifier le statut d'une demande (Admin)",
+                "operationId": "35fd52e4cb67b24e56c3e0fda87b136c",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "status"
+                                ],
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "pending",
+                                            "accepted",
+                                            "rejected"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Statut modifié"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/request-for-sales/{id}": {
+            "delete": {
+                "tags": [
+                    "Request For Sales"
+                ],
+                "summary": "Supprimer ma demande (Client)",
+                "operationId": "ce14cd68e00ba5cabc542eba0e1e429b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Demande supprimée"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
         }
     },
     "components": {
@@ -3233,6 +3517,10 @@
             "description": "Commissions"
         },
         {
+            "name": "Authentification Google",
+            "description": "Authentification Google"
+        },
+        {
             "name": "Jobs",
             "description": "Jobs"
         },
@@ -3255,6 +3543,10 @@
         {
             "name": "Manager",
             "description": "Manager"
+        },
+        {
+            "name": "Request For Sales",
+            "description": "Request For Sales"
         }
     ]
 }

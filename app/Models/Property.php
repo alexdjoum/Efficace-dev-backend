@@ -143,4 +143,9 @@ class Property extends Model implements HasMedia
     {
         return $this->hasOne(BuildingFinance::class);
     }
+
+    public function requestForSales()
+    {
+        return $this->morphMany(RequestForSale::class, 'saleable');
+    }
 }

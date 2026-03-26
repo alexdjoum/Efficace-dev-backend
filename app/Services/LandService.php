@@ -23,8 +23,6 @@ class LandService
             'coordinate_link' => null, 
         ]);
 
-        \Log::info('Location créée', ['id' => $location->id]);
-
         if (isset($data['file']) && $data['file'] instanceof \Illuminate\Http\UploadedFile) {
             \Log::info('Traitement KML', [
                 'name' => $data['file']->getClientOriginalName(),
@@ -42,8 +40,6 @@ class LandService
                 $uploadedKml->getClientOriginalName()
             );
 
-            \Log::info('KML simplifié', ['temp_path' => $tempFilePath]);
-
             if (!file_exists($tempFilePath)) {
                 throw new Exception("KML temporaire introuvable");
             }
@@ -52,11 +48,6 @@ class LandService
                 ->addMedia($tempFilePath)
                 ->usingFileName($uploadedKml->getClientOriginalName())
                 ->toMediaCollection('kml');
-
-            \Log::info('Media KML ajouté', [
-                'media_id' => $media->id,
-                'url' => $media->getUrl()
-            ]);
 
             $location->update([
                 'coordinate_link' => $media->getUrl(),
@@ -91,25 +82,11 @@ class LandService
             'location_id' => $location->id,
         ]);
 
-        \Log::info('Land créé', ['id' => $land->id]);
-
-        // Gestion des images
         if (isset($data['images']) && is_array($data['images'])) {
-            \Log::info('Traitement images', ['count' => count($data['images'])]);
             
             foreach ($data['images'] as $index => $image) {
-                \Log::info("Image $index", [
-                    'is_object' => is_object($image),
-                    'is_uploaded_file' => $image instanceof \Illuminate\Http\UploadedFile,
-                    'type' => is_object($image) ? get_class($image) : gettype($image)
-                ]);
-                
                 if ($image instanceof \Illuminate\Http\UploadedFile) {
                     $media = $land->addMedia($image)->toMediaCollection('land');
-                    \Log::info("Image ajoutée", [
-                        'media_id' => $media->id,
-                        'url' => $media->getUrl()
-                    ]);
                 }
             }
         } else {
@@ -130,7 +107,6 @@ class LandService
                 $video = $land->videoLands()->create([
                     'videoLink' => trim($data['videoLink'])
                 ]);
-                \Log::info('Video créée', ['id' => $video->id]);
             } catch (\Exception $e) {
                 \Log::error('Erreur création video_lands', [
                     'error' => $e->getMessage(),
@@ -160,49 +136,33 @@ class LandService
 
         $land->refresh();
         $landImages = $land->getMedia('land');
-        \Log::info('Images finales', ['count' => $landImages->count()]);
-        
         $location->refresh();
         $locationKml = $location->getMedia('kml');
-        \Log::info('KML final', ['count' => $locationKml->count()]);
-
-        \Log::info('=== FIN CREATE LAND ===');
-
         return $land;
     }
 
     private function simplifyAndSaveKml(string $originalPath, string $originalFileName): string
     {
-        // 1. Charger le fichier
         $xml = @simplexml_load_file($originalPath); 
 
         if (!$xml) {
             throw new Exception("Impossible de charger le KML. Vérifiez le format XML.");
         }
         
-        // 2. Créer un chemin de fichier temporaire
         $tempFilePath = tempnam(sys_get_temp_dir(), 'kml_min_'); 
         
         if ($tempFilePath === false) {
             throw new Exception("Impossible de créer un fichier temporaire pour le KML simplifié.");
         }
-
-        // 3. Simplification : Supprimer les éléments inutiles
-        
-        // Supprimer <Schema> si présent au niveau Document
         if (isset($xml->Document->Schema)) {
             unset($xml->Document->Schema);
         }
-
-        // Trouver tous les Placemark et supprimer ExtendedData
         $placemarks = $xml->xpath('//Placemark');
         foreach ($placemarks as $placemark) {
             if (isset($placemark->ExtendedData)) {
                 unset($placemark->ExtendedData); 
             }
         }
-
-        // 4. Sauvegarder la version simplifiée
         if (!$xml->asXML($tempFilePath)) {
             throw new Exception("Impossible de sauvegarder le KML simplifié.");
         }

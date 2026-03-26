@@ -84,5 +84,10 @@ class Land extends Model implements HasMedia
             'mime_type' => $kmlMedia->mime_type,
         ] : null;
     }
+
+    public function requestForSales()
+    {
+        return $this->morphMany(RequestForSale::class, 'saleable');
+    }
     
 }

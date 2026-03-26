@@ -91,7 +91,21 @@ class Project extends Model
 
     public function localisationWorker()
     {
-        return $this->belongsTo(LocalisationWorker::class, 'localisation_worker_id');
+        return $this->belongsTo(LocalisationWorker::class);
     }
+
+    public function projectEngins()
+    {
+        return $this->hasMany(ProjectEngin::class);
+    }
+
+    public function engins()
+    {
+        return $this->belongsToMany(User::class, 'project_engins')
+            ->withPivot('task', 'note', 'start_at', 'end_at')
+            ->withTimestamps();
+    }
+
+    
 
 }

@@ -83,6 +83,16 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::get('/admin/users', [\App\Http\Controllers\AuthController::class, 'listAdminUsers']);
     Route::get('/admin/commercials', [\App\Http\Controllers\AuthController::class, 'listCommercials']);
     Route::patch('/admin/users/{id}', [\App\Http\Controllers\AuthController::class, 'updateAdminUser']);
+
+    Route::post('/admin/contracts', [\App\Http\Controllers\ContractController::class, 'store']);
+    Route::get('/admin/contracts/{id}', [\App\Http\Controllers\ContractController::class, 'showForAdmin']);
+    Route::get('/admin/contracts', [\App\Http\Controllers\ContractController::class, 'listAll']);
+    Route::delete('/admin/contracts/{id}', [\App\Http\Controllers\ContractController::class, 'destroy']);
+});
+
+Route::middleware(['auth', 'verified', 'role:engin'])->group(function () {
+    Route::get('/engin/my-notifications', [\App\Http\Controllers\ProjectEnginController::class, 'myNotifications']);
+    Route::patch('/engin/notifications/{id}/respond', [\App\Http\Controllers\ProjectEnginController::class, 'respondToNotification']);
 });
 
 Route::middleware(['auth', 'verified', 'role:admin,validator'])->group(function () {
@@ -121,6 +131,14 @@ Route::middleware(['auth', 'verified', 'role:admin,validator'])->group(function 
     Route::post('/admin/request-for-sales', [\App\Http\Controllers\RequestForSaleController::class, 'index']);
     Route::patch('/admin/request-for-sales/{id}/status', [\App\Http\Controllers\RequestForSaleController::class, 'updateStatus']);
 
+    Route::post('/projects/{projectId}/assign-engin', [\App\Http\Controllers\ProjectEnginController::class, 'assignEngin']);
+    Route::get('/projects/{projectId}/assigned-engins', [\App\Http\Controllers\ProjectEnginController::class, 'getAssignedEngins']);
+    Route::patch('/project-engins/{id}', [\App\Http\Controllers\ProjectEnginController::class, 'update']);
+    Route::delete('/project-engins/{id}', [\App\Http\Controllers\ProjectEnginController::class, 'destroy']);
+    Route::get('/projects/{projectId}/available-engins', [\App\Http\Controllers\ProjectEnginController::class, 'getAvailableEngins']);
+
+    Route::delete('/projects/{projectId}/engins/{userId}', [\App\Http\Controllers\ProjectEnginController::class, 'removeEngin']);
+
 });
 
 Route::middleware(['auth:sanctum', 'role:commercial'])->group(function () {
@@ -128,11 +146,14 @@ Route::middleware(['auth:sanctum', 'role:commercial'])->group(function () {
     Route::get('/commercial/my-payments', [\App\Http\Controllers\PaymentSalespersonController::class, 'myPayments']);
 });
 
-// Routes pour les clients
 Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/contracts', [\App\Http\Controllers\ContractController::class, 'index']); 
+    Route::get('/contracts/{id}', [\App\Http\Controllers\ContractController::class, 'show']);
+    Route::get('/contracts/{id}/download', [\App\Http\Controllers\ContractController::class, 'download']);
     Route::post('/request-for-sales', [\App\Http\Controllers\RequestForSaleController::class, 'store']);
     Route::get('/request-for-sales/my-requests', [\App\Http\Controllers\RequestForSaleController::class, 'myRequests']);
     Route::delete('/request-for-sales/{id}', [\App\Http\Controllers\RequestForSaleController::class, 'destroy']);
+    
 });
 
 Route::get('/auth/google', [\App\Http\Controllers\GoogleAuthController::class, 'redirectToGoogle']);
@@ -145,7 +166,10 @@ Route::middleware(['auth', 'verified', 'role:manager'])->group(function () {
     Route::get('/manager/projects/{id}', [\App\Http\Controllers\ProjectController::class, 'showProject']);
     Route::patch('/manager/projects/{id}/update-launch', [\App\Http\Controllers\ProjectController::class, 'updateProjectLaunch']);
     Route::patch('/manager/project-users/{id}/note', [\App\Http\Controllers\ProjectController::class, 'noteWorker']);
+    Route::delete('/projects/{projectId}/workers/{userId}', [\App\Http\Controllers\ProjectController::class, 'removeWorker']);
 });
+
+
 Route::get('/worker/stats', [\App\Http\Controllers\ProjectController::class, 'workerStats']);
 Route::get('/public/projects', [\App\Http\Controllers\ProjectController::class, 'publicIndex']);
 Route::get('/public/projects/{project}', [\App\Http\Controllers\ProjectController::class, 'publicShow']);
@@ -207,5 +231,9 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::apiResource('orders', \App\Http\Controllers\OrderController::class);
     Route::apiResource('propositions', \App\Http\Controllers\PropositionController::class);
     Route::apiResource('contracts', \App\Http\Controllers\ContractController::class)->except('index', 'show');
+
+    Route::get('/worker/my-notifications', [\App\Http\Controllers\ProjectController::class, 'myNotifications']);
+    Route::patch('/worker/notifications/{id}/respond', [\App\Http\Controllers\ProjectController::class, 'respondToNotification']);
+    Route::get('/worker/my-projects', [\App\Http\Controllers\ProjectController::class, 'myWorkerProjects']); 
 });
 

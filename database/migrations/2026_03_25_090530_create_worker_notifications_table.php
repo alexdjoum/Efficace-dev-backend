@@ -8,23 +8,19 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('request_for_sales', function (Blueprint $table) {
+        Schema::create('worker_notifications', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('project_id')->constrained('projects')->onDelete('cascade');
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->string('saleable_type')->nullable();
-            $table->unsignedBigInteger('saleable_id')->nullable();
-            $table->text('description');
-            $table->enum('type', ['land', 'villa', 'building']);
             $table->enum('status', ['pending', 'accepted', 'rejected'])->default('pending');
-            $table->boolean('has_validated_contrat')->default(false);
+            $table->text('message');
+            $table->timestamp('read_at')->nullable();
             $table->timestamps();
-            
-            $table->index(['saleable_type', 'saleable_id']);
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('request_for_sales');
+        Schema::dropIfExists('worker_notifications');
     }
 };

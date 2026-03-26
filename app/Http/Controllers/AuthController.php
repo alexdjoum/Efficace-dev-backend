@@ -439,40 +439,155 @@ class AuthController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/api/registerWorker",
-     *     summary="Inscription d'un travailleur ou d'une entreprise",
-     *     tags={"Authentification"},
+     *     path="/api/auth/register/worker",
+     *     summary="Inscription d'un travailleur ou d'un engin",
+     *     tags={"Authentication"},
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\MediaType(
      *             mediaType="multipart/form-data",
      *             @OA\Schema(
-     *                 required={"email","password","password_confirmation","privacy_policy","phoneNumber","firstName","lastName","years_of_experience","is_enterprise"},
-     *                 @OA\Property(property="email", type="string", format="email", example="worker@example.com", description="Email unique"),
-     *                 @OA\Property(property="password", type="string", format="password", example="password123", description="Minimum 8 caractères"),
-     *                 @OA\Property(property="password_confirmation", type="string", format="password", example="password123"),
-     *                 @OA\Property(property="privacy_policy", type="boolean", example=true, description="Acceptation obligatoire"),
-     *                 @OA\Property(property="phoneNumber", type="string", example="+237698765432"),
-     *                 @OA\Property(property="firstName", type="string", example="Jean"),
-     *                 @OA\Property(property="lastName", type="string", example="Dupont"),
-     *                 @OA\Property(property="localisation_worker_id", type="integer", nullable=true, example=1, description="ID de la localisation (ou utiliser localisation_name)"),
-     *                 @OA\Property(property="localisation_name", type="string", nullable=true, example="Douala", description="Nom de la localisation (ou utiliser localisation_worker_id)"),
-     *                 @OA\Property(property="years_of_experience", type="integer", example=5, description="Années d'expérience"),
-     *                 @OA\Property(property="presentation", type="string", nullable=true, example="Architecte spécialisé en bâtiments résidentiels"),
-     *                 @OA\Property(property="is_enterprise", type="boolean", example=false, description="false pour travailleur, true pour entreprise"),
-     *                 @OA\Property(property="lot_id", type="integer", nullable=true, example=1, description="Requis si is_enterprise=false. Détermine le rôle: Site supervisor/Site manager/Technical director → manager, Architect/Engineer → corrector, autres → user"),
+     *                 required={"email","password","password_confirmation","privacy_policy","phoneNumber","years_of_experience","is_enterprise"},
      *                 @OA\Property(
-     *                     property="worker_ids[]",
+     *                     property="email",
+     *                     type="string",
+     *                     format="email",
+     *                     example="worker@example.com"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="password",
+     *                     type="string",
+     *                     format="password",
+     *                     example="password123"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="password_confirmation",
+     *                     type="string",
+     *                     format="password",
+     *                     example="password123"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="privacy_policy",
+     *                     type="boolean",
+     *                     example=true
+     *                 ),
+     *                 @OA\Property(
+     *                     property="phoneNumber",
+     *                     type="string",
+     *                     example="+237698765432"
+     *                 ),
+     *                 
+     *                 @OA\Property(
+     *                     property="firstName",
+     *                     type="string",
+     *                     example="Jean",
+     *                     description="Requis pour worker (pas pour engin)"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="lastName",
+     *                     type="string",
+     *                     example="Dupont",
+     *                     description="Requis pour worker (pas pour engin)"
+     *                 ),
+     *                 
+     *                 @OA\Property(
+     *                     property="nameOfTheEngin",
+     *                     type="string",
+     *                     example="Bulldozer Caterpillar D6T",
+     *                     description="Requis pour engin (pas pour worker)"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="brandOfTheDevice",
+     *                     type="string",
+     *                     example="Caterpillar",
+     *                     description="Requis pour engin (pas pour worker)"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="feature",
+     *                     type="string",
+     *                     example="Bulldozer avec lame hydraulique, puissance 215 HP",
+     *                     description="Optionnel pour engin"
+     *                 ),
+     *                 
+     *                 @OA\Property(
+     *                     property="localisation_worker_id",
+     *                     type="integer",
+     *                     example=1,
+     *                     description="ID de localisation existante (optionnel)"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="localisation_name",
+     *                     type="string",
+     *                     example="Douala",
+     *                     description="Nom de localisation (créée si n'existe pas, optionnel)"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="years_of_experience",
+     *                     type="integer",
+     *                     example=5
+     *                 ),
+     *                 @OA\Property(
+     *                     property="presentation",
+     *                     type="string",
+     *                     example="Professionnel expérimenté dans le domaine",
+     *                     description="Optionnel"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="is_enterprise",
+     *                     type="boolean",
+     *                     example=false
+     *                 ),
+     *                 @OA\Property(
+     *                     property="lot_id",
+     *                     type="integer",
+     *                     example=1,
+     *                     description="ID du lot (engin, architect, engineer, commercial, etc.)"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="lot_ids",
      *                     type="array",
      *                     @OA\Items(type="integer"),
-     *                     example={28,30,32},
-     *                     description="Requis si is_enterprise=true. Exactement 3 IDs de travailleurs (non-entreprises)"
+     *                     example={18, 19, 20},
+     *                     description="IDs des lots enfants (uniquement pour commercial)"
      *                 ),
-     *                 @OA\Property(property="commercial_register", type="string", format="binary", description="PDF requis si is_enterprise=true"),
-     *                 @OA\Property(property="immigration_certificate", type="string", format="binary", description="PDF requis si is_enterprise=true"),
-     *                 @OA\Property(property="certificate_of_compliance", type="string", format="binary", description="PDF requis si is_enterprise=true"),
-     *                 @OA\Property(property="approval", type="string", format="binary", nullable=true, description="PDF optionnel si is_enterprise=true"),
-     *                 @OA\Property(property="patent", type="string", format="binary", nullable=true, description="PDF optionnel si is_enterprise=true")
+     *                 
+     *                 @OA\Property(
+     *                     property="commercial_register",
+     *                     type="string",
+     *                     format="binary",
+     *                     description="Requis si is_enterprise=true"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="immigration_certificate",
+     *                     type="string",
+     *                     format="binary",
+     *                     description="Requis si is_enterprise=true"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="certificate_of_compliance",
+     *                     type="string",
+     *                     format="binary",
+     *                     description="Requis si is_enterprise=true"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="approval",
+     *                     type="string",
+     *                     format="binary",
+     *                     description="Optionnel si is_enterprise=true"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="patent",
+     *                     type="string",
+     *                     format="binary",
+     *                     description="Optionnel si is_enterprise=true"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="worker_ids",
+     *                     type="array",
+     *                     @OA\Items(type="integer"),
+     *                     example={1, 2, 3},
+     *                     description="IDs de 3 travailleurs (requis si is_enterprise=true)"
+     *                 )
      *             )
      *         )
      *     ),
@@ -485,60 +600,36 @@ class AuthController extends Controller
      *             @OA\Property(
      *                 property="user",
      *                 type="object",
-     *                 @OA\Property(property="id", type="integer", example=50),
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="email", type="string", example="worker@example.com"),
      *                 @OA\Property(
      *                     property="contact",
      *                     type="object",
+     *                     description="Présent pour worker (pas pour engin)",
      *                     @OA\Property(property="firstName", type="string", example="Jean"),
      *                     @OA\Property(property="lastName", type="string", example="Dupont"),
-     *                     @OA\Property(property="email", type="string", example="worker@example.com"),
-     *                     @OA\Property(property="phoneNumber", type="string", example="+237698765432"),
-     *                     @OA\Property(
-     *                         property="localisation_worker",
-     *                         type="object",
-     *                         @OA\Property(property="id", type="integer", example=1),
-     *                         @OA\Property(property="name", type="string", example="Douala")
-     *                     )
+     *                     @OA\Property(property="phoneNumber", type="string", example="+237698765432")
      *                 ),
      *                 @OA\Property(
-     *                     property="account_type",
+     *                     property="engin",
      *                     type="object",
-     *                     @OA\Property(property="lot_id", type="integer", example=1),
-     *                     @OA\Property(property="is_enterprise", type="boolean", example=false),
+     *                     description="Présent pour engin (pas pour worker)",
+     *                     @OA\Property(property="nameOfTheEngin", type="string", example="Bulldozer Caterpillar D6T"),
+     *                     @OA\Property(property="brandOfTheDevice", type="string", example="Caterpillar"),
+     *                     @OA\Property(property="feature", type="string", example="Bulldozer avec lame hydraulique")
+     *                 ),
+     *                 @OA\Property(
+     *                     property="accountType",
+     *                     type="object",
      *                     @OA\Property(property="years_of_experience", type="integer", example=5),
-     *                     @OA\Property(
-     *                         property="lot",
-     *                         type="object",
-     *                         @OA\Property(property="id", type="integer", example=1),
-     *                         @OA\Property(property="name", type="string", example="architect")
-     *                     )
+     *                     @OA\Property(property="is_enterprise", type="boolean", example=false),
+     *                     @OA\Property(property="account_creation_request", type="string", example="pending")
      *                 ),
      *                 @OA\Property(
      *                     property="roles",
      *                     type="array",
      *                     @OA\Items(
-     *                         type="object",
-     *                         @OA\Property(property="name", type="string", example="corrector")
-     *                     )
-     *                 ),
-     *                 @OA\Property(
-     *                     property="worker_enterprises",
-     *                     type="array",
-     *                     description="Présent uniquement si is_enterprise=true",
-     *                     @OA\Items(
-     *                         type="object",
-     *                         @OA\Property(property="id", type="integer", example=1),
-     *                         @OA\Property(
-     *                             property="worker",
-     *                             type="object",
-     *                             @OA\Property(property="id", type="integer", example=28),
-     *                             @OA\Property(
-     *                                 property="contact",
-     *                                 type="object",
-     *                                 @OA\Property(property="firstName", type="string", example="Pierre"),
-     *                                 @OA\Property(property="lastName", type="string", example="Martin")
-     *                             )
-     *                         )
+     *                         @OA\Property(property="name", type="string", example="engin")
      *                     )
      *                 )
      *             )
@@ -549,12 +640,12 @@ class AuthController extends Controller
      *         description="Erreur de validation",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(property="message", type="string", example="Les travailleurs sélectionnés ne doivent pas être des entreprises")
+     *             @OA\Property(property="message", type="string", example="Les données fournies sont invalides")
      *         )
      *     ),
      *     @OA\Response(
      *         response=500,
-     *         description="Erreur serveur lors de l'inscription",
+     *         description="Erreur serveur",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Erreur lors de l'inscription")
@@ -570,8 +661,6 @@ class AuthController extends Controller
             'privacy_policy' => 'required|boolean|accepted',
             
             'phoneNumber' => 'required|string|max:20',
-            'firstName' => 'required|string|max:255',
-            'lastName' => 'required|string|max:255',
             'localisation_worker_id' => 'nullable|exists:localisation_workers,id',
             'localisation_name' => 'nullable|string|max:255',
             
@@ -580,6 +669,30 @@ class AuthController extends Controller
             
             'is_enterprise' => 'required|boolean',
         ];
+
+        $isEngin = false;
+        $lotForCheck = null;
+        
+        if ($request->has('lot_id')) {
+            $lotForCheck = Lot::with('parent')->find($request->input('lot_id'));
+            if ($lotForCheck) {
+                $lotName = strtolower(trim($lotForCheck->name));
+                $parentLotName = $lotForCheck->parent ? strtolower(trim($lotForCheck->parent->name)) : null;
+                
+                if ($lotName === 'engin' || $parentLotName === 'engin') {
+                    $isEngin = true;
+                }
+            }
+        }
+
+        if ($isEngin) {
+            $rules['nameOfTheEngin'] = 'required|string|max:255';
+            $rules['brandOfTheDevice'] = 'required|string|max:255';
+            $rules['feature'] = 'nullable|string|max:5000';
+        } else {
+            $rules['firstName'] = 'required|string|max:255';
+            $rules['lastName'] = 'required|string|max:255';
+        }
 
         $rules['lot_id'] = 'nullable|exists:lots,id';
         $rules['lot_ids'] = 'nullable|array';
@@ -626,6 +739,7 @@ class AuthController extends Controller
             DB::beginTransaction();
 
             $user = User::create([
+                'email' => $validated['email'],
                 'password' => Hash::make($validated['password']),
                 'privacy_policy' => $validated['privacy_policy'],
             ]);
@@ -663,15 +777,31 @@ class AuthController extends Controller
 
             if (!empty($validated['lot_id']) && !$isCommercial) {
                 $lot = Lot::with('parent')->find($validated['lot_id']);
+
+                \Log::info('Lot trouvé', [
+                    'lot_id' => $validated['lot_id'],
+                    'lot_name' => $lot ? $lot->name : 'null',
+                    'parent_name' => $lot && $lot->parent ? $lot->parent->name : 'null',
+                ]);
                 
                 if ($lot) {
                     $lotName = strtolower(trim($lot->name));
                     $parentLotName = $lot->parent ? strtolower(trim($lot->parent->name)) : null;
+
+                    \Log::info('Vérification engin', [
+                        'lotName' => $lotName,
+                        'parentLotName' => $parentLotName,
+                        'isEngin' => ($lotName === 'engin' || $parentLotName === 'engin'),
+                    ]);
                     
-                    if ($parentLotName === 'commercial') {
+                    if ($lotName === 'engin' || $parentLotName === 'engin') {
+                        $assignedRole = 'engin';
+                        $finalLotId = $validated['lot_id'];
+                    }
+                    elseif ($parentLotName === 'commercial') {
                         $assignedRole = 'commercial';
                         $isCommercial = true;
-                        $finalLotId = $lot->main_id; // Parent commercial
+                        $finalLotId = $lot->main_id;
                     }
                     elseif (in_array($lotName, ['site supervisor', 'site manager', 'technical director']) ||
                         in_array($parentLotName, ['site supervisor', 'site manager', 'technical director'])) {
@@ -688,18 +818,39 @@ class AuthController extends Controller
                         $finalLotId = $validated['lot_id'];
                     }
                 }
+    
             }
 
-            $role = \Spatie\Permission\Models\Role::findByName($assignedRole, 'api');
-            $user->roles()->attach($role->id);
+            $role = \Spatie\Permission\Models\Role::where('name', $assignedRole)
+                ->where('guard_name', 'api')
+                ->first();
+                
+            if (!$role) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => "Le rôle '{$assignedRole}' n'existe pas dans le système",
+                ], 500);
+            }
+            
+            $user->assignRole($assignedRole);
 
-            $user->contact()->create([
-                'phoneNumber' => $validated['phoneNumber'],
-                'firstName' => $validated['firstName'],
-                'lastName' => $validated['lastName'],
-                'email' => $validated['email'],
-                'localisation_worker_id' => $localisationWorkerId,
-            ]);
+            if ($isEngin) {
+                $user->engin()->create([
+                    'nameOfTheEngin' => $validated['nameOfTheEngin'],
+                    'brandOfTheDevice' => $validated['brandOfTheDevice'],
+                    'feature' => $validated['feature'] ?? null,
+                    'localisation_worker_id' => $localisationWorkerId,
+                ]);
+            } else {
+                $user->contact()->create([
+                    'phoneNumber' => $validated['phoneNumber'],
+                    'firstName' => $validated['firstName'],
+                    'lastName' => $validated['lastName'],
+                    'email' => $validated['email'],
+                    'localisation_worker_id' => $localisationWorkerId,
+                ]);
+            }
 
             $accountType = $user->accountType()->create([
                 'lot_id' => $finalLotId,
@@ -763,6 +914,7 @@ class AuthController extends Controller
                 'message' => __('messages.register_success'),
                 'user' => $user->load(
                     'contact',
+                    'engin', 
                     'accountType.lot',
                     'accountType.lots',
                     'contact.localisationWorker',
@@ -821,7 +973,7 @@ class AuthController extends Controller
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
-        $user->load('contact', 'accountType.lot.parent', 'enterpriseDocument');
+        $user->load('contact', 'engin', 'accountType.lot.parent', 'enterpriseDocument');
 
         $childLotName = $user->accountType?->lot?->name;
         $parentLotName = $user->accountType?->lot?->parent?->name;
@@ -836,6 +988,17 @@ class AuthController extends Controller
                 'child_lot_name' => $childLotName,
                 'parent_lot_name' => $parentLotName,
                 'account_status' => $user->accountType?->account_creation_request,
+                'engin' => $user->engin ? [
+                    'nameOfTheEngin' => $user->engin->nameOfTheEngin,
+                    'brandOfTheDevice' => $user->engin->brandOfTheDevice,
+                    'feature' => $user->engin->feature,
+                ] : null,
+                'contact' => $user->contact ? [
+                    'firstName' => $user->contact->firstName,
+                    'lastName' => $user->contact->lastName,
+                    'phoneNumber' => $user->contact->phoneNumber,
+                    'email' => $user->contact->email,
+                ] : null,
             ]
         ], 200);
     }

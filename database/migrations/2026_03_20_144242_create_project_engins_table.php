@@ -8,23 +8,20 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('project_users', function (Blueprint $table) {
+        Schema::create('project_engins', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('project_id')->constrained()->onDelete('cascade');
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->boolean('is_accepted')->default(false);
+            $table->foreignId('project_id')->constrained('projects')->onDelete('cascade');
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->text('task')->nullable();
-            $table->integer('note')->nullable();
+            $table->decimal('note', 3, 1)->nullable()->default(0);
             $table->date('start_at')->nullable();
             $table->date('end_at')->nullable();
             $table->timestamps();
-            
-            $table->unique(['project_id', 'user_id']);
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('project_users');
+        Schema::dropIfExists('project_engins');
     }
 };

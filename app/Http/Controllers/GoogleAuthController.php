@@ -42,31 +42,49 @@ class GoogleAuthController extends Controller
                     $user->update(['email_verified_at' => now()]);
                 }
             } else {
-                DB::beginTransaction();
+                $user = User::where('email', $googleUser->getEmail())->first();
                 
-                try {
-                    $user = User::create([
-                        'email' => $googleUser->getEmail(),
-                        'password' => Hash::make(Str::random(32)),
-                        'privacy_policy' => true,
-                        'email_verified_at' => now(), 
-                    ]);
-
-                    $role = \Spatie\Permission\Models\Role::findByName('client', 'api');
-                    $user->roles()->attach($role->id);
-
-                    $user->contact()->create([
-                        'email' => $googleUser->getEmail(),
-                        'firstName' => $googleUser->offsetGet('given_name') ?? 'User',
-                        'lastName' => $googleUser->offsetGet('family_name') ?? 'Account',
-                        'phoneNumber' => null,
-                    ]);
-
-                    DB::commit();
+                if ($user) {
+                    if (!$user->contact) {
+                        $user->contact()->create([
+                            'email' => $googleUser->getEmail(),
+                            'firstName' => $googleUser->offsetGet('given_name') ?? 'User',
+                            'lastName' => $googleUser->offsetGet('family_name') ?? 'Account',
+                            'phoneNumber' => null,
+                        ]);
+                    }
                     
-                } catch (\Exception $e) {
-                    DB::rollBack();
-                    throw $e;
+                    if (!$user->email_verified_at) {
+                        $user->update(['email_verified_at' => now()]);
+                    }
+                } else {
+                    DB::beginTransaction();
+                    
+                    try {
+                        $newContact = Contact::create([
+                            'email' => $googleUser->getEmail(),
+                            'firstName' => $googleUser->offsetGet('given_name') ?? 'User',
+                            'lastName' => $googleUser->offsetGet('family_name') ?? 'Account',
+                            'phoneNumber' => null,
+                        ]);
+
+                        $user = User::create([
+                            'email' => null, 
+                            'password' => Hash::make(Str::random(32)),
+                            'privacy_policy' => false,
+                            'email_verified_at' => now(),
+                        ]);
+
+                        $newContact->update(['user_id' => $user->id]);
+                        $role = \Spatie\Permission\Models\Role::findByName('client', 'api');
+                        $user->roles()->attach($role->id);
+
+                        DB::commit();
+                        
+                    } catch (\Exception $e) {
+                        DB::rollBack();
+                        throw $e;
+                    }
                 }
             }
 
@@ -126,21 +144,23 @@ class GoogleAuthController extends Controller
             ], 401);
         }
 
-        $user->load('contact', 'accountType.lot.parent');
-
-        $childLotName = $user->accountType?->lot?->name;
-        $parentLotName = $user->accountType?->lot?->parent?->name;
+        $user->load('contact', 'roles');
 
         return response()->json([
             'success' => true,
-            'user' => [
-                'id' => $user->id,
-                'email' => $user->contact?->email,
-                'firstName' => $user->contact?->firstName,
-                'lastName' => $user->contact?->lastName,
-                'role' => $user->role,
-                'child_lot_name' => $childLotName,
-                'parent_lot_name' => $parentLotName,
+            'data' => [
+                'email_verified_at' => $user->email_verified_at,
+                'token' => $request->bearerToken(),
+                'user' => [
+                    'id' => $user->id,
+                    'email' => $user->contact?->email ?? $user->email,
+                    'created_at' => $user->created_at,
+                    'updated_at' => $user->updated_at,
+                    'roles' => $user->roles->map(fn($role) => [
+                        'name' => $role->name,
+                        'display_name' => $role->name
+                    ]),
+                ]
             ]
         ]);
     }

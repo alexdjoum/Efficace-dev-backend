@@ -177,4 +177,15 @@ class User extends Authenticatable implements HasMedia
     {
         return $this->hasMany(RequestForSale::class);
     }
+
+    public function engin()
+    {
+        return $this->hasOne(Engin::class);
+    }
+
+    public function projectEngins()
+    {
+        return $this->hasMany(ProjectEngin::class);
+    }
+
 }

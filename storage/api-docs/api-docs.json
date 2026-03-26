@@ -73,13 +73,13 @@
                 }
             }
         },
-        "/api/registerWorker": {
+        "/api/auth/register/worker": {
             "post": {
                 "tags": [
-                    "Authentification"
+                    "Authentication"
                 ],
-                "summary": "Inscription d'un travailleur ou d'une entreprise",
-                "operationId": "66914434c35d7d15c04282c0879af82e",
+                "summary": "Inscription d'un travailleur ou d'un engin",
+                "operationId": "ee9f9c9ec3fbe614288275ec19fa0dce",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -91,20 +91,16 @@
                                     "password_confirmation",
                                     "privacy_policy",
                                     "phoneNumber",
-                                    "firstName",
-                                    "lastName",
                                     "years_of_experience",
                                     "is_enterprise"
                                 ],
                                 "properties": {
                                     "email": {
-                                        "description": "Email unique",
                                         "type": "string",
                                         "format": "email",
                                         "example": "worker@example.com"
                                     },
                                     "password": {
-                                        "description": "Minimum 8 caractères",
                                         "type": "string",
                                         "format": "password",
                                         "example": "password123"
@@ -115,7 +111,6 @@
                                         "example": "password123"
                                     },
                                     "privacy_policy": {
-                                        "description": "Acceptation obligatoire",
                                         "type": "boolean",
                                         "example": true
                                     },
@@ -124,84 +119,106 @@
                                         "example": "+237698765432"
                                     },
                                     "firstName": {
+                                        "description": "Requis pour worker (pas pour engin)",
                                         "type": "string",
                                         "example": "Jean"
                                     },
                                     "lastName": {
+                                        "description": "Requis pour worker (pas pour engin)",
                                         "type": "string",
                                         "example": "Dupont"
                                     },
+                                    "nameOfTheEngin": {
+                                        "description": "Requis pour engin (pas pour worker)",
+                                        "type": "string",
+                                        "example": "Bulldozer Caterpillar D6T"
+                                    },
+                                    "brandOfTheDevice": {
+                                        "description": "Requis pour engin (pas pour worker)",
+                                        "type": "string",
+                                        "example": "Caterpillar"
+                                    },
+                                    "feature": {
+                                        "description": "Optionnel pour engin",
+                                        "type": "string",
+                                        "example": "Bulldozer avec lame hydraulique, puissance 215 HP"
+                                    },
                                     "localisation_worker_id": {
-                                        "description": "ID de la localisation (ou utiliser localisation_name)",
+                                        "description": "ID de localisation existante (optionnel)",
                                         "type": "integer",
-                                        "example": 1,
-                                        "nullable": true
+                                        "example": 1
                                     },
                                     "localisation_name": {
-                                        "description": "Nom de la localisation (ou utiliser localisation_worker_id)",
+                                        "description": "Nom de localisation (créée si n'existe pas, optionnel)",
                                         "type": "string",
-                                        "example": "Douala",
-                                        "nullable": true
+                                        "example": "Douala"
                                     },
                                     "years_of_experience": {
-                                        "description": "Années d'expérience",
                                         "type": "integer",
                                         "example": 5
                                     },
                                     "presentation": {
+                                        "description": "Optionnel",
                                         "type": "string",
-                                        "example": "Architecte spécialisé en bâtiments résidentiels",
-                                        "nullable": true
+                                        "example": "Professionnel expérimenté dans le domaine"
                                     },
                                     "is_enterprise": {
-                                        "description": "false pour travailleur, true pour entreprise",
                                         "type": "boolean",
                                         "example": false
                                     },
                                     "lot_id": {
-                                        "description": "Requis si is_enterprise=false. Détermine le rôle: Site supervisor/Site manager/Technical director → manager, Architect/Engineer → corrector, autres → user",
+                                        "description": "ID du lot (engin, architect, engineer, commercial, etc.)",
                                         "type": "integer",
-                                        "example": 1,
-                                        "nullable": true
+                                        "example": 1
                                     },
-                                    "worker_ids[]": {
-                                        "description": "Requis si is_enterprise=true. Exactement 3 IDs de travailleurs (non-entreprises)",
+                                    "lot_ids": {
+                                        "description": "IDs des lots enfants (uniquement pour commercial)",
                                         "type": "array",
                                         "items": {
                                             "type": "integer"
                                         },
                                         "example": [
-                                            28,
-                                            30,
-                                            32
+                                            18,
+                                            19,
+                                            20
                                         ]
                                     },
                                     "commercial_register": {
-                                        "description": "PDF requis si is_enterprise=true",
+                                        "description": "Requis si is_enterprise=true",
                                         "type": "string",
                                         "format": "binary"
                                     },
                                     "immigration_certificate": {
-                                        "description": "PDF requis si is_enterprise=true",
+                                        "description": "Requis si is_enterprise=true",
                                         "type": "string",
                                         "format": "binary"
                                     },
                                     "certificate_of_compliance": {
-                                        "description": "PDF requis si is_enterprise=true",
+                                        "description": "Requis si is_enterprise=true",
                                         "type": "string",
                                         "format": "binary"
                                     },
                                     "approval": {
-                                        "description": "PDF optionnel si is_enterprise=true",
+                                        "description": "Optionnel si is_enterprise=true",
                                         "type": "string",
-                                        "format": "binary",
-                                        "nullable": true
+                                        "format": "binary"
                                     },
                                     "patent": {
-                                        "description": "PDF optionnel si is_enterprise=true",
+                                        "description": "Optionnel si is_enterprise=true",
                                         "type": "string",
-                                        "format": "binary",
-                                        "nullable": true
+                                        "format": "binary"
+                                    },
+                                    "worker_ids": {
+                                        "description": "IDs de 3 travailleurs (requis si is_enterprise=true)",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "example": [
+                                            1,
+                                            2,
+                                            3
+                                        ]
                                     }
                                 },
                                 "type": "object"
@@ -228,9 +245,14 @@
                                             "properties": {
                                                 "id": {
                                                     "type": "integer",
-                                                    "example": 50
+                                                    "example": 1
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "worker@example.com"
                                                 },
                                                 "contact": {
+                                                    "description": "Présent pour worker (pas pour engin)",
                                                     "properties": {
                                                         "firstName": {
                                                             "type": "string",
@@ -240,56 +262,44 @@
                                                             "type": "string",
                                                             "example": "Dupont"
                                                         },
-                                                        "email": {
-                                                            "type": "string",
-                                                            "example": "worker@example.com"
-                                                        },
                                                         "phoneNumber": {
                                                             "type": "string",
                                                             "example": "+237698765432"
-                                                        },
-                                                        "localisation_worker": {
-                                                            "properties": {
-                                                                "id": {
-                                                                    "type": "integer",
-                                                                    "example": 1
-                                                                },
-                                                                "name": {
-                                                                    "type": "string",
-                                                                    "example": "Douala"
-                                                                }
-                                                            },
-                                                            "type": "object"
                                                         }
                                                     },
                                                     "type": "object"
                                                 },
-                                                "account_type": {
+                                                "engin": {
+                                                    "description": "Présent pour engin (pas pour worker)",
                                                     "properties": {
-                                                        "lot_id": {
+                                                        "nameOfTheEngin": {
+                                                            "type": "string",
+                                                            "example": "Bulldozer Caterpillar D6T"
+                                                        },
+                                                        "brandOfTheDevice": {
+                                                            "type": "string",
+                                                            "example": "Caterpillar"
+                                                        },
+                                                        "feature": {
+                                                            "type": "string",
+                                                            "example": "Bulldozer avec lame hydraulique"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "accountType": {
+                                                    "properties": {
+                                                        "years_of_experience": {
                                                             "type": "integer",
-                                                            "example": 1
+                                                            "example": 5
                                                         },
                                                         "is_enterprise": {
                                                             "type": "boolean",
                                                             "example": false
                                                         },
-                                                        "years_of_experience": {
-                                                            "type": "integer",
-                                                            "example": 5
-                                                        },
-                                                        "lot": {
-                                                            "properties": {
-                                                                "id": {
-                                                                    "type": "integer",
-                                                                    "example": 1
-                                                                },
-                                                                "name": {
-                                                                    "type": "string",
-                                                                    "example": "architect"
-                                                                }
-                                                            },
-                                                            "type": "object"
+                                                        "account_creation_request": {
+                                                            "type": "string",
+                                                            "example": "pending"
                                                         }
                                                     },
                                                     "type": "object"
@@ -300,42 +310,7 @@
                                                         "properties": {
                                                             "name": {
                                                                 "type": "string",
-                                                                "example": "corrector"
-                                                            }
-                                                        },
-                                                        "type": "object"
-                                                    }
-                                                },
-                                                "worker_enterprises": {
-                                                    "description": "Présent uniquement si is_enterprise=true",
-                                                    "type": "array",
-                                                    "items": {
-                                                        "properties": {
-                                                            "id": {
-                                                                "type": "integer",
-                                                                "example": 1
-                                                            },
-                                                            "worker": {
-                                                                "properties": {
-                                                                    "id": {
-                                                                        "type": "integer",
-                                                                        "example": 28
-                                                                    },
-                                                                    "contact": {
-                                                                        "properties": {
-                                                                            "firstName": {
-                                                                                "type": "string",
-                                                                                "example": "Pierre"
-                                                                            },
-                                                                            "lastName": {
-                                                                                "type": "string",
-                                                                                "example": "Martin"
-                                                                            }
-                                                                        },
-                                                                        "type": "object"
-                                                                    }
-                                                                },
-                                                                "type": "object"
+                                                                "example": "engin"
                                                             }
                                                         },
                                                         "type": "object"
@@ -362,7 +337,7 @@
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "Les travailleurs sélectionnés ne doivent pas être des entreprises"
+                                            "example": "Les données fournies sont invalides"
                                         }
                                     },
                                     "type": "object"
@@ -371,7 +346,7 @@
                         }
                     },
                     "500": {
-                        "description": "Erreur serveur lors de l'inscription",
+                        "description": "Erreur serveur",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1354,6 +1329,378 @@
                                 }
                             }
                         }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/contracts": {
+            "get": {
+                "tags": [
+                    "Contracts"
+                ],
+                "summary": "Lister tous les contrats (Admin uniquement)",
+                "operationId": "0639aeffeecb8cb2c5b96478b3c656bf",
+                "parameters": [
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "description": "Filtrer par type (optionnel)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "inscription",
+                                "request_for_sales"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des contrats",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "title": {
+                                                        "type": "string",
+                                                        "example": "Contrat de vente standard"
+                                                    },
+                                                    "type": {
+                                                        "type": "string",
+                                                        "example": "request_for_sales"
+                                                    },
+                                                    "file_url": {
+                                                        "type": "string",
+                                                        "example": "http://example.com/storage/contracts/contract.pdf"
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Contracts"
+                ],
+                "summary": "Uploader un contrat PDF (Admin uniquement)",
+                "operationId": "ba7d5087d960ffd8cf3aa83e521c3c2c",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "title",
+                                    "type",
+                                    "contract_file"
+                                ],
+                                "properties": {
+                                    "title": {
+                                        "type": "string",
+                                        "example": "Contrat de vente standard"
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "inscription",
+                                            "request_for_sales"
+                                        ],
+                                        "example": "request_for_sales"
+                                    },
+                                    "contract_file": {
+                                        "description": "Fichier PDF du contrat",
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Contrat uploadé avec succès"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/contracts": {
+            "post": {
+                "tags": [
+                    "Contracts"
+                ],
+                "summary": "Récupérer le contrat selon le type",
+                "operationId": "5627980f675402829565174d0677fbc1",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "type"
+                                ],
+                                "properties": {
+                                    "type": {
+                                        "description": "Type de contrat à récupérer",
+                                        "type": "string",
+                                        "enum": [
+                                            "inscription",
+                                            "request_for_sales"
+                                        ],
+                                        "example": "request_for_sales"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Contrat récupéré avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "title": {
+                                                    "type": "string",
+                                                    "example": "Contrat de vente standard"
+                                                },
+                                                "type": {
+                                                    "type": "string",
+                                                    "example": "request_for_sales"
+                                                },
+                                                "file_url": {
+                                                    "type": "string",
+                                                    "example": "http://example.com/storage/contracts/contract.pdf"
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Aucun contrat trouvé pour ce type",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Aucun contrat trouvé pour ce type"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/contracts/{id}": {
+            "get": {
+                "tags": [
+                    "Contracts"
+                ],
+                "summary": "Récupérer un contrat spécifique",
+                "operationId": "0551b349162da83031f7c5f1eac63c41",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Détails du contrat"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/contracts/{id}/download": {
+            "get": {
+                "tags": [
+                    "Contracts"
+                ],
+                "summary": "Télécharger un contrat",
+                "operationId": "7b71b9b4ec82a2fefd7d54dd09ad1f07",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Téléchargement du fichier PDF"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/contracts/{id}": {
+            "get": {
+                "tags": [
+                    "Contracts"
+                ],
+                "summary": "Récupérer un contrat spécifique (Admin)",
+                "operationId": "4bb41e3a9882a67ebc62cb20fbf6884b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Détails du contrat",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "title": {
+                                                    "type": "string"
+                                                },
+                                                "type": {
+                                                    "type": "string"
+                                                },
+                                                "file_url": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Contracts"
+                ],
+                "summary": "Supprimer un contrat (Admin uniquement)",
+                "operationId": "e1ba97934ec96d73fe0cadbf15acdfbc",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Contrat supprimé"
                     }
                 },
                 "security": [
@@ -2728,9 +3075,9 @@
         "/api/projects/{projectId}/assign-user": {
             "post": {
                 "tags": [
-                    "Project Users"
+                    "Projects"
                 ],
-                "summary": "Assigner un utilisateur à un projet",
+                "summary": "Assigner un worker à un projet avec notification (Admin/Manager)",
                 "operationId": "4b1e0a0d070cf1d183d34571116d8fae",
                 "parameters": [
                     {
@@ -2738,8 +3085,7 @@
                         "in": "path",
                         "required": true,
                         "schema": {
-                            "type": "integer",
-                            "example": 1
+                            "type": "integer"
                         }
                     }
                 ],
@@ -2754,26 +3100,25 @@
                                 "properties": {
                                     "user_id": {
                                         "type": "integer",
-                                        "example": 28
+                                        "example": 10
                                     },
                                     "task": {
                                         "type": "string",
-                                        "example": "Supervision des travaux"
+                                        "example": "Construction du premier étage"
                                     },
                                     "note": {
                                         "type": "integer",
-                                        "example": 8,
-                                        "nullable": true
+                                        "example": 8
                                     },
                                     "start_at": {
                                         "type": "string",
                                         "format": "date",
-                                        "example": "2026-03-01"
+                                        "example": "2026-04-01"
                                     },
                                     "end_at": {
                                         "type": "string",
                                         "format": "date",
-                                        "example": "2026-05-01"
+                                        "example": "2026-04-30"
                                     }
                                 },
                                 "type": "object"
@@ -2783,24 +3128,58 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Utilisateur assigné",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Utilisateur assigné au projet"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
+                        "description": "Notification envoyée au worker"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/worker/notifications/{id}/respond": {
+            "patch": {
+                "tags": [
+                    "Worker Notifications"
+                ],
+                "summary": "Accepter ou refuser une notification (Worker)",
+                "operationId": "9ea9de1f6d757696db0245b1332e9ab1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "status"
+                                ],
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "accepted",
+                                            "rejected"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
                             }
                         }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Réponse enregistrée"
                     }
                 },
                 "security": [
@@ -2854,47 +3233,6 @@
             }
         },
         "/api/project-users/{id}": {
-            "delete": {
-                "tags": [
-                    "Project Users"
-                ],
-                "summary": "Retirer un utilisateur d'un projet",
-                "operationId": "e19c04108b72919f71b21d547f6da3cc",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer",
-                            "example": 1
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Utilisateur retiré",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            },
             "patch": {
                 "tags": [
                     "Project Users"
@@ -2957,6 +3295,43 @@
                                 }
                             }
                         }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/projects/{projectId}/workers/{userId}": {
+            "delete": {
+                "tags": [
+                    "Worker Notifications"
+                ],
+                "summary": "Retirer un worker d'un projet (Admin/Manager)",
+                "operationId": "fe3ff2ef491866e5cfce5aefc64e4bc0",
+                "parameters": [
+                    {
+                        "name": "projectId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Worker retiré du projet"
                     }
                 },
                 "security": [
@@ -3047,6 +3422,87 @@
                                                 }
                                             },
                                             "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/worker/my-projects": {
+            "get": {
+                "tags": [
+                    "Worker Notifications"
+                ],
+                "summary": "Voir les projets où je suis assigné et que j'ai acceptés (Worker)",
+                "operationId": "175133c4d4c6ef2d06f6e36ab61391ea",
+                "responses": {
+                    "200": {
+                        "description": "Liste des projets acceptés",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "project_user_id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "project": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "name": {
+                                                                "type": "string"
+                                                            },
+                                                            "uuid": {
+                                                                "type": "string"
+                                                            },
+                                                            "status": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "task": {
+                                                        "type": "string"
+                                                    },
+                                                    "note": {
+                                                        "type": "integer"
+                                                    },
+                                                    "start_at": {
+                                                        "type": "string",
+                                                        "format": "date"
+                                                    },
+                                                    "end_at": {
+                                                        "type": "string",
+                                                        "format": "date"
+                                                    },
+                                                    "assigned_at": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
                                         }
                                     },
                                     "type": "object"
@@ -3272,35 +3728,70 @@
                 ]
             }
         },
-        "/api/request-for-sales": {
+        "/api/worker/my-notifications": {
+            "get": {
+                "tags": [
+                    "Worker Notifications"
+                ],
+                "summary": "Voir mes notifications d'assignation (Worker)",
+                "operationId": "39447cb6f6f4d07af0dc7cc6c5ca53fa",
+                "responses": {
+                    "200": {
+                        "description": "Liste des notifications"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/projects/{projectId}/assign-engin": {
             "post": {
                 "tags": [
-                    "Request For Sales"
+                    "Project Engins"
                 ],
-                "summary": "Créer une demande de vente (Client)",
-                "operationId": "f563e01d1a4b92ebc8c56735720b29b4",
+                "summary": "Assigner un engin à un projet avec notification (Admin/Validator)",
+                "operationId": "f268df1acabb21e249fd336c322b7f6b",
+                "parameters": [
+                    {
+                        "name": "projectId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
                 "requestBody": {
                     "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "description",
-                                    "type"
+                                    "user_id",
+                                    "start_at",
+                                    "end_at"
                                 ],
                                 "properties": {
-                                    "description": {
-                                        "type": "string",
-                                        "example": "Je souhaite vendre mon terrain de 500m²"
+                                    "user_id": {
+                                        "type": "integer",
+                                        "example": 67
                                     },
-                                    "type": {
+                                    "task": {
                                         "type": "string",
-                                        "enum": [
-                                            "land",
-                                            "villa",
-                                            "building"
-                                        ],
-                                        "example": "land"
+                                        "example": "Terrassement"
+                                    },
+                                    "start_at": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2026-04-01"
+                                    },
+                                    "end_at": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2026-04-30"
                                     }
                                 },
                                 "type": "object"
@@ -3310,7 +3801,135 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Demande créée",
+                        "description": "Notification envoyée à l'engin"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/engin/my-notifications": {
+            "get": {
+                "tags": [
+                    "Project Engins"
+                ],
+                "summary": "Voir mes notifications d'assignation (Engin)",
+                "operationId": "31553f686dc9a7677a08d756c99515d8",
+                "responses": {
+                    "200": {
+                        "description": "Liste des notifications"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/engin/notifications/{id}/respond": {
+            "patch": {
+                "tags": [
+                    "Project Engins"
+                ],
+                "summary": "Accepter ou refuser une notification (Engin)",
+                "operationId": "34399e5b1f9acb9d44c462de9c7776dc",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "status"
+                                ],
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "accepted",
+                                            "rejected"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Réponse enregistrée"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/projects/{projectId}/assigned-engins": {
+            "get": {
+                "tags": [
+                    "Project Engins"
+                ],
+                "summary": "Lister les engins assignés à un projet",
+                "operationId": "f4ef40d9e04fcf1076c2fada26a53152",
+                "parameters": [
+                    {
+                        "name": "projectId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des engins assignés"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/projects/{projectId}/available-engins": {
+            "get": {
+                "tags": [
+                    "Project Engins"
+                ],
+                "summary": "Lister les engins disponibles pour un projet (Admin/Validator)",
+                "operationId": "6d858dbf06f4de47f6a50cde6b87ed27",
+                "parameters": [
+                    {
+                        "name": "projectId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des engins disponibles",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -3319,9 +3938,237 @@
                                             "type": "boolean",
                                             "example": true
                                         },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "user_id": {
+                                                        "type": "integer",
+                                                        "example": 67
+                                                    },
+                                                    "engin": {
+                                                        "properties": {
+                                                            "nameOfTheEngin": {
+                                                                "type": "string",
+                                                                "example": "Bulldozer Caterpillar D6T"
+                                                            },
+                                                            "brandOfTheDevice": {
+                                                                "type": "string",
+                                                                "example": "Caterpillar"
+                                                            },
+                                                            "feature": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "city": {
+                                                        "type": "string",
+                                                        "example": "Douala"
+                                                    },
+                                                    "latest_availability": {
+                                                        "properties": {
+                                                            "date": {
+                                                                "type": "string",
+                                                                "format": "date"
+                                                            },
+                                                            "end_date": {
+                                                                "description": "Date + 15 jours",
+                                                                "type": "string",
+                                                                "format": "date"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/projects/{projectId}/engins/{userId}": {
+            "delete": {
+                "tags": [
+                    "Project Engins"
+                ],
+                "summary": "Retirer un engin d'un projet (Admin/Validator)",
+                "operationId": "dbd5fddc35ade09fb60e98d05efb82aa",
+                "parameters": [
+                    {
+                        "name": "projectId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Engin retiré du projet"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/request-for-sales": {
+            "post": {
+                "tags": [
+                    "Request For Sales"
+                ],
+                "summary": "Créer une demande de vente avec un bien immobilier ou terrain (Client)",
+                "operationId": "f563e01d1a4b92ebc8c56735720b29b4",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "description",
+                                    "type",
+                                    "has_validated_contrat"
+                                ],
+                                "properties": {
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Je souhaite vendre mon terrain de 500m² situé à Douala"
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "land",
+                                            "villa",
+                                            "building"
+                                        ],
+                                        "example": "land"
+                                    },
+                                    "has_validated_contrat": {
+                                        "description": "OBLIGATOIRE : Doit être à true pour accepter le contrat",
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "property_data[area]": {
+                                        "description": "Superficie du bien (requis si property_data)",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 150.5
+                                    },
+                                    "property_data[numberOfRoom]": {
+                                        "description": "Nombre de chambres (optionnel)",
+                                        "type": "integer",
+                                        "example": 4
+                                    },
+                                    "property_data[numberOfToilet]": {
+                                        "description": "Nombre de toilettes (optionnel)",
+                                        "type": "integer",
+                                        "example": 2
+                                    },
+                                    "land_data[area]": {
+                                        "description": "Superficie du terrain (requis si land_data)",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 500
+                                    },
+                                    "land_data[is_fragmentable]": {
+                                        "description": "Le terrain est-il fragmentable ? (optionnel)",
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "land_data[relief]": {
+                                        "description": "Type de relief (optionnel)",
+                                        "type": "string",
+                                        "example": "plat"
+                                    },
+                                    "land_data[land_title]": {
+                                        "description": "Numéro du titre foncier (optionnel)",
+                                        "type": "string",
+                                        "example": "Titre foncier 12345"
+                                    },
+                                    "land_data[certificat_of_ownership]": {
+                                        "description": "Certificat de propriété disponible ? (optionnel)",
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "land_data[technical_doc]": {
+                                        "description": "Documentation technique disponible ? (optionnel)",
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "address[country]": {
+                                        "description": "Pays (optionnel)",
+                                        "type": "string",
+                                        "example": "Cameroun"
+                                    },
+                                    "address[city]": {
+                                        "description": "Ville (optionnel)",
+                                        "type": "string",
+                                        "example": "Douala"
+                                    },
+                                    "address[street]": {
+                                        "description": "Rue (optionnel)",
+                                        "type": "string",
+                                        "example": "Rue de la paix"
+                                    },
+                                    "kml_file": {
+                                        "description": "Fichier KML pour la localisation (optionnel)",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "photos[]": {
+                                        "description": "Photos du bien (max 10, 5MB chacune)",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "binary"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Demande de vente créée avec succès"
+                    },
+                    "422": {
+                        "description": "Erreur de validation - Contrat non validé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
                                         "message": {
                                             "type": "string",
-                                            "example": "Demande de vente créée avec succès"
+                                            "example": "Vous devez accepter le contrat pour créer une demande de vente"
                                         }
                                     },
                                     "type": "object"
@@ -3384,6 +4231,10 @@
                                             "villa",
                                             "building"
                                         ],
+                                        "nullable": true
+                                    },
+                                    "has_validated_contrat": {
+                                        "type": "boolean",
                                         "nullable": true
                                     },
                                     "perPage": {
@@ -3509,12 +4360,20 @@
             "description": "Authentification"
         },
         {
+            "name": "Authentication",
+            "description": "Authentication"
+        },
+        {
             "name": "Admin",
             "description": "Admin"
         },
         {
             "name": "Commissions",
             "description": "Commissions"
+        },
+        {
+            "name": "Contracts",
+            "description": "Contracts"
         },
         {
             "name": "Authentification Google",
@@ -3537,12 +4396,20 @@
             "description": "Projects"
         },
         {
+            "name": "Worker Notifications",
+            "description": "Worker Notifications"
+        },
+        {
             "name": "Project Users",
             "description": "Project Users"
         },
         {
             "name": "Manager",
             "description": "Manager"
+        },
+        {
+            "name": "Project Engins",
+            "description": "Project Engins"
         },
         {
             "name": "Request For Sales",

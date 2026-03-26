@@ -11,6 +11,7 @@ use App\Models\ProjectImage;
 use Illuminate\Http\Request;
 use App\Models\PaymentProject;
 use App\Models\WorkerAvailability;
+use App\Models\WorkerNotification;
 use App\Services\ProjectSoldService;
 
 class ProjectController extends Controller
@@ -826,32 +827,37 @@ class ProjectController extends Controller
      *     )
      * )
      */
-    public function setEndDate(Request $request, $id)
+    public function setEndDate(Request $request, $projectId)
     {
         $user = auth()->user();
 
-        if (!$user->hasRole('admin') && !$user->hasRole('validator')) {
+        if (!$user->hasRole('admin', 'api') && !$user->hasRole('manager', 'api')) {
             return response()->json([
                 'success' => false,
-                'message' => 'Action non autorisée',
+                'message' => 'Action réservée aux admins et managers',
             ], 403);
         }
 
         $validated = $request->validate([
-            'ended_at' => 'required|date|after:started_at',
+            'end_at' => 'required|date',
         ]);
 
-        $project = Project::findOrFail($id);
+        $project = Project::findOrFail($projectId);
 
         $project->update([
-            'ended_at' => $validated['ended_at'],
-            'launch_status' => 'onfinish',
+            'ended_at' => $validated['end_at'],
         ]);
+
+        ProjectUser::where('project_id', $projectId)
+            ->whereNull('end_at') 
+            ->update([
+                'end_at' => $validated['end_at'],
+            ]);
 
         return response()->json([
             'success' => true,
-            'message' => 'Date de fin définie',
-            'data' => $project->fresh()
+            'message' => 'Date de fin définie pour le projet et tous les workers assignés',
+            'data' => $project->fresh()->load('projectUsers.user.contact')
         ]);
     }
 
@@ -859,38 +865,40 @@ class ProjectController extends Controller
     /**
      * @OA\Post(
      *     path="/api/projects/{projectId}/assign-user",
-     *     summary="Assigner un utilisateur à un projet",
-     *     tags={"Project Users"},
+     *     summary="Assigner un worker à un projet avec notification (Admin/Manager)",
+     *     tags={"Projects"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
      *         name="projectId",
      *         in="path",
      *         required=true,
-     *         @OA\Schema(type="integer", example=1)
+     *         @OA\Schema(type="integer")
      *     ),
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
      *             required={"user_id"},
-     *             @OA\Property(property="user_id", type="integer", example=28),
-     *             @OA\Property(property="task", type="string", example="Supervision des travaux"),
-     *             @OA\Property(property="note", type="integer", nullable=true, example=8),
-     *             @OA\Property(property="start_at", type="string", format="date", example="2026-03-01"),
-     *             @OA\Property(property="end_at", type="string", format="date", example="2026-05-01")
+     *             @OA\Property(property="user_id", type="integer", example=10),
+     *             @OA\Property(property="task", type="string", example="Construction du premier étage"),
+     *             @OA\Property(property="note", type="integer", example=8),
+     *             @OA\Property(property="start_at", type="string", format="date", example="2026-04-01"),
+     *             @OA\Property(property="end_at", type="string", format="date", example="2026-04-30")
      *         )
      *     ),
-     *     @OA\Response(
-     *         response=201,
-     *         description="Utilisateur assigné",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string", example="Utilisateur assigné au projet")
-     *         )
-     *     )
+     *     @OA\Response(response=201, description="Notification envoyée au worker")
      * )
      */
     public function assignUser(Request $request, $projectId)
     {
+        $user = auth()->user();
+
+        if (!$user->hasRole('admin', 'api') && !$user->hasRole('manager', 'api')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Action réservée aux admins et managers',
+            ], 403);
+        }
+
         $validated = $request->validate([
             'user_id' => 'required|exists:users,id',
             'task' => 'nullable|string',
@@ -900,6 +908,15 @@ class ProjectController extends Controller
         ]);
 
         $project = Project::findOrFail($projectId);
+
+        $worker = User::with('engin')->find($validated['user_id']);
+        
+        if ($worker->engin) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cet utilisateur est un engin, utilisez l\'endpoint assign-engin',
+            ], 422);
+        }
 
         $exists = ProjectUser::where('project_id', $projectId)
             ->where('user_id', $validated['user_id'])
@@ -912,20 +929,116 @@ class ProjectController extends Controller
             ], 422);
         }
 
+        $task = $validated['task'] ?? null;
+    
+        if (!$task && $worker->accountType && $worker->accountType->lot) {
+            $task = $worker->accountType->lot->name;
+        }
+
         $projectUser = ProjectUser::create([
             'project_id' => $projectId,
             'user_id' => $validated['user_id'],
-            'task' => $validated['task'] ?? null,
+            'task' => $task,
             'note' => $validated['note'] ?? null,
             'start_at' => $validated['start_at'] ?? null,
             'end_at' => $validated['end_at'] ?? null,
+            'is_accepted' => false, 
+        ]);
+
+        $message = "Vous avez été assigné au projet '{$project->name}'.";
+        if ($task) {
+            $message .= " Tâche: {$task}.";
+        }
+        
+        if (isset($validated['task']) && $validated['task']) {
+            $message .= " Tâche: {$validated['task']}.";
+        }
+        
+        if (isset($validated['start_at']) && isset($validated['end_at'])) {
+            $message .= " Période: du {$validated['start_at']} au {$validated['end_at']}.";
+        }
+        
+        $message .= " Veuillez accepter ou refuser cette assignation.";
+
+        WorkerNotification::create([
+            'project_id' => $projectId,
+            'user_id' => $validated['user_id'],
+            'status' => 'pending',
+            'message' => $message,
         ]);
 
         return response()->json([
             'success' => true,
-            'message' => 'Utilisateur assigné au projet',
+            'message' => 'Notification d\'assignation envoyée au worker',
             'data' => $projectUser->load('user.contact')
         ], 201);
+    }
+
+    /**
+     * @OA\Patch(
+     *     path="/api/worker/notifications/{id}/respond",
+     *     summary="Accepter ou refuser une notification (Worker)",
+     *     tags={"Worker Notifications"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"status"},
+     *             @OA\Property(property="status", type="string", enum={"accepted","rejected"})
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Réponse enregistrée")
+     * )
+     */
+    public function respondToNotification(Request $request, $id)
+    {
+        $user = auth()->user();
+
+        $validated = $request->validate([
+            'status' => 'required|in:accepted,rejected',
+        ]);
+
+        $notification = WorkerNotification::where('id', $id)
+            ->where('user_id', $user->id)
+            ->firstOrFail();
+
+        if ($notification->status !== 'pending') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cette notification a déjà été traitée',
+            ], 422);
+        }
+
+        $notification->update([
+            'status' => $validated['status'],
+            'read_at' => now(),
+        ]);
+
+        if ($validated['status'] === 'accepted') {
+            ProjectUser::where('project_id', $notification->project_id)
+                ->where('user_id', $user->id)
+                ->update(['is_accepted' => true]);
+            
+            $message = 'Vous avez accepté l\'assignation au projet';
+        } else {
+            ProjectUser::where('project_id', $notification->project_id)
+                ->where('user_id', $user->id)
+                ->delete();
+            
+            $message = 'Vous avez refusé l\'assignation au projet';
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => $message,
+            'data' => $notification
+        ]);
     }
 
     /**
@@ -1027,34 +1140,37 @@ class ProjectController extends Controller
 
     /**
      * @OA\Delete(
-     *     path="/api/project-users/{id}",
-     *     summary="Retirer un utilisateur d'un projet",
-     *     tags={"Project Users"},
+     *     path="/api/projects/{projectId}/workers/{userId}",
+     *     summary="Retirer un worker d'un projet (Admin/Manager)",
+     *     tags={"Worker Notifications"},
      *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         required=true,
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Utilisateur retiré",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean", example=true)
-     *         )
-     *     )
+     *     @OA\Parameter(name="projectId", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="userId", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Worker retiré du projet")
      * )
      */
-    public function removeUser($id)
+    public function removeWorker($projectId, $userId)
     {
-        $projectUser = ProjectUser::findOrFail($id);
+        $user = auth()->user();
 
-        $projectUser->delete();
+        if (!$user->hasRole('admin', 'api') && !$user->hasRole('manager', 'api')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Action réservée aux admins et managers',
+            ], 403);
+        }
+
+        ProjectUser::where('project_id', $projectId)
+            ->where('user_id', $userId)
+            ->delete();
+
+        WorkerNotification::where('project_id', $projectId)
+            ->where('user_id', $userId)
+            ->delete();
 
         return response()->json([
             'success' => true,
-            'message' => 'Utilisateur retiré du projet',
+            'message' => 'Worker retiré du projet',
         ]);
     }
 
@@ -1268,6 +1384,78 @@ class ProjectController extends Controller
                 'from' => $projectUsers->firstItem(),
                 'to' => $projectUsers->lastItem(),
             ]
+        ]);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/worker/my-projects",
+     *     summary="Voir les projets où je suis assigné et que j'ai acceptés (Worker)",
+     *     tags={"Worker Notifications"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Liste des projets acceptés",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="id", type="integer"),
+     *                     @OA\Property(property="project_user_id", type="integer"),
+     *                     @OA\Property(
+     *                         property="project",
+     *                         type="object",
+     *                         @OA\Property(property="id", type="integer"),
+     *                         @OA\Property(property="name", type="string"),
+     *                         @OA\Property(property="uuid", type="string"),
+     *                         @OA\Property(property="status", type="string")
+     *                     ),
+     *                     @OA\Property(property="task", type="string"),
+     *                     @OA\Property(property="note", type="integer"),
+     *                     @OA\Property(property="start_at", type="string", format="date"),
+     *                     @OA\Property(property="end_at", type="string", format="date"),
+     *                     @OA\Property(property="assigned_at", type="string", format="date-time")
+     *                 )
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function myWorkerProjects()
+    {
+        $user = auth()->user();
+
+        $myProjects = ProjectUser::where('user_id', $user->id)
+            ->where('is_accepted', true)
+            ->with('project')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'total' => $myProjects->count(),
+            'data' => $myProjects->map(function ($pu) {
+                return [
+                    'id' => $pu->id,
+                    'project_user_id' => $pu->id,
+                    'project' => [
+                        'id' => $pu->project?->id,
+                        'name' => $pu->project?->name,
+                        'uuid' => $pu->project?->uuid,
+                        'status' => $pu->project?->status,
+                        'amount' => $pu->project?->amount,
+                        'started_at' => $pu->project?->started_at,
+                        'ended_at' => $pu->project?->ended_at,
+                    ],
+                    'task' => $pu->task,
+                    'note' => $pu->note,
+                    'start_at' => $pu->start_at,
+                    'end_at' => $pu->end_at,
+                    'assigned_at' => $pu->created_at,
+                ];
+            })
         ]);
     }
 
@@ -1549,6 +1737,43 @@ class ProjectController extends Controller
                 'created_at' => $project->created_at,
                 'updated_at' => $project->updated_at,
             ]
+        ]);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/worker/my-notifications",
+     *     summary="Voir mes notifications d'assignation (Worker)",
+     *     tags={"Worker Notifications"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(response=200, description="Liste des notifications")
+     * )
+     */
+    public function myNotifications()
+    {
+        $user = auth()->user();
+
+        $notifications = WorkerNotification::where('user_id', $user->id)
+            ->with('project')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $notifications->map(function ($notif) {
+                return [
+                    'id' => $notif->id,
+                    'project' => [
+                        'id' => $notif->project?->id,
+                        'name' => $notif->project?->name,
+                        'uuid' => $notif->project?->uuid,
+                    ],
+                    'message' => $notif->message,
+                    'status' => $notif->status,
+                    'read_at' => $notif->read_at,
+                    'created_at' => $notif->created_at,
+                ];
+            })
         ]);
     }
 }

@@ -1038,6 +1038,59 @@
                 ]
             }
         },
+        "/api/properties/{propertyId}/investment": {
+            "post": {
+                "tags": [
+                    "Building Investments"
+                ],
+                "summary": "Créer ou mettre à jour un investissement",
+                "operationId": "6f04b21b1bce3aa5269f9a8a51f1225b",
+                "parameters": [
+                    {
+                        "name": "propertyId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "growth_in_market_value",
+                                    "annual_expense",
+                                    "mount_income"
+                                ],
+                                "properties": {
+                                    "growth_in_market_value": {
+                                        "type": "number",
+                                        "example": 5.5
+                                    },
+                                    "annual_expense": {
+                                        "type": "number",
+                                        "example": 1500000
+                                    },
+                                    "mount_income": {
+                                        "type": "number",
+                                        "example": 3000000
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Investissement créé/mis à jour"
+                    }
+                }
+            }
+        },
         "/api/admin/commissions": {
             "post": {
                 "tags": [
@@ -1773,615 +1826,6 @@
                 ]
             }
         },
-        "/api/jobs": {
-            "get": {
-                "tags": [
-                    "Jobs"
-                ],
-                "summary": "Lister les jobs du travailleur connecté",
-                "operationId": "9538d30d530d4c3680ea31fe228944e2",
-                "responses": {
-                    "200": {
-                        "description": "Liste des jobs",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "properties": {
-                                                    "id": {
-                                                        "type": "integer",
-                                                        "example": 1
-                                                    },
-                                                    "name": {
-                                                        "type": "string",
-                                                        "example": "Construction Villa Tagidor"
-                                                    },
-                                                    "start_date": {
-                                                        "type": "string",
-                                                        "example": "2026-03-10"
-                                                    },
-                                                    "end_date": {
-                                                        "type": "string",
-                                                        "example": "2026-06-30"
-                                                    },
-                                                    "workers_found": {
-                                                        "type": "integer",
-                                                        "example": 3
-                                                    }
-                                                },
-                                                "type": "object"
-                                            }
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/api/jobs/{id}": {
-            "get": {
-                "tags": [
-                    "Jobs"
-                ],
-                "summary": "Voir les détails d'un job",
-                "operationId": "6de31489b41fa51255446ac2ad15b7fb",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "ID du job",
-                        "required": true,
-                        "schema": {
-                            "type": "integer",
-                            "example": 1
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Détails du job",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "data": {
-                                            "properties": {
-                                                "id": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                },
-                                                "name": {
-                                                    "type": "string",
-                                                    "example": "Construction Villa Tagidor"
-                                                },
-                                                "description": {
-                                                    "type": "string",
-                                                    "example": "Construction d'une villa R+2"
-                                                },
-                                                "start_date": {
-                                                    "type": "string",
-                                                    "example": "2026-03-10"
-                                                },
-                                                "end_date": {
-                                                    "type": "string",
-                                                    "example": "2026-06-30"
-                                                },
-                                                "localisation": {
-                                                    "properties": {
-                                                        "id": {
-                                                            "type": "integer",
-                                                            "example": 1
-                                                        },
-                                                        "name": {
-                                                            "type": "string",
-                                                            "example": "Douala"
-                                                        }
-                                                    },
-                                                    "type": "object"
-                                                },
-                                                "workers": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "properties": {
-                                                            "id": {
-                                                                "type": "integer",
-                                                                "example": 28
-                                                            },
-                                                            "firstName": {
-                                                                "type": "string",
-                                                                "example": "Jean"
-                                                            },
-                                                            "lastName": {
-                                                                "type": "string",
-                                                                "example": "Dupont"
-                                                            },
-                                                            "worker": {
-                                                                "type": "string",
-                                                                "example": "architect"
-                                                            },
-                                                            "lot": {
-                                                                "type": "string",
-                                                                "example": "Gros oeuvre"
-                                                            },
-                                                            "note": {
-                                                                "type": "integer",
-                                                                "example": 8
-                                                            }
-                                                        },
-                                                        "type": "object"
-                                                    }
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Job non trouvé",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Job non trouvé"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            },
-            "delete": {
-                "tags": [
-                    "Jobs"
-                ],
-                "summary": "Supprimer un job",
-                "operationId": "5537fd998abc3a62eef8c09e4ae52000",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer",
-                            "example": 1
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Job supprimé",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Job supprimé avec succès"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/api/jobs/workers/note": {
-            "patch": {
-                "tags": [
-                    "Jobs"
-                ],
-                "summary": "Noter un travailleur dans un job",
-                "operationId": "c6cfea7225590cf29045009d490c4eb3",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "job_id",
-                                    "user_id",
-                                    "note"
-                                ],
-                                "properties": {
-                                    "job_id": {
-                                        "type": "integer",
-                                        "example": 1
-                                    },
-                                    "user_id": {
-                                        "type": "integer",
-                                        "example": 28
-                                    },
-                                    "note": {
-                                        "description": "Note entre 0 et 10",
-                                        "type": "integer",
-                                        "maximum": 10,
-                                        "minimum": 0,
-                                        "example": 8
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Note ajoutée avec succès",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Note ajoutée avec succès"
-                                        },
-                                        "data": {
-                                            "properties": {
-                                                "id": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                },
-                                                "job_id": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                },
-                                                "user_id": {
-                                                    "type": "integer",
-                                                    "example": 28
-                                                },
-                                                "note": {
-                                                    "type": "integer",
-                                                    "example": 8
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Erreur de validation",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "La note doit être un entier entre 0 et 10"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Travailleur non trouvé dans ce job",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Travailleur non trouvé dans ce job"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/api/jobs/{jobId}/workers": {
-            "post": {
-                "tags": [
-                    "Jobs"
-                ],
-                "summary": "Ajouter un travailleur à un job",
-                "operationId": "b2411a22d1e76d15c36af500e99c502a",
-                "parameters": [
-                    {
-                        "name": "jobId",
-                        "in": "path",
-                        "description": "ID du job",
-                        "required": true,
-                        "schema": {
-                            "type": "integer",
-                            "example": 1
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "user_id"
-                                ],
-                                "properties": {
-                                    "user_id": {
-                                        "type": "integer",
-                                        "example": 28
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Travailleur ajouté avec succès",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Travailleur ajouté avec succès"
-                                        },
-                                        "data": {
-                                            "properties": {
-                                                "id": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                },
-                                                "job_id": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                },
-                                                "user_id": {
-                                                    "type": "integer",
-                                                    "example": 28
-                                                },
-                                                "note": {
-                                                    "type": "string",
-                                                    "example": null,
-                                                    "nullable": true
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Erreur de validation",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Le travailleur n'est pas dans la même ville que le job"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Job ou travailleur non trouvé",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Job non trouvé"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/api/jobs/{jobId}/available-workers": {
-            "get": {
-                "tags": [
-                    "Jobs"
-                ],
-                "summary": "Lister les travailleurs disponibles pour un job",
-                "operationId": "d0f68d7786476cec5400e7759a71806a",
-                "parameters": [
-                    {
-                        "name": "jobId",
-                        "in": "path",
-                        "description": "ID du job",
-                        "required": true,
-                        "schema": {
-                            "type": "integer",
-                            "example": 1
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Liste des travailleurs disponibles",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "properties": {
-                                                    "id": {
-                                                        "type": "integer",
-                                                        "example": 28
-                                                    },
-                                                    "firstName": {
-                                                        "type": "string",
-                                                        "example": "Jean"
-                                                    },
-                                                    "lastName": {
-                                                        "type": "string",
-                                                        "example": "Dupont"
-                                                    },
-                                                    "email": {
-                                                        "type": "string",
-                                                        "example": "jean@example.com"
-                                                    },
-                                                    "phone": {
-                                                        "type": "string",
-                                                        "example": "+237698765432"
-                                                    },
-                                                    "localisation": {
-                                                        "type": "string",
-                                                        "example": "Douala"
-                                                    },
-                                                    "worker": {
-                                                        "type": "string",
-                                                        "example": "architect"
-                                                    },
-                                                    "lot": {
-                                                        "type": "string",
-                                                        "example": "Gros oeuvre"
-                                                    },
-                                                    "years_of_experience": {
-                                                        "type": "integer",
-                                                        "example": 5
-                                                    },
-                                                    "average_note": {
-                                                        "type": "number",
-                                                        "example": 4.75
-                                                    }
-                                                },
-                                                "type": "object"
-                                            }
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Job non trouvé",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Job non trouvé"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
         "/api/lots": {
             "post": {
                 "tags": [
@@ -2777,6 +2221,395 @@
                 "responses": {
                     "200": {
                         "description": "Paiement supprimé"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/products/payment-plan": {
+            "post": {
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Calculer le plan de paiement et l'investissement pour un produit",
+                "operationId": "4813822cc9a9e135928148a8cd7a8407",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "product_id",
+                                    "purchase_duration",
+                                    "standing"
+                                ],
+                                "properties": {
+                                    "product_id": {
+                                        "type": "integer",
+                                        "example": 41
+                                    },
+                                    "purchase_duration": {
+                                        "type": "integer",
+                                        "example": 24
+                                    },
+                                    "standing": {
+                                        "type": "string",
+                                        "enum": [
+                                            "high",
+                                            "medium",
+                                            "low"
+                                        ],
+                                        "example": "medium"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Plan de paiement et investissement calculés",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Plan de paiement calculé"
+                                        },
+                                        "payment_plan": {
+                                            "properties": {
+                                                "total_cost": {
+                                                    "type": "number",
+                                                    "example": 217900000
+                                                },
+                                                "duration_months": {
+                                                    "type": "integer",
+                                                    "example": 24
+                                                },
+                                                "weekly": {
+                                                    "type": "number",
+                                                    "example": 2273958.33
+                                                },
+                                                "monthly": {
+                                                    "type": "number",
+                                                    "example": 9095833.33
+                                                },
+                                                "quarterly": {
+                                                    "type": "number",
+                                                    "example": 27287500
+                                                },
+                                                "semester": {
+                                                    "type": "number",
+                                                    "example": 54575000
+                                                },
+                                                "annual": {
+                                                    "type": "number",
+                                                    "example": 109150000
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "investment": {
+                                            "properties": {
+                                                "investment_cost": {
+                                                    "type": "number",
+                                                    "example": 217900000
+                                                },
+                                                "growth_in_market_value": {
+                                                    "type": "number",
+                                                    "example": 0
+                                                },
+                                                "total_income": {
+                                                    "properties": {
+                                                        "mount_income": {
+                                                            "type": "number",
+                                                            "example": 0
+                                                        },
+                                                        "percent": {
+                                                            "type": "number",
+                                                            "example": 0
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "annual_expense": {
+                                                    "type": "number",
+                                                    "example": 0
+                                                },
+                                                "annual_net_operating_margin": {
+                                                    "properties": {
+                                                        "mount_margin": {
+                                                            "type": "number",
+                                                            "example": 0
+                                                        },
+                                                        "percent_margin": {
+                                                            "type": "number",
+                                                            "example": 0
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "annual_investment_growth": {
+                                                    "type": "number",
+                                                    "example": 0
+                                                },
+                                                "return_on_investment_period": {
+                                                    "type": "number",
+                                                    "example": null,
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/products/{productId}/land-investment-analysis": {
+            "post": {
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Analyser l'investissement pour un terrain (Land)",
+                "operationId": "0c4481f94646ff7072906f00d3afb28c",
+                "parameters": [
+                    {
+                        "name": "productId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "area",
+                                    "growth_in_market_value",
+                                    "number_conservation_years"
+                                ],
+                                "properties": {
+                                    "area": {
+                                        "description": "Superficie en m²",
+                                        "type": "number",
+                                        "example": 5000
+                                    },
+                                    "growth_in_market_value": {
+                                        "description": "Croissance de la valeur marchande en %",
+                                        "type": "number",
+                                        "example": 5.5
+                                    },
+                                    "number_conservation_years": {
+                                        "description": "Nombre d'années de conservation",
+                                        "type": "integer",
+                                        "example": 10
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Analyse d'investissement calculée",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Analyse d'investissement calculée"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "purchase_price": {
+                                                    "description": "Prix d'achat total (unit_price * area)",
+                                                    "type": "number",
+                                                    "example": 25000000
+                                                },
+                                                "growth_in_market_value": {
+                                                    "description": "Croissance de la valeur marchande en %",
+                                                    "type": "number",
+                                                    "example": 5.5
+                                                },
+                                                "number_conservation_years": {
+                                                    "type": "integer",
+                                                    "example": 10
+                                                },
+                                                "price_based_number_of_years": {
+                                                    "description": "Prix basé sur le nombre d'années (number_conservation_years * growth_in_market_value * unit_price)",
+                                                    "type": "number",
+                                                    "example": 2750
+                                                },
+                                                "maturity_amount": {
+                                                    "description": "Montant à maturité (price_based_number_of_years * area)",
+                                                    "type": "number",
+                                                    "example": 13750000
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Le produit n'est pas un terrain (Land)"
+                    }
+                }
+            }
+        },
+        "/api/products/{productId}/propose-land": {
+            "post": {
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Proposer un terrain (Land) comme produit associé",
+                "operationId": "f53d97ebf12202e4ee68965499209dc3",
+                "parameters": [
+                    {
+                        "name": "productId",
+                        "in": "path",
+                        "description": "ID du produit principal",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "land_product_id"
+                                ],
+                                "properties": {
+                                    "land_product_id": {
+                                        "description": "ID du produit Land à proposer",
+                                        "type": "integer",
+                                        "example": 38
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Land proposé avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Land proposé avec succès"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/products/{productId}/propose-property": {
+            "post": {
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Proposer une propriété (Property) comme produit associé",
+                "operationId": "e3094d2c931bafa1639ee22aee64cf36",
+                "parameters": [
+                    {
+                        "name": "productId",
+                        "in": "path",
+                        "description": "ID du produit principal",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "property_product_id"
+                                ],
+                                "properties": {
+                                    "property_product_id": {
+                                        "description": "ID du produit Property à proposer",
+                                        "type": "integer",
+                                        "example": 41
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Property proposée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Property proposée avec succès"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -4368,6 +4201,10 @@
             "description": "Admin"
         },
         {
+            "name": "Building Investments",
+            "description": "Building Investments"
+        },
+        {
             "name": "Commissions",
             "description": "Commissions"
         },
@@ -4380,16 +4217,16 @@
             "description": "Authentification Google"
         },
         {
-            "name": "Jobs",
-            "description": "Jobs"
-        },
-        {
             "name": "Lots",
             "description": "Lots"
         },
         {
             "name": "Payment Salespersons",
             "description": "Payment Salespersons"
+        },
+        {
+            "name": "Products",
+            "description": "Products"
         },
         {
             "name": "Projects",

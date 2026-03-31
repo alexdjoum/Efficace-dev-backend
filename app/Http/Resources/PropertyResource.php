@@ -33,6 +33,7 @@ class PropertyResource extends JsonResource
             'has_garden' => $this->has_garden,
             'has_pool' => $this->has_pool,
             'basement_area' => $this->basement_area,
+            'productable' => $this->productable,
             'ground_floor_area' => $this->ground_floor_area,
             'estimated_payment' => $this->estimated_payment,
         ];
@@ -92,6 +93,14 @@ class PropertyResource extends JsonResource
 
     protected function getInvestment()
     {
+        if (!($property instanceof \App\Models\Property) || $property->type !== 'building') {
+            return null;
+        }
+
+        if (isset($property->investment)) {
+            return $property->investment;
+        }
+
         $mediumFinance = $this->buildingFinances->firstWhere('type_of_standing', 'medium');
 
         if (!$mediumFinance) {

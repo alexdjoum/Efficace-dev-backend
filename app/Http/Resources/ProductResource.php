@@ -35,6 +35,10 @@ class ProductResource extends JsonResource
             'updated_at' => $this->updated_at,
         ];
 
+        if (isset($property->investment)) {
+            $data['investment'] = $property->investment;
+        }
+
         if ($this->productable) {
             if ($this->productable_type === 'App\\Models\\Land') {
                 $data['productable'] = $this->getLandData();
@@ -117,60 +121,80 @@ class ProductResource extends JsonResource
 
     protected function getProposedProducts()
     {
-        if ($this->proposedProducts->isEmpty()) {
+        if (!$this->proposedProducts || $this->proposedProducts->isEmpty()) {
             return [];
         }
 
         $currentLocale = app()->getLocale();
         $shouldTranslate = $currentLocale !== 'fr';
 
-        return $this->proposedProducts->map(function ($proposedProduct) use ($shouldTranslate) {
-            $data = [
-                'id' => $proposedProduct->id,
-                'reference' => $proposedProduct->reference,
-                'description' => $shouldTranslate 
-                    ? $this->translator->translate($proposedProduct->description) 
-                    : $proposedProduct->description,
-                'for_sale' => $proposedProduct->for_sale,
-                'for_rent' => $proposedProduct->for_rent,
-                'unit_price' => $proposedProduct->unit_price,
-                'total_price' => $proposedProduct->total_price,
-                'status' => $proposedProduct->status,
-                'status_translated' => $this->getTranslatedStatus($proposedProduct),
-                'productable_type' => $proposedProduct->productable_type,
-            ];
-
-            if ($proposedProduct->productable_type === 'App\\Models\\Land') {
-                $land = $proposedProduct->productable;
-                $data['productable'] = [
-                    'id' => $land->id,
-                    'area' => $land->area,
-                    'land_title' => $shouldTranslate 
-                        ? $this->translator->translate($land->land_title) 
-                        : $land->land_title,
-                    'images' => $land->getMedia('land')->map(fn($media) => $media->getUrl()),
-                    'kml_file' => $this->getKmlFile($land),
-                    'location' => $this->getLocation($land->location),
-                    'fragments' => $land->fragments,
-                    'video_lands' => $land->videoLands,
+        try {
+            $result = $this->proposedProducts->map(function ($proposedProduct) use ($shouldTranslate) {
+                
+                $data = [
+                    'id' => $proposedProduct->id,
+                    'reference' => $proposedProduct->reference,
+                    'description' => $shouldTranslate 
+                        ? $this->translator->translate($proposedProduct->description) 
+                        : $proposedProduct->description,
+                    'for_sale' => $proposedProduct->for_sale,
+                    'for_rent' => $proposedProduct->for_rent,
+                    'unit_price' => $proposedProduct->unit_price,
+                    'total_price' => $proposedProduct->total_price,
+                    'status' => $proposedProduct->status,
+                    'status_translated' => $this->getTranslatedStatus($proposedProduct),
+                    'productable_type' => $proposedProduct->productable_type,
                 ];
-            } elseif ($proposedProduct->productable_type === 'App\\Models\\Property') {
-                $property = $proposedProduct->productable;
-                $data['productable'] = [
-                    'id' => $property->id,
-                    'title' => $shouldTranslate 
-                        ? $this->translator->translate($property->title) 
-                        : $property->title,
-                    'type' => $property->type,
-                    'type_translated' => __('attributes.' . $property->type),
-                    'building_finances' => $this->getBuildingFinances($property),
-                    'part_of_buildings' => $this->getPartOfBuildingsForProperty($property, $shouldTranslate),
-                    'location' => $this->getLocation($property->location),
-                ];
-            }
 
-            return $data;
-        });
+                if ($proposedProduct->productable_type === 'App\\Models\\Land') {
+                    $land = $proposedProduct->productable;
+                    $data['productable'] = [
+                        'id' => $land->id,
+                        'area' => $land->area,
+                        'land_title' => $shouldTranslate 
+                            ? $this->translator->translate($land->land_title) 
+                            : $land->land_title,
+                        'images' => $land->getMedia('land')->map(fn($media) => $media->getUrl()),
+                        'kml_file' => $this->getKmlFile($land),
+                        'location' => $this->getLocation($land->location),
+                        'fragments' => $land->fragments,
+                        'video_lands' => $land->videoLands,
+                    ];
+                } elseif ($proposedProduct->productable_type === 'App\\Models\\Property') {
+                    $property = $proposedProduct->productable;
+                    $data['productable'] = [
+                        'id' => $property->id,
+                        'title' => $shouldTranslate 
+                            ? $this->translator->translate($property->title) 
+                            : $property->title,
+                        'type' => $property->type,
+                        'type_translated' => __('attributes.' . $property->type),
+                        'location' => $this->getLocation($property->location),
+                    ];
+                    
+                    if ($property->type === 'building') {
+                        $data['productable']['building_finances'] = $this->getBuildingFinances($property);
+                        $data['productable']['part_of_buildings'] = $this->getPartOfBuildingsForProperty($property, $shouldTranslate);
+                    } else {
+                        $data['productable']['bedrooms'] = $property->bedrooms;
+                        $data['productable']['bathrooms'] = $property->bathrooms;
+                        $data['productable']['number_of_salons'] = $property->number_of_salons;
+                    }
+                }
+
+                return $data;
+            })->toArray();
+            
+            return $result;
+            
+        } catch (\Exception $e) {
+            \Log::error('Error in getProposedProducts', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'product_id' => $this->id
+            ]);
+            return [];
+        }
     }
 
     protected function getKmlFile($land)
@@ -232,6 +256,14 @@ class ProductResource extends JsonResource
 
     protected function getInvestment($property)
     {
+        // if (!($property instanceof \App\Models\Property) || $property->type !== 'building') {
+        //     return null;
+        // }
+
+        if (isset($property->investment)) {
+            return $property->investment;
+        }
+        
         $mediumFinance = $property->buildingFinances->firstWhere('type_of_standing', 'medium');
 
         if (!$mediumFinance) {
@@ -250,20 +282,24 @@ class ProductResource extends JsonResource
 
         $growthInMarketValue = 0;
         $annualExpense = 0;
+        $mountIncome = 0; 
 
-        if ($mediumFinance->buildingInvestment) {
-            $investment = $mediumFinance->buildingInvestment;
+        if ($property->buildingInvestment) {
+            $investment = $property->buildingInvestment;
             $growthInMarketValue = round((float) $investment->growth_in_market_value, 2);
             $annualExpense = round((float) $investment->annual_expense, 2);
+            $mountIncome = round((float) $investment->mount_income, 2); 
         }
-
-        $mountIncome = 0;
-        foreach ($property->partOfBuildings as $part) {
-            if ($part->mount_of_part && $part->number_of_part) {
-                $mountIncome += (float) $part->mount_of_part * (int) $part->number_of_part;
+        
+        if ($mountIncome == 0) {
+            foreach ($property->partOfBuildings as $part) {
+                if ($part->mount_of_part && $part->number_of_part) {
+                    $mountIncome += (float) $part->mount_of_part * (int) $part->number_of_part;
+                }
             }
+            $mountIncome = round($mountIncome, 2);
         }
-        $mountIncome = round($mountIncome, 2);
+        
         $percentIncome = $investmentCost > 0 ? round(($mountIncome * 100) / $investmentCost, 2) : 0;
 
         $mountMargin = round($mountIncome - $annualExpense, 2);

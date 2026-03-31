@@ -53,6 +53,7 @@ Route::match(['PUT', 'PATCH'], '/properties/{property}', [\App\Http\Controllers\
 Route::get('lands', [\App\Http\Controllers\LandController::class, 'index']);
 Route::middleware(['auth:api', 'role:admin'])->post('admin/users/create', [\App\Http\Controllers\UserController::class, 'createUser']);
 Route::get('products', [\App\Http\Controllers\ProductController::class, 'index']);
+Route::post('products/payment-plan', [\App\Http\Controllers\ProductController::class, 'calculatePaymentPlan']);
 Route::patch('products/{product}', [\App\Http\Controllers\ProductController::class, 'update']);
 Route::get('/appointments', [\App\Http\Controllers\AppointmentController::class, 'index']);
 Route::post('/appointments', [\App\Http\Controllers\AppointmentController::class, 'store']);
@@ -78,6 +79,8 @@ Route::get('/lots', [\App\Http\Controllers\LotController::class, 'index']);
 Route::get('/projects/{project}', [\App\Http\Controllers\ProjectController::class, 'show']);
 Route::get('/worker/accepted-projects', [\App\Http\Controllers\ProjectController::class, 'workerAcceptedProjects']);
 
+Route::post('products/{productId}/land-investment-analysis', [\App\Http\Controllers\ProductController::class, 'landInvestmentAnalysis']);
+
 Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::post('/admin/create-user', [\App\Http\Controllers\AuthController::class, 'createAdminUser']);
     Route::get('/admin/users', [\App\Http\Controllers\AuthController::class, 'listAdminUsers']);
@@ -88,6 +91,8 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::get('/admin/contracts/{id}', [\App\Http\Controllers\ContractController::class, 'showForAdmin']);
     Route::get('/admin/contracts', [\App\Http\Controllers\ContractController::class, 'listAll']);
     Route::delete('/admin/contracts/{id}', [\App\Http\Controllers\ContractController::class, 'destroy']);
+    Route::post('/products/{productId}/propose-land', [\App\Http\Controllers\ProductController::class, 'proposeLand']);
+    Route::post('/products/{productId}/propose-property', [\App\Http\Controllers\ProductController::class, 'proposeProperty']);
 });
 
 Route::middleware(['auth', 'verified', 'role:engin'])->group(function () {
@@ -182,18 +187,18 @@ Route::post('/worker/availabilities/filter', [\App\Http\Controllers\WorkerAvaila
 Route::patch('/worker/availabilities/{id}', [\App\Http\Controllers\WorkerAvailabilityController::class, 'update']);
 Route::delete('/worker/availabilities/{id}', [\App\Http\Controllers\WorkerAvailabilityController::class, 'destroy']);
 
-Route::get('/jobs/{jobId}/available-workers', [\App\Http\Controllers\JobController::class, 'availableWorkers']);
-Route::post('/jobs', [\App\Http\Controllers\JobController::class, 'store']);
-Route::get('/jobs', [\App\Http\Controllers\JobController::class, 'index']);
-Route::get('/jobs/{id}', [\App\Http\Controllers\JobController::class, 'show']);
-Route::delete('/jobs/{id}', [\App\Http\Controllers\JobController::class, 'destroy']);
+// Route::get('/jobs/{jobId}/available-workers', [\App\Http\Controllers\JobController::class, 'availableWorkers']);
+// Route::post('/jobs', [\App\Http\Controllers\JobController::class, 'store']);
+// Route::get('/jobs', [\App\Http\Controllers\JobController::class, 'index']);
+// Route::get('/jobs/{id}', [\App\Http\Controllers\JobController::class, 'show']);
+// Route::delete('/jobs/{id}', [\App\Http\Controllers\JobController::class, 'destroy']);
 
-Route::patch('/jobs/workers/note', [\App\Http\Controllers\JobController::class, 'addNote']);
+// Route::patch('/jobs/workers/note', [\App\Http\Controllers\JobController::class, 'addNote']);
 
 Route::get('/localisation-workers', [\App\Http\Controllers\LocalisationWorkerController::class, 'index']);
 
 Route::get('/workers', [\App\Http\Controllers\UserController::class, 'listWorkers']);
-Route::post('/jobs/{jobId}/workers', [\App\Http\Controllers\JobController::class, 'addWorker']);
+// Route::post('/jobs/{jobId}/workers', [\App\Http\Controllers\JobController::class, 'addWorker']);
 Route::post('/lots', [\App\Http\Controllers\LotController::class, 'index']);
 Route::post('/lots/create', [\App\Http\Controllers\LotController::class, 'store']);
 Route::get('/lots/main', [\App\Http\Controllers\LotController::class, 'mainLots']);

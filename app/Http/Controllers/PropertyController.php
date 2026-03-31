@@ -42,7 +42,7 @@ class PropertyController extends Controller
 
         $query = Property::with([
             'partOfBuildings.typeOfPartOfTheBuilding',
-            'buildingFinances.buildingInvestment',
+            'buildingInvestment',
             'location.address',
         ]);
 
@@ -108,7 +108,8 @@ class PropertyController extends Controller
     {
         $property = Property::with([
             'partOfBuildings.typeOfPartOfTheBuilding',
-            'buildingFinances.buildingInvestment',
+            'buildingInvestment', 
+            'buildingFinances', 
             'operatingRatios',
             'location.address',
             'location.media',
@@ -170,11 +171,13 @@ class PropertyController extends Controller
                 
                 $growthInMarketValue = 0;
                 $annualExpense = 0;
+                $mountIncomeFromInvestment = 0; 
                 
-                if ($mediumFinance->buildingInvestment) {
-                    $investment = $mediumFinance->buildingInvestment;
+                if ($property->buildingInvestment) {
+                    $investment = $property->buildingInvestment;
                     $growthInMarketValue = round((float) $investment->growth_in_market_value, 2);
                     $annualExpense = round((float) $investment->annual_expense, 2);
+                    $mountIncomeFromInvestment = round((float) $investment->mount_income, 2); 
                 }
                 
                 $mountIncome = 0;
@@ -186,7 +189,12 @@ class PropertyController extends Controller
                     $mountIncome += (float) $ratio->montant * $count;
                 }
                 
-                $mountIncome = round($mountIncome, 2);
+                if ($mountIncomeFromInvestment > 0) {
+                    $mountIncome = $mountIncomeFromInvestment;
+                } else {
+                    $mountIncome = round($mountIncome, 2);
+                }
+                
                 $percentIncome = $investmentCost > 0 ? round(($mountIncome * 100) / $investmentCost, 2) : 0;
                 
                 $mountMargin = round($mountIncome - $annualExpense, 2);
@@ -252,7 +260,6 @@ class PropertyController extends Controller
             'message' => 'Détails de la propriété',
             'data' => $property
         ]);
-        // return response()->json($property);
     }
 
     /**

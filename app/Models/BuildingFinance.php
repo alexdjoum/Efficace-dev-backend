@@ -63,11 +63,6 @@ class BuildingFinance extends Model
         );
     }
 
-    public function buildingInvestment() 
-    {
-        return $this->hasOne(BuildingInvestment::class);
-    }
-
     public function getTranslatedStandingAttribute()
     {
         return __('attributes.' . $this->type_of_standing);

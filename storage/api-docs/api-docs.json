@@ -2091,6 +2091,193 @@
                 }
             }
         },
+        "/api/order-customers": {
+            "get": {
+                "tags": [
+                    "Order Customers"
+                ],
+                "summary": "Liste des commandes (Admin voit tout, Client voit les siennes)",
+                "operationId": "0439426f75744ca4eb30f017aebb64d1",
+                "responses": {
+                    "200": {
+                        "description": "Liste des commandes"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Order Customers"
+                ],
+                "summary": "Créer une commande client",
+                "operationId": "aee3f70c79e443490a22648c3999f253",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "phone_number",
+                                    "budget",
+                                    "localization",
+                                    "type"
+                                ],
+                                "properties": {
+                                    "phone_number": {
+                                        "type": "string",
+                                        "example": "+237670000000"
+                                    },
+                                    "budget": {
+                                        "type": "number",
+                                        "example": 50000000
+                                    },
+                                    "localization": {
+                                        "type": "string",
+                                        "example": "Douala, Akwa"
+                                    },
+                                    "land_area": {
+                                        "type": "number",
+                                        "example": 5000
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Je recherche un terrain"
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "land",
+                                            "building",
+                                            "city"
+                                        ],
+                                        "example": "land"
+                                    },
+                                    "purchase_time": {
+                                        "type": "string",
+                                        "example": "6 mois"
+                                    },
+                                    "building_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "commercial",
+                                            "office",
+                                            "hotel",
+                                            "furnished_apartment",
+                                            "apartment_rental"
+                                        ]
+                                    },
+                                    "number_of_apartments": {
+                                        "type": "integer",
+                                        "example": 20
+                                    },
+                                    "function": {
+                                        "type": "string",
+                                        "enum": [
+                                            "ressort",
+                                            "social_housing",
+                                            "commercial_housing",
+                                            "business_district",
+                                            "residential_area",
+                                            "gate_community"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Commande créée avec succès"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/order-customers/my-orders": {
+            "get": {
+                "tags": [
+                    "Order Customers"
+                ],
+                "summary": "Mes commandes (Client)",
+                "operationId": "f73cc5f502c8df1991658ea18cb6c499",
+                "responses": {
+                    "200": {
+                        "description": "Liste de mes commandes"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/order-customers/{id}": {
+            "get": {
+                "tags": [
+                    "Order Customers"
+                ],
+                "summary": "Détails d'une commande",
+                "operationId": "c9420c1048c319547fb1b1c88ba3f3c0",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Détails de la commande"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Order Customers"
+                ],
+                "summary": "Supprimer une commande (Admin uniquement)",
+                "operationId": "b4412da7bc1b0b6f2e38f98f13be1592",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Commande supprimée avec succès"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/admin/payment-salespersons": {
             "post": {
                 "tags": [
@@ -4219,6 +4406,10 @@
         {
             "name": "Lots",
             "description": "Lots"
+        },
+        {
+            "name": "Order Customers",
+            "description": "Order Customers"
         },
         {
             "name": "Payment Salespersons",

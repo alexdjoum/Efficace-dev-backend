@@ -158,6 +158,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/request-for-sales', [\App\Http\Controllers\RequestForSaleController::class, 'store']);
     Route::get('/request-for-sales/my-requests', [\App\Http\Controllers\RequestForSaleController::class, 'myRequests']);
     Route::delete('/request-for-sales/{id}', [\App\Http\Controllers\RequestForSaleController::class, 'destroy']);
+    Route::get('order-customers/my-orders', [\App\Http\Controllers\OrderCustomerController::class, 'myOrders']);
+    Route::apiResource('order-customers', \App\Http\Controllers\OrderCustomerController::class);
     
 });
 

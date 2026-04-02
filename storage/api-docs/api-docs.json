@@ -3767,6 +3767,99 @@
                 ]
             }
         },
+        "/api/projects/commercial/sold": {
+            "get": {
+                "tags": [
+                    "Projects"
+                ],
+                "summary": "Liste des projets vendus par un commercial",
+                "operationId": "73cb75203aaee8376e25e748384656fd",
+                "responses": {
+                    "200": {
+                        "description": "Liste des projets vendus",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Liste des projets vendus"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Projet Résidentiel Akwa"
+                                                    },
+                                                    "product_reference": {
+                                                        "type": "string",
+                                                        "example": "PROD-123456"
+                                                    },
+                                                    "client_name": {
+                                                        "type": "string",
+                                                        "example": "Jean Dupont"
+                                                    },
+                                                    "sale_amount": {
+                                                        "type": "number",
+                                                        "example": 150000000
+                                                    },
+                                                    "sold_at": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2026-03-15 10:30:00"
+                                                    },
+                                                    "commission": {
+                                                        "type": "number",
+                                                        "example": 7500000
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "statistics": {
+                                            "properties": {
+                                                "total_projects_sold": {
+                                                    "type": "integer",
+                                                    "example": 15
+                                                },
+                                                "total_sales_amount": {
+                                                    "type": "number",
+                                                    "example": 2250000000
+                                                },
+                                                "total_commissions": {
+                                                    "type": "number",
+                                                    "example": 112500000
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Accès réservé aux commerciaux"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/projects/{projectId}/assign-engin": {
             "post": {
                 "tags": [

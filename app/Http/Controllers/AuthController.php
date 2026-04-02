@@ -821,19 +821,32 @@ class AuthController extends Controller
     
             }
 
-            $role = \Spatie\Permission\Models\Role::where('name', $assignedRole)
-                ->where('guard_name', 'api')
-                ->first();
+            try {
+                $role = \Spatie\Permission\Models\Role::where('name', $assignedRole)
+                    ->where('guard_name', 'api')
+                    ->firstOrFail();
                 
-            if (!$role) {
+                $user->assignRole($assignedRole);
+                
+            } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
                 DB::rollBack();
+                
+                \Log::error('Rôle manquant lors de l\'inscription', [
+                    'assignedRole' => $assignedRole,
+                    'user_email' => $validated['email'],
+                    'lot_id' => $validated['lot_id'] ?? null,
+                ]);
+                
                 return response()->json([
                     'success' => false,
-                    'message' => "Le rôle '{$assignedRole}' n'existe pas dans le système",
+                    'message' => "Le rôle '{$assignedRole}' n'existe pas dans le système. Veuillez contacter l'administrateur.",
+                    'debug' => [
+                        'role_recherché' => $assignedRole,
+                        'roles_disponibles' => \Spatie\Permission\Models\Role::where('guard_name', 'api')
+                            ->pluck('name')->toArray()
+                    ]
                 ], 500);
             }
-            
-            $user->assignRole($assignedRole);
 
             if ($isEngin) {
                 $user->engin()->create([

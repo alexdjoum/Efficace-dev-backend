@@ -1197,9 +1197,16 @@ class ProjectController extends Controller
             ->pluck('user_id')
             ->unique();
 
-        $workers = User::whereIn('id', $availableWorkerIds)
-            ->whereHas('contact', function ($query) use ($project) {
-                $query->where('localisation_worker_id', $project->localisation_worker_id);
+        $workers = User::where(function ($query) use ($availableWorkerIds, $project) {
+                $query->whereIn('id', $availableWorkerIds)
+                    ->whereHas('contact', function ($q) use ($project) {
+                        $q->where('localisation_worker_id', $project->localisation_worker_id);
+                    });
+            })
+            ->orWhere(function ($query) use ($project) {
+                $query->whereHas('contact', function ($q) use ($project) {
+                    $q->where('localisation_worker_id', $project->localisation_worker_id);
+                });
             })
             ->whereHas('roles', function ($query) {
                 $query->whereNotIn('name', ['admin', 'validator']);
@@ -1208,9 +1215,12 @@ class ProjectController extends Controller
                 'contact.localisationWorker',
                 'accountType.lot',
                 'jobWorkers',
+                'workerAvailabilities' => function ($query) {
+                    $query->latest()->limit(1); 
+                }
             ])
             ->get()
-            ->map(function ($worker) {
+            ->map(function ($worker) use ($availableWorkerIds) {
 
                 $notes = $worker->jobWorkers
                     ->whereNotNull('note')
@@ -1222,6 +1232,10 @@ class ProjectController extends Controller
                 $average = $notes->isNotEmpty()
                     ? round($notes->avg(), 2)
                     : null;
+
+                $isAvailable = $availableWorkerIds->contains($worker->id);
+                
+                $lastAvailability = $worker->workerAvailabilities->first();
 
                 return [
                     'id' => $worker->id,
@@ -1235,10 +1249,17 @@ class ProjectController extends Controller
                     'years_of_experience' => $worker->accountType?->years_of_experience,
                     'total_jobs' => $worker->jobWorkers->count(),
                     'average_note' => $average,
+                    'is_available' => $isAvailable, 
+                    'last_availability' => $lastAvailability ? [
+                        'start_date' => $lastAvailability->start_date,
+                        'end_date' => $lastAvailability->end_date,
+                    ] : null, 
                 ];
             })
             ->sortBy([
                 fn($a, $b) => match(true) {
+                    $a['is_available'] && !$b['is_available'] => -1,
+                    !$a['is_available'] && $b['is_available'] => 1,
                     $a['average_note'] !== null && $b['average_note'] !== null 
                         => $b['average_note'] <=> $a['average_note'],
                     $a['average_note'] !== null 
@@ -1253,6 +1274,7 @@ class ProjectController extends Controller
 
         return response()->json([
             'success' => true,
+            'message' => 'Liste des workers dans la même ville',
             'data' => $workers
         ]);
     }
@@ -1774,6 +1796,116 @@ class ProjectController extends Controller
                     'created_at' => $notif->created_at,
                 ];
             })
+        ]);
+    }
+
+
+    /**
+     * @OA\Get(
+     *     path="/api/projects/commercial/sold",
+     *     summary="Liste des projets vendus par un commercial",
+     *     tags={"Projects"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Liste des projets vendus",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Liste des projets vendus"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="Projet Résidentiel Akwa"),
+     *                     @OA\Property(property="product_reference", type="string", example="PROD-123456"),
+     *                     @OA\Property(property="client_name", type="string", example="Jean Dupont"),
+     *                     @OA\Property(property="sale_amount", type="number", example=150000000),
+     *                     @OA\Property(property="sold_at", type="string", format="date-time", example="2026-03-15 10:30:00"),
+     *                     @OA\Property(property="commission", type="number", example=7500000)
+     *                 )
+     *             ),
+     *             @OA\Property(property="statistics", type="object",
+     *                 @OA\Property(property="total_projects_sold", type="integer", example=15),
+     *                 @OA\Property(property="total_sales_amount", type="number", example=2250000000),
+     *                 @OA\Property(property="total_commissions", type="number", example=112500000)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=403, description="Accès réservé aux commerciaux")
+     * )
+     */
+    public function getCommercialSoldProjects()
+    {
+        $user = auth()->user();
+
+        if (!$user->hasRole('commercial', 'api')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Accès réservé aux commerciaux',
+            ], 403);
+        }
+
+        $payments = \App\Models\PaymentSalesperson::with([
+            'commission.projectSold.project',
+            'commission.projectSold.product',
+            'commission.projectSold.buyer.contact',
+        ])
+        ->where('commercial_id', $user->id)
+        ->get();
+
+        $groupedByProject = $payments->groupBy(function ($payment) {
+            return $payment->commission?->project_sold_id;
+        });
+
+        $soldProjects = $groupedByProject->map(function ($paymentsForProject) {
+            $firstPayment = $paymentsForProject->first();
+            $projectSold = $firstPayment->commission?->projectSold;
+            
+            if (!$projectSold) {
+                return null;
+            }
+
+            $totalCommissionAmount = $paymentsForProject->sum('mount');
+
+            return [
+                'id' => $projectSold->id,
+                'project_id' => $projectSold->project_id,
+                'project_name' => $projectSold->project?->name,
+                'product_id' => $projectSold->product_id,
+                'product_reference' => $projectSold->product?->reference,
+                'product_type' => $projectSold->product?->productable_type,
+                'client_id' => $projectSold->buyer_id,
+                'client_name' => trim(($projectSold->buyer?->contact?->firstName ?? '') . ' ' . ($projectSold->buyer?->contact?->lastName ?? '')),
+                'client_email' => $projectSold->buyer?->email,
+                'sale_amount' => (float) $projectSold->amount,
+                'sold_at' => $projectSold->created_at,
+                'commission_amount' => (float) $totalCommissionAmount,
+                'commission_paid' => (float) ($firstPayment->commission?->getTotalPaidAttribute() ?? 0),
+                'commission_remaining' => (float) ($firstPayment->commission?->getRemainingAmountAttribute() ?? 0),
+            ];
+        })
+        ->filter()
+        ->sortByDesc('sold_at')
+        ->values();
+
+        $totalProjectsSold = $soldProjects->count();
+        $totalSalesAmount = $soldProjects->sum('sale_amount');
+        $totalCommissions = $soldProjects->sum('commission_amount');
+        $totalCommissionsPaid = $soldProjects->sum('commission_paid');
+        $totalCommissionsRemaining = $soldProjects->sum('commission_remaining');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Liste des projets vendus',
+            'data' => $soldProjects,
+            'statistics' => [
+                'total_projects_sold' => $totalProjectsSold,
+                'total_sales_amount' => $totalSalesAmount,
+                'total_commissions' => $totalCommissions,
+                'total_commissions_paid' => $totalCommissionsPaid,
+                'total_commissions_remaining' => $totalCommissionsRemaining,
+            ]
         ]);
     }
 }

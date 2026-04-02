@@ -149,6 +149,7 @@ Route::middleware(['auth', 'verified', 'role:admin,validator'])->group(function 
 Route::middleware(['auth:sanctum', 'role:commercial'])->group(function () {
     Route::get('/commercial/my-commissions', [\App\Http\Controllers\CommissionController::class, 'myCommissions']);
     Route::get('/commercial/my-payments', [\App\Http\Controllers\PaymentSalespersonController::class, 'myPayments']);
+    Route::get('projects/commercial/sold', [\App\Http\Controllers\ProjectController::class, 'getCommercialSoldProjects']);
 });
 
 Route::middleware('auth:sanctum')->group(function () {

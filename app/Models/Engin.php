@@ -12,6 +12,9 @@ class Engin extends Model
         'brandOfTheDevice',
         'feature',
         'localisation_worker_id',
+        'registration_document', 
+        'purchase_invoice', 
+        'last_gear_report', 
     ];
 
     public function user()

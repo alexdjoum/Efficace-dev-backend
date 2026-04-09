@@ -98,6 +98,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
 Route::middleware(['auth', 'verified', 'role:engin'])->group(function () {
     Route::get('/engin/my-notifications', [\App\Http\Controllers\ProjectEnginController::class, 'myNotifications']);
     Route::patch('/engin/notifications/{id}/respond', [\App\Http\Controllers\ProjectEnginController::class, 'respondToNotification']);
+    Route::post('engin/complete-profile', [\App\Http\Controllers\AuthController::class, 'completeEnginProfile']);
 });
 
 Route::middleware(['auth', 'verified', 'role:admin,validator'])->group(function () {
@@ -150,6 +151,8 @@ Route::middleware(['auth:sanctum', 'role:commercial'])->group(function () {
     Route::get('/commercial/my-commissions', [\App\Http\Controllers\CommissionController::class, 'myCommissions']);
     Route::get('/commercial/my-payments', [\App\Http\Controllers\PaymentSalespersonController::class, 'myPayments']);
     Route::get('projects/commercial/sold', [\App\Http\Controllers\ProjectController::class, 'getCommercialSoldProjects']);
+
+    Route::get('projects/commercial/my-projects', [\App\Http\Controllers\ProjectController::class, 'getCommercialProjects']);
 });
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -161,6 +164,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/request-for-sales/{id}', [\App\Http\Controllers\RequestForSaleController::class, 'destroy']);
     Route::get('order-customers/my-orders', [\App\Http\Controllers\OrderCustomerController::class, 'myOrders']);
     Route::apiResource('order-customers', \App\Http\Controllers\OrderCustomerController::class);
+    Route::post('worker/complete-profile', [\App\Http\Controllers\AuthController::class, 'completeWorkerOrEntrepriseProfile']);
+    Route::get('user/profile', [\App\Http\Controllers\AuthController::class, 'getUserProfile']);
     
 });
 

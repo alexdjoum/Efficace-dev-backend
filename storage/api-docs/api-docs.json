@@ -1038,6 +1038,414 @@
                 ]
             }
         },
+        "/api/engin/complete-profile": {
+            "post": {
+                "tags": [
+                    "Engins"
+                ],
+                "summary": "Compléter le profil de l'engin avec documents",
+                "operationId": "f3e6b9828f46b1ed0fcf5edf68c38044",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "profil",
+                                    "nationalIDCard",
+                                    "registration_document",
+                                    "purchase_invoice",
+                                    "last_gear_report"
+                                ],
+                                "properties": {
+                                    "profil": {
+                                        "description": "Photo de profil",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "nationalIDCard": {
+                                        "description": "Carte d'identité nationale (image)",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "registration_document": {
+                                        "description": "Document d'immatriculation (PDF)",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "purchase_invoice": {
+                                        "description": "Facture d'achat (PDF)",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "last_gear_report": {
+                                        "description": "Dernier rapport de contrôle (PDF)",
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Profil complété avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Profil complété avec succès"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Utilisateur n'est pas un engin"
+                    },
+                    "422": {
+                        "description": "Erreur de validation"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/worker/complete-profile": {
+            "post": {
+                "tags": [
+                    "Workers"
+                ],
+                "summary": "Compléter le profil du worker (entreprise ou individuel)",
+                "operationId": "e4496506124c5c2a4fb7a9a1e44751b8",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "profil": {
+                                        "description": "Photo de profil (requis)",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "nationalIDCard": {
+                                        "description": "Carte d'identité nationale (requis)",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "years_of_experience": {
+                                        "description": "Années d'expérience (optionnel)",
+                                        "type": "integer",
+                                        "example": 5
+                                    },
+                                    "presentation": {
+                                        "description": "Présentation (optionnel)",
+                                        "type": "string",
+                                        "example": "Description professionnelle"
+                                    },
+                                    "commercial_register": {
+                                        "description": "Registre de commerce (requis si entreprise)",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "immigration_certificate": {
+                                        "description": "Certificat d'immigration (requis si entreprise)",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "certificate_of_compliance": {
+                                        "description": "Certificat de conformité (requis si entreprise)",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "approval": {
+                                        "description": "Agrément (optionnel)",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "patent": {
+                                        "description": "Brevet (optionnel)",
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Profil complété avec succès"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/user/profile": {
+            "get": {
+                "tags": [
+                    "User Profile"
+                ],
+                "summary": "Récupérer les détails du profil de l'utilisateur connecté (Worker ou Engin)",
+                "operationId": "1c7d198d3498d3e346589b575710e8b0",
+                "responses": {
+                    "200": {
+                        "description": "Détails du profil - Structure varie selon le type (worker ou engin)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Détails du profil"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 32
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "user@example.com"
+                                                },
+                                                "user_type": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "worker",
+                                                        "engin"
+                                                    ],
+                                                    "example": "worker"
+                                                },
+                                                "profil": {
+                                                    "type": "string",
+                                                    "example": "http://example.com/storage/worker_profiles/photo.png",
+                                                    "nullable": true
+                                                },
+                                                "roles": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    },
+                                                    "example": [
+                                                        "corrector"
+                                                    ]
+                                                },
+                                                "privacy_policy": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2026-03-15T10:30:00.000000Z"
+                                                },
+                                                "account": {
+                                                    "properties": {
+                                                        "child_lot_name": {
+                                                            "type": "string",
+                                                            "example": "architect",
+                                                            "nullable": true
+                                                        },
+                                                        "parent_lot_name": {
+                                                            "type": "string",
+                                                            "example": "engineering",
+                                                            "nullable": true
+                                                        },
+                                                        "all_lots": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "object"
+                                                            },
+                                                            "example": []
+                                                        },
+                                                        "is_enterprise": {
+                                                            "type": "boolean",
+                                                            "example": false
+                                                        },
+                                                        "years_of_experience": {
+                                                            "type": "integer",
+                                                            "example": 5,
+                                                            "nullable": true
+                                                        },
+                                                        "presentation": {
+                                                            "type": "string",
+                                                            "example": "Expert en architecture",
+                                                            "nullable": true
+                                                        },
+                                                        "account_status": {
+                                                            "type": "string",
+                                                            "example": "pending"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "contact": {
+                                                    "description": "Présent uniquement si user_type = 'worker'",
+                                                    "properties": {
+                                                        "firstName": {
+                                                            "type": "string",
+                                                            "example": "Jean"
+                                                        },
+                                                        "lastName": {
+                                                            "type": "string",
+                                                            "example": "Dupont"
+                                                        },
+                                                        "phoneNumber": {
+                                                            "type": "string",
+                                                            "example": "568985656"
+                                                        },
+                                                        "email": {
+                                                            "type": "string",
+                                                            "example": "jean@example.com"
+                                                        },
+                                                        "localisation": {
+                                                            "type": "string",
+                                                            "example": "Douala",
+                                                            "nullable": true
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "engin": {
+                                                    "description": "Présent uniquement si user_type = 'engin'",
+                                                    "properties": {
+                                                        "nameOfTheEngin": {
+                                                            "type": "string",
+                                                            "example": "Caterpillar D9"
+                                                        },
+                                                        "brandOfTheDevice": {
+                                                            "type": "string",
+                                                            "example": "Caterpillar"
+                                                        },
+                                                        "feature": {
+                                                            "type": "string",
+                                                            "example": "Bulldozer haute performance",
+                                                            "nullable": true
+                                                        },
+                                                        "localisation": {
+                                                            "type": "string",
+                                                            "example": "Yaoundé",
+                                                            "nullable": true
+                                                        },
+                                                        "registration_document": {
+                                                            "type": "string",
+                                                            "example": "http://example.com/storage/engin_documents/registration/doc.pdf",
+                                                            "nullable": true
+                                                        },
+                                                        "purchase_invoice": {
+                                                            "type": "string",
+                                                            "example": "http://example.com/storage/engin_documents/invoices/invoice.pdf",
+                                                            "nullable": true
+                                                        },
+                                                        "last_gear_report": {
+                                                            "type": "string",
+                                                            "example": "http://example.com/storage/engin_documents/reports/report.pdf",
+                                                            "nullable": true
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "enterprise_documents": {
+                                                    "description": "Présent uniquement si l'utilisateur est une entreprise (is_enterprise = true)",
+                                                    "properties": {
+                                                        "commercial_register": {
+                                                            "type": "string",
+                                                            "nullable": true
+                                                        },
+                                                        "immigration_certificate": {
+                                                            "type": "string",
+                                                            "nullable": true
+                                                        },
+                                                        "certificate_of_compliance": {
+                                                            "type": "string",
+                                                            "nullable": true
+                                                        },
+                                                        "approval": {
+                                                            "type": "string",
+                                                            "nullable": true
+                                                        },
+                                                        "patent": {
+                                                            "type": "string",
+                                                            "nullable": true
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "success": true,
+                                    "message": "Détails du profil",
+                                    "data": {
+                                        "id": 32,
+                                        "email": "jean@example.com",
+                                        "user_type": "worker",
+                                        "profil": "http://example.com/storage/worker_profiles/photo.png",
+                                        "roles": [
+                                            "corrector"
+                                        ],
+                                        "privacy_policy": true,
+                                        "created_at": "2026-03-15T10:30:00.000000Z",
+                                        "account": {
+                                            "child_lot_name": "architect",
+                                            "parent_lot_name": "engineering",
+                                            "all_lots": [],
+                                            "is_enterprise": false,
+                                            "years_of_experience": 5,
+                                            "presentation": "Expert en architecture",
+                                            "account_status": "pending"
+                                        },
+                                        "contact": {
+                                            "firstName": "Jean",
+                                            "lastName": "Dupont",
+                                            "phoneNumber": "568985656",
+                                            "email": "jean@example.com",
+                                            "localisation": "Douala"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/properties/{propertyId}/investment": {
             "post": {
                 "tags": [
@@ -3767,90 +4175,16 @@
                 ]
             }
         },
-        "/api/projects/commercial/sold": {
+        "/api/projects/commercial/my-projects": {
             "get": {
                 "tags": [
                     "Projects"
                 ],
-                "summary": "Liste des projets vendus par un commercial",
-                "operationId": "73cb75203aaee8376e25e748384656fd",
+                "summary": "Liste de tous les projets du commercial avec ses commissions",
+                "operationId": "d99c6226110e45cdae7ef2af6d9ef4ef",
                 "responses": {
                     "200": {
-                        "description": "Liste des projets vendus",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Liste des projets vendus"
-                                        },
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "properties": {
-                                                    "id": {
-                                                        "type": "integer",
-                                                        "example": 1
-                                                    },
-                                                    "name": {
-                                                        "type": "string",
-                                                        "example": "Projet Résidentiel Akwa"
-                                                    },
-                                                    "product_reference": {
-                                                        "type": "string",
-                                                        "example": "PROD-123456"
-                                                    },
-                                                    "client_name": {
-                                                        "type": "string",
-                                                        "example": "Jean Dupont"
-                                                    },
-                                                    "sale_amount": {
-                                                        "type": "number",
-                                                        "example": 150000000
-                                                    },
-                                                    "sold_at": {
-                                                        "type": "string",
-                                                        "format": "date-time",
-                                                        "example": "2026-03-15 10:30:00"
-                                                    },
-                                                    "commission": {
-                                                        "type": "number",
-                                                        "example": 7500000
-                                                    }
-                                                },
-                                                "type": "object"
-                                            }
-                                        },
-                                        "statistics": {
-                                            "properties": {
-                                                "total_projects_sold": {
-                                                    "type": "integer",
-                                                    "example": 15
-                                                },
-                                                "total_sales_amount": {
-                                                    "type": "number",
-                                                    "example": 2250000000
-                                                },
-                                                "total_commissions": {
-                                                    "type": "number",
-                                                    "example": 112500000
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "403": {
-                        "description": "Accès réservé aux commerciaux"
+                        "description": "Liste des projets"
                     }
                 },
                 "security": [
@@ -4479,6 +4813,18 @@
         {
             "name": "Admin",
             "description": "Admin"
+        },
+        {
+            "name": "Engins",
+            "description": "Engins"
+        },
+        {
+            "name": "Workers",
+            "description": "Workers"
+        },
+        {
+            "name": "User Profile",
+            "description": "User Profile"
         },
         {
             "name": "Building Investments",

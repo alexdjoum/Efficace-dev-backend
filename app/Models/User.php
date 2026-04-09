@@ -34,6 +34,7 @@ class User extends Authenticatable implements HasMedia
         'userable_type',
         'userable_id',
         'privacy_policy',
+        'nationalIDCard',
     ];
 
     /**

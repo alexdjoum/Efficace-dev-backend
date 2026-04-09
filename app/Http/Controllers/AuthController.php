@@ -986,36 +986,98 @@ class AuthController extends Controller
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
-        $user->load('contact', 'engin', 'accountType.lot.parent', 'enterpriseDocument');
+        $user->load([
+            'contact',
+            'engin',
+            'accountType.lot.parent',
+            'enterpriseDocument'
+        ]);
 
-        $childLotName = $user->accountType?->lot?->name;
-        $parentLotName = $user->accountType?->lot?->parent?->name;
+        $childLotName = null;
+        $parentLotName = null;
+
+        if ($user->accountType && $user->accountType->lot) {
+            $childLotName = $user->accountType->lot->name;
+            
+            if ($user->accountType->lot->parent) {
+                $parentLotName = $user->accountType->lot->parent->name;
+            }
+        }
+
+        $userData = [
+            'id' => $user->id,
+            'role' => $user->role,
+            'profil' => $user->profil ? asset('storage/' . $user->profil) : null,
+            'nationalIDCard' => $user->nationalIDCard ? asset('storage/' . $user->nationalIDCard) : null,
+            'child_lot_name' => $childLotName,
+            'parent_lot_name' => $parentLotName,
+            'account_status' => $user->accountType?->account_creation_request,
+            'is_enterprise' => $user->accountType?->is_enterprise ?? false,
+            'years_of_experience' => $user->accountType?->years_of_experience,
+            'presentation' => $user->accountType?->presentation,
+            'engin' => $user->engin ? [
+                'nameOfTheEngin' => $user->engin->nameOfTheEngin,
+                'brandOfTheDevice' => $user->engin->brandOfTheDevice,
+                'feature' => $user->engin->feature,
+                'registration_document' => $user->engin->registration_document ? asset('storage/' . $user->engin->registration_document) : null,
+                'purchase_invoice' => $user->engin->purchase_invoice ? asset('storage/' . $user->engin->purchase_invoice) : null,
+                'last_gear_report' => $user->engin->last_gear_report ? asset('storage/' . $user->engin->last_gear_report) : null,
+            ] : null,
+            'contact' => $user->contact ? [
+                'firstName' => $user->contact->firstName,
+                'lastName' => $user->contact->lastName,
+                'phoneNumber' => $user->contact->phoneNumber,
+                'email' => $user->contact->email,
+            ] : null,
+            'enterprise_document' => $user->enterpriseDocument ? [
+                'commercial_register' => $user->enterpriseDocument->commercial_register ? asset('storage/' . $user->enterpriseDocument->commercial_register) : null,
+                'immigration_certificate' => $user->enterpriseDocument->immigration_certificate ? asset('storage/' . $user->enterpriseDocument->immigration_certificate) : null,
+                'certificate_of_compliance' => $user->enterpriseDocument->certificate_of_compliance ? asset('storage/' . $user->enterpriseDocument->certificate_of_compliance) : null,
+                'approval' => $user->enterpriseDocument->approval ? asset('storage/' . $user->enterpriseDocument->approval) : null,
+                'patent' => $user->enterpriseDocument->patent ? asset('storage/' . $user->enterpriseDocument->patent) : null,
+            ] : null,
+        ];
+
+        $isProfileIncomplete = false;
+
+        if ($user->engin) {
+            $isProfileIncomplete = empty($user->profil) 
+                || empty($user->nationalIDCard)
+                || empty($user->engin->registration_document)
+                || empty($user->engin->purchase_invoice)
+                || empty($user->engin->last_gear_report);
+        } elseif ($user->contact) {
+            $isProfileIncomplete = empty($user->profil) 
+                || empty($user->nationalIDCard);
+            
+            if ($user->accountType?->is_enterprise) {
+                $isProfileIncomplete = $isProfileIncomplete 
+                    || empty($user->enterpriseDocument?->commercial_register)
+                    || empty($user->enterpriseDocument?->immigration_certificate)
+                    || empty($user->enterpriseDocument?->certificate_of_compliance);
+            }
+        }
+
+        if ($isProfileIncomplete) {
+            $profileUrl = env('FRONTEND_URL', 'http://localhost:3000') . '/user/profil/' . $user->id;
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Veuillez compléter votre profil',
+                'redirect_url' => $profileUrl,
+                'token' => $token,
+                'user' => $userData, 
+            ], 302);
+        }
 
         return response()->json([
             'success' => true,
+            'redirect_url' => null,
             'message' => __('messages.login_success'),
             'token' => $token,
-            'user' => [
-                'id' => $user->id,
-                'role' => $user->role,
-                'child_lot_name' => $childLotName,
-                'parent_lot_name' => $parentLotName,
-                'account_status' => $user->accountType?->account_creation_request,
-                'engin' => $user->engin ? [
-                    'nameOfTheEngin' => $user->engin->nameOfTheEngin,
-                    'brandOfTheDevice' => $user->engin->brandOfTheDevice,
-                    'feature' => $user->engin->feature,
-                ] : null,
-                'contact' => $user->contact ? [
-                    'firstName' => $user->contact->firstName,
-                    'lastName' => $user->contact->lastName,
-                    'phoneNumber' => $user->contact->phoneNumber,
-                    'email' => $user->contact->email,
-                ] : null,
-            ]
+            'user' => $userData,
         ], 200);
     }
-
 
     /**
      * @OA\Post(
@@ -1629,6 +1691,500 @@ class AuthController extends Controller
                     'created_at' => $commercial->created_at,
                 ];
             })
+        ]);
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/engin/complete-profile",
+     *     summary="Compléter le profil de l'engin avec documents",
+     *     tags={"Engins"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 required={"profil","nationalIDCard","registration_document","purchase_invoice","last_gear_report"},
+     *                 @OA\Property(property="profil", type="string", format="binary", description="Photo de profil"),
+     *                 @OA\Property(property="nationalIDCard", type="string", format="binary", description="Carte d'identité nationale (image)"),
+     *                 @OA\Property(property="registration_document", type="string", format="binary", description="Document d'immatriculation (PDF)"),
+     *                 @OA\Property(property="purchase_invoice", type="string", format="binary", description="Facture d'achat (PDF)"),
+     *                 @OA\Property(property="last_gear_report", type="string", format="binary", description="Dernier rapport de contrôle (PDF)")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Profil complété avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Profil complété avec succès")
+     *         )
+     *     ),
+     *     @OA\Response(response=403, description="Utilisateur n'est pas un engin"),
+     *     @OA\Response(response=422, description="Erreur de validation")
+     * )
+     */
+    public function completeEnginProfile(Request $request)
+    {
+        $user = auth()->user();
+
+        if (!$user->engin) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cet endpoint est réservé aux engins',
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'profil' => 'required|image|mimes:jpeg,png,jpg|max:5120', 
+            'nationalIDCard' => 'required|image|mimes:jpeg,png,jpg|max:5120',
+            'registration_document' => 'required|file|mimes:pdf|max:10240',
+            'purchase_invoice' => 'required|file|mimes:pdf|max:10240',
+            'last_gear_report' => 'required|file|mimes:pdf|max:10240',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            if ($request->hasFile('profil')) {
+                if ($user->profil && Storage::disk('public')->exists($user->profil)) {
+                    Storage::disk('public')->delete($user->profil);
+                }
+
+                $user->profil = $request->file('profil')->store('engin_profiles', 'public');
+            }
+
+            if ($request->hasFile('nationalIDCard')) {
+                if ($user->nationalIDCard && Storage::disk('public')->exists($user->nationalIDCard)) {
+                    Storage::disk('public')->delete($user->nationalIDCard);
+                }
+
+                $user->nationalIDCard = $request->file('nationalIDCard')->store('national_id_cards', 'public');
+            }
+
+            $user->save();
+
+            $engin = $user->engin;
+
+            if ($request->hasFile('registration_document')) {
+                if ($engin->registration_document && Storage::disk('public')->exists($engin->registration_document)) {
+                    Storage::disk('public')->delete($engin->registration_document);
+                }
+
+                $engin->registration_document = $request->file('registration_document')
+                    ->store('engin_documents/registration', 'public');
+            }
+
+            if ($request->hasFile('purchase_invoice')) {
+                if ($engin->purchase_invoice && Storage::disk('public')->exists($engin->purchase_invoice)) {
+                    Storage::disk('public')->delete($engin->purchase_invoice);
+                }
+
+                $engin->purchase_invoice = $request->file('purchase_invoice')
+                    ->store('engin_documents/invoices', 'public');
+            }
+
+            if ($request->hasFile('last_gear_report')) {
+                if ($engin->last_gear_report && Storage::disk('public')->exists($engin->last_gear_report)) {
+                    Storage::disk('public')->delete($engin->last_gear_report);
+                }
+
+                $engin->last_gear_report = $request->file('last_gear_report')
+                    ->store('engin_documents/reports', 'public');
+            }
+
+            $engin->save();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Profil complété avec succès',
+                'data' => [
+                    'profil' => $user->profil ? asset('storage/' . $user->profil) : null,
+                    'nationalIDCard' => $user->nationalIDCard ? asset('storage/' . $user->nationalIDCard) : null, 
+                    'registration_document' => $engin->registration_document ? asset('storage/' . $engin->registration_document) : null,
+                    'purchase_invoice' => $engin->purchase_invoice ? asset('storage/' . $engin->purchase_invoice) : null,
+                    'last_gear_report' => $engin->last_gear_report ? asset('storage/' . $engin->last_gear_report) : null,
+                ]
+            ], 200);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de l\'upload des documents : ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+ * @OA\Post(
+ *     path="/api/worker/complete-profile",
+ *     summary="Compléter le profil du worker (entreprise ou individuel)",
+ *     tags={"Workers"},
+ *     security={{"bearerAuth":{}}},
+ *     @OA\RequestBody(
+ *         required=true,
+ *         @OA\MediaType(
+ *             mediaType="multipart/form-data",
+ *             @OA\Schema(
+ *                 @OA\Property(property="profil", type="string", format="binary", description="Photo de profil (requis)"),
+ *                 @OA\Property(property="nationalIDCard", type="string", format="binary", description="Carte d'identité nationale (requis)"),
+ *                 @OA\Property(property="years_of_experience", type="integer", example=5, description="Années d'expérience (optionnel)"),
+ *                 @OA\Property(property="presentation", type="string", example="Description professionnelle", description="Présentation (optionnel)"),
+ *                 @OA\Property(property="commercial_register", type="string", format="binary", description="Registre de commerce (requis si entreprise)"),
+ *                 @OA\Property(property="immigration_certificate", type="string", format="binary", description="Certificat d'immigration (requis si entreprise)"),
+ *                 @OA\Property(property="certificate_of_compliance", type="string", format="binary", description="Certificat de conformité (requis si entreprise)"),
+ *                 @OA\Property(property="approval", type="string", format="binary", description="Agrément (optionnel)"),
+ *                 @OA\Property(property="patent", type="string", format="binary", description="Brevet (optionnel)")
+ *             )
+ *         )
+ *     ),
+ *     @OA\Response(response=200, description="Profil complété avec succès")
+    * )
+    */
+    public function completeWorkerOrEntrepriseProfile(Request $request)
+    {
+        $user = auth()->user();
+
+        $user->load('accountType', 'enterpriseDocument');
+
+        $isEnterprise = false;
+        
+        if ($user->accountType) {
+            $rawValue = $user->accountType->is_enterprise;
+            
+            if (in_array($rawValue, [0, '0', false, 'false', null], true)) {
+                $isEnterprise = false;
+            } elseif (in_array($rawValue, [1, '1', true, 'true'], true)) {
+                $isEnterprise = true;
+            }
+        }
+
+        \Log::info('Complete Profile Debug', [
+            'user_id' => $user->id,
+            'has_accountType' => $user->accountType ? 'OUI' : 'NON',
+            'is_enterprise_raw' => $user->accountType?->is_enterprise ?? 'null',
+            'is_enterprise_converted' => $isEnterprise,
+        ]);
+
+        $rules = [
+            'profil' => 'required|image|mimes:jpeg,png,jpg|max:5120',
+            'nationalIDCard' => 'required|image|mimes:jpeg,png,jpg|max:5120', // ✅ Ajouté
+            'years_of_experience' => 'nullable|integer|min:0',
+            'presentation' => 'nullable|string|max:5000',
+        ];
+
+        if ($isEnterprise === true) {
+            $rules['commercial_register'] = 'required|file|mimes:pdf|max:10240';
+            $rules['immigration_certificate'] = 'required|file|mimes:pdf|max:10240';
+            $rules['certificate_of_compliance'] = 'required|file|mimes:pdf|max:10240';
+            $rules['approval'] = 'nullable|file|mimes:pdf|max:10240';
+            $rules['patent'] = 'nullable|file|mimes:pdf|max:10240';
+        }
+
+        $validated = $request->validate($rules);
+
+        try {
+            DB::beginTransaction();
+
+            // ✅ Upload de la photo de profil
+            if ($request->hasFile('profil')) {
+                if ($user->profil && Storage::disk('public')->exists($user->profil)) {
+                    Storage::disk('public')->delete($user->profil);
+                }
+
+                $user->profil = $request->file('profil')->store('worker_profiles', 'public');
+            }
+
+            // ✅ Upload de la carte d'identité nationale
+            if ($request->hasFile('nationalIDCard')) {
+                if ($user->nationalIDCard && Storage::disk('public')->exists($user->nationalIDCard)) {
+                    Storage::disk('public')->delete($user->nationalIDCard);
+                }
+
+                $user->nationalIDCard = $request->file('nationalIDCard')->store('national_id_cards', 'public');
+            }
+
+            $user->save();
+
+            // ✅ Mise à jour des informations du compte
+            if ($user->accountType) {
+                if ($request->has('years_of_experience')) {
+                    $user->accountType->years_of_experience = $validated['years_of_experience'];
+                }
+                if ($request->has('presentation')) {
+                    $user->accountType->presentation = $validated['presentation'];
+                }
+                $user->accountType->save();
+            }
+
+            // ✅ Upload des documents d'entreprise si applicable
+            if ($isEnterprise === true) {
+                $documentsData = [];
+
+                if ($request->hasFile('commercial_register')) {
+                    if ($user->enterpriseDocument?->commercial_register && Storage::disk('public')->exists($user->enterpriseDocument->commercial_register)) {
+                        Storage::disk('public')->delete($user->enterpriseDocument->commercial_register);
+                    }
+                    $documentsData['commercial_register'] = $request->file('commercial_register')
+                        ->store('enterprise_documents/commercial_registers', 'public');
+                }
+
+                if ($request->hasFile('immigration_certificate')) {
+                    if ($user->enterpriseDocument?->immigration_certificate && Storage::disk('public')->exists($user->enterpriseDocument->immigration_certificate)) {
+                        Storage::disk('public')->delete($user->enterpriseDocument->immigration_certificate);
+                    }
+                    $documentsData['immigration_certificate'] = $request->file('immigration_certificate')
+                        ->store('enterprise_documents/immigration_certificates', 'public');
+                }
+
+                if ($request->hasFile('certificate_of_compliance')) {
+                    if ($user->enterpriseDocument?->certificate_of_compliance && Storage::disk('public')->exists($user->enterpriseDocument->certificate_of_compliance)) {
+                        Storage::disk('public')->delete($user->enterpriseDocument->certificate_of_compliance);
+                    }
+                    $documentsData['certificate_of_compliance'] = $request->file('certificate_of_compliance')
+                        ->store('enterprise_documents/certificates_of_compliance', 'public');
+                }
+
+                if ($request->hasFile('approval')) {
+                    if ($user->enterpriseDocument?->approval && Storage::disk('public')->exists($user->enterpriseDocument->approval)) {
+                        Storage::disk('public')->delete($user->enterpriseDocument->approval);
+                    }
+                    $documentsData['approval'] = $request->file('approval')
+                        ->store('enterprise_documents/approvals', 'public');
+                }
+
+                if ($request->hasFile('patent')) {
+                    if ($user->enterpriseDocument?->patent && Storage::disk('public')->exists($user->enterpriseDocument->patent)) {
+                        Storage::disk('public')->delete($user->enterpriseDocument->patent);
+                    }
+                    $documentsData['patent'] = $request->file('patent')
+                        ->store('enterprise_documents/patents', 'public');
+                }
+
+                if ($user->enterpriseDocument) {
+                    $user->enterpriseDocument->update($documentsData);
+                } else {
+                    $user->enterpriseDocument()->create($documentsData);
+                }
+            }
+
+            DB::commit();
+
+            // ✅ Construire la réponse
+            $responseData = [
+                'profil' => $user->profil ? asset('storage/' . $user->profil) : null,
+                'nationalIDCard' => $user->nationalIDCard ? asset('storage/' . $user->nationalIDCard) : null, // ✅ Ajouté
+                'years_of_experience' => $user->accountType?->years_of_experience,
+                'presentation' => $user->accountType?->presentation,
+            ];
+
+            if ($isEnterprise === true && $user->enterpriseDocument) {
+                $responseData['enterprise_documents'] = [
+                    'commercial_register' => $user->enterpriseDocument->commercial_register ? asset('storage/' . $user->enterpriseDocument->commercial_register) : null,
+                    'immigration_certificate' => $user->enterpriseDocument->immigration_certificate ? asset('storage/' . $user->enterpriseDocument->immigration_certificate) : null,
+                    'certificate_of_compliance' => $user->enterpriseDocument->certificate_of_compliance ? asset('storage/' . $user->enterpriseDocument->certificate_of_compliance) : null,
+                    'approval' => $user->enterpriseDocument->approval ? asset('storage/' . $user->enterpriseDocument->approval) : null,
+                    'patent' => $user->enterpriseDocument->patent ? asset('storage/' . $user->enterpriseDocument->patent) : null,
+                ];
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Profil complété avec succès',
+                'data' => $responseData
+            ], 200);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la mise à jour du profil : ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/user/profile",
+     *     summary="Récupérer les détails du profil de l'utilisateur connecté (Worker ou Engin)",
+     *     tags={"User Profile"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Détails du profil - Structure varie selon le type (worker ou engin)",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Détails du profil"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="integer", example=32),
+     *                 @OA\Property(property="email", type="string", example="user@example.com"),
+     *                 @OA\Property(property="user_type", type="string", enum={"worker","engin"}, example="worker"),
+     *                 @OA\Property(property="profil", type="string", nullable=true, example="http://example.com/storage/worker_profiles/photo.png"),
+     *                 @OA\Property(property="nationalIDCard", type="string", nullable=true, example="http://example.com/storage/national_id_cards/id.png"),
+     *                 @OA\Property(property="roles", type="array", @OA\Items(type="string"), example={"corrector"}),
+     *                 @OA\Property(property="privacy_policy", type="boolean", example=true),
+     *                 @OA\Property(property="created_at", type="string", format="date-time", example="2026-03-15T10:30:00.000000Z"),
+     *                 @OA\Property(
+     *                     property="account",
+     *                     type="object",
+     *                     @OA\Property(property="child_lot_name", type="string", nullable=true, example="architect"),
+     *                     @OA\Property(property="parent_lot_name", type="string", nullable=true, example="engineering"),
+     *                     @OA\Property(property="all_lots", type="array", @OA\Items(type="object"), example={}),
+     *                     @OA\Property(property="is_enterprise", type="boolean", example=false),
+     *                     @OA\Property(property="years_of_experience", type="integer", nullable=true, example=5),
+     *                     @OA\Property(property="presentation", type="string", nullable=true, example="Expert en architecture"),
+     *                     @OA\Property(property="account_status", type="string", example="pending")
+     *                 ),
+     *                 @OA\Property(
+     *                     property="contact",
+     *                     type="object",
+     *                     description="Présent uniquement si user_type = 'worker'",
+     *                     @OA\Property(property="firstName", type="string", example="Jean"),
+     *                     @OA\Property(property="lastName", type="string", example="Dupont"),
+     *                     @OA\Property(property="phoneNumber", type="string", example="568985656"),
+     *                     @OA\Property(property="email", type="string", example="jean@example.com"),
+     *                     @OA\Property(property="localisation", type="string", nullable=true, example="Douala")
+     *                 ),
+     *                 @OA\Property(
+     *                     property="engin",
+     *                     type="object",
+     *                     description="Présent uniquement si user_type = 'engin'",
+     *                     @OA\Property(property="nameOfTheEngin", type="string", example="Caterpillar D9"),
+     *                     @OA\Property(property="brandOfTheDevice", type="string", example="Caterpillar"),
+     *                     @OA\Property(property="feature", type="string", nullable=true, example="Bulldozer haute performance"),
+     *                     @OA\Property(property="localisation", type="string", nullable=true, example="Yaoundé"),
+     *                     @OA\Property(property="registration_document", type="string", nullable=true, example="http://example.com/storage/engin_documents/registration/doc.pdf"),
+     *                     @OA\Property(property="purchase_invoice", type="string", nullable=true, example="http://example.com/storage/engin_documents/invoices/invoice.pdf"),
+     *                     @OA\Property(property="last_gear_report", type="string", nullable=true, example="http://example.com/storage/engin_documents/reports/report.pdf")
+     *                 ),
+     *                 @OA\Property(
+     *                     property="enterprise_documents",
+     *                     type="object",
+     *                     description="Présent uniquement si l'utilisateur est une entreprise (is_enterprise = true)",
+     *                     @OA\Property(property="commercial_register", type="string", nullable=true),
+     *                     @OA\Property(property="immigration_certificate", type="string", nullable=true),
+     *                     @OA\Property(property="certificate_of_compliance", type="string", nullable=true),
+     *                     @OA\Property(property="approval", type="string", nullable=true),
+     *                     @OA\Property(property="patent", type="string", nullable=true)
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Non authentifié")
+     * )
+     */
+    public function getUserProfile()
+    {
+        $user = auth()->user();
+
+        $user->load([
+            'contact.localisationWorker',
+            'engin.localisationWorker',
+            'accountType.lot.parent',
+            'accountType.lots', 
+            'enterpriseDocument',
+            'roles'
+        ]);
+
+        $userType = null;
+        if ($user->engin) {
+            $userType = 'engin';
+        } elseif ($user->contact) {
+            $userType = 'worker';
+        }
+
+        $childLotName = null;
+        $parentLotName = null;
+        $allLots = [];
+
+        if ($user->accountType) {
+            if ($user->accountType->lot) {
+                $childLotName = $user->accountType->lot->name;
+                
+                if ($user->accountType->lot->parent) {
+                    $parentLotName = $user->accountType->lot->parent->name;
+                }
+            }
+
+            if ($user->accountType->lots && $user->accountType->lots->isNotEmpty()) {
+                $allLots = $user->accountType->lots->map(function ($lot) {
+                    return [
+                        'id' => $lot->id,
+                        'name' => $lot->name,
+                        'parent_name' => $lot->parent?->name,
+                    ];
+                });
+            }
+        }
+
+        $profileData = [
+            'id' => $user->id,
+            'email' => $user->email,
+            'user_type' => $userType,
+            'profil' => $user->profil ? asset('storage/' . $user->profil) : null,
+            'nationalIDCard' => $user->nationalIDCard ? asset('storage/' . $user->nationalIDCard) : null, // ✅ Ajouté
+            'roles' => $user->roles->pluck('name'),
+            'privacy_policy' => $user->privacy_policy,
+            'created_at' => $user->created_at,
+        ];
+
+        if ($user->accountType) {
+            $profileData['account'] = [
+                'child_lot_name' => $childLotName,
+                'parent_lot_name' => $parentLotName,
+                'all_lots' => $allLots,
+                'is_enterprise' => $user->accountType->is_enterprise ?? false,
+                'years_of_experience' => $user->accountType->years_of_experience,
+                'presentation' => $user->accountType->presentation,
+                'account_status' => $user->accountType->account_creation_request,
+            ];
+        }
+
+        if ($user->engin) {
+            $profileData['engin'] = [
+                'nameOfTheEngin' => $user->engin->nameOfTheEngin,
+                'brandOfTheDevice' => $user->engin->brandOfTheDevice,
+                'feature' => $user->engin->feature,
+                'localisation' => $user->engin->localisationWorker?->name,
+                'registration_document' => $user->engin->registration_document ? asset('storage/' . $user->engin->registration_document) : null,
+                'purchase_invoice' => $user->engin->purchase_invoice ? asset('storage/' . $user->engin->purchase_invoice) : null,
+                'last_gear_report' => $user->engin->last_gear_report ? asset('storage/' . $user->engin->last_gear_report) : null,
+            ];
+        }
+
+        if ($user->contact) {
+            $profileData['contact'] = [
+                'firstName' => $user->contact->firstName,
+                'lastName' => $user->contact->lastName,
+                'phoneNumber' => $user->contact->phoneNumber,
+                'email' => $user->contact->email,
+                'localisation' => $user->contact->localisationWorker?->name,
+            ];
+        }
+
+        if ($user->enterpriseDocument) {
+            $profileData['enterprise_documents'] = [
+                'commercial_register' => $user->enterpriseDocument->commercial_register ? asset('storage/' . $user->enterpriseDocument->commercial_register) : null,
+                'immigration_certificate' => $user->enterpriseDocument->immigration_certificate ? asset('storage/' . $user->enterpriseDocument->immigration_certificate) : null,
+                'certificate_of_compliance' => $user->enterpriseDocument->certificate_of_compliance ? asset('storage/' . $user->enterpriseDocument->certificate_of_compliance) : null,
+                'approval' => $user->enterpriseDocument->approval ? asset('storage/' . $user->enterpriseDocument->approval) : null,
+                'patent' => $user->enterpriseDocument->patent ? asset('storage/' . $user->enterpriseDocument->patent) : null,
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Détails du profil',
+            'data' => $profileData
         ]);
     }
 }

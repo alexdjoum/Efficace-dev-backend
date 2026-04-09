@@ -1799,43 +1799,16 @@ class ProjectController extends Controller
         ]);
     }
 
-
     /**
      * @OA\Get(
-     *     path="/api/projects/commercial/sold",
-     *     summary="Liste des projets vendus par un commercial",
+     *     path="/api/projects/commercial/my-projects",
+     *     summary="Liste de tous les projets du commercial avec ses commissions",
      *     tags={"Projects"},
      *     security={{"bearerAuth":{}}},
-     *     @OA\Response(
-     *         response=200,
-     *         description="Liste des projets vendus",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string", example="Liste des projets vendus"),
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="array",
-     *                 @OA\Items(
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="name", type="string", example="Projet Résidentiel Akwa"),
-     *                     @OA\Property(property="product_reference", type="string", example="PROD-123456"),
-     *                     @OA\Property(property="client_name", type="string", example="Jean Dupont"),
-     *                     @OA\Property(property="sale_amount", type="number", example=150000000),
-     *                     @OA\Property(property="sold_at", type="string", format="date-time", example="2026-03-15 10:30:00"),
-     *                     @OA\Property(property="commission", type="number", example=7500000)
-     *                 )
-     *             ),
-     *             @OA\Property(property="statistics", type="object",
-     *                 @OA\Property(property="total_projects_sold", type="integer", example=15),
-     *                 @OA\Property(property="total_sales_amount", type="number", example=2250000000),
-     *                 @OA\Property(property="total_commissions", type="number", example=112500000)
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(response=403, description="Accès réservé aux commerciaux")
+     *     @OA\Response(response=200, description="Liste des projets")
      * )
      */
-    public function getCommercialSoldProjects()
+    public function getCommercialProjects()
     {
         $user = auth()->user();
 
@@ -1846,65 +1819,98 @@ class ProjectController extends Controller
             ], 403);
         }
 
-        $payments = \App\Models\PaymentSalesperson::with([
-            'commission.projectSold.project',
-            'commission.projectSold.product',
-            'commission.projectSold.buyer.contact',
-        ])
-        ->where('commercial_id', $user->id)
-        ->get();
+        $commissionIds = \App\Models\PaymentSalesperson::where('commercial_id', $user->id)
+            ->pluck('commission_id')
+            ->unique()
+            ->toArray();
 
-        $groupedByProject = $payments->groupBy(function ($payment) {
-            return $payment->commission?->project_sold_id;
-        });
+        if (empty($commissionIds)) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Aucune commission trouvée',
+                'data' => [],
+                'statistics' => [
+                    'total_projects' => 0,
+                    'total_commissions' => 0,
+                    'total_paid' => 0,
+                ]
+            ]);
+        }
 
-        $soldProjects = $groupedByProject->map(function ($paymentsForProject) {
-            $firstPayment = $paymentsForProject->first();
-            $projectSold = $firstPayment->commission?->projectSold;
-            
-            if (!$projectSold) {
-                return null;
-            }
+        $projectSoldIds = \App\Models\Commission::whereIn('id', $commissionIds)
+            ->pluck('project_sold_id')
+            ->filter()
+            ->unique()
+            ->toArray();
 
-            $totalCommissionAmount = $paymentsForProject->sum('mount');
+        if (empty($projectSoldIds)) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Aucun projet vendu trouvé',
+                'data' => [],
+            ]);
+        }
 
-            return [
-                'id' => $projectSold->id,
-                'project_id' => $projectSold->project_id,
-                'project_name' => $projectSold->project?->name,
-                'product_id' => $projectSold->product_id,
-                'product_reference' => $projectSold->product?->reference,
-                'product_type' => $projectSold->product?->productable_type,
-                'client_id' => $projectSold->buyer_id,
-                'client_name' => trim(($projectSold->buyer?->contact?->firstName ?? '') . ' ' . ($projectSold->buyer?->contact?->lastName ?? '')),
-                'client_email' => $projectSold->buyer?->email,
-                'sale_amount' => (float) $projectSold->amount,
-                'sold_at' => $projectSold->created_at,
-                'commission_amount' => (float) $totalCommissionAmount,
-                'commission_paid' => (float) ($firstPayment->commission?->getTotalPaidAttribute() ?? 0),
-                'commission_remaining' => (float) ($firstPayment->commission?->getRemainingAmountAttribute() ?? 0),
-            ];
-        })
-        ->filter()
-        ->sortByDesc('sold_at')
-        ->values();
+        $projectIds = \App\Models\ProjectSold::whereIn('id', $projectSoldIds)
+            ->pluck('project_id')
+            ->filter()
+            ->unique()
+            ->toArray();
 
-        $totalProjectsSold = $soldProjects->count();
-        $totalSalesAmount = $soldProjects->sum('sale_amount');
-        $totalCommissions = $soldProjects->sum('commission_amount');
-        $totalCommissionsPaid = $soldProjects->sum('commission_paid');
-        $totalCommissionsRemaining = $soldProjects->sum('commission_remaining');
+        if (empty($projectIds)) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Aucun projet trouvé',
+                'data' => [],
+            ]);
+        }
+
+        $projects = \App\Models\Project::with('localisationWorker')
+            ->whereIn('id', $projectIds)
+            ->get()
+            ->map(function ($project) use ($user) {
+                
+                $commissionsForProject = \App\Models\Commission::whereIn('project_sold_id', function ($query) use ($project) {
+                    $query->select('id')
+                        ->from('project_solds')
+                        ->where('project_id', $project->id);
+                })
+                ->whereIn('id', function ($query) use ($user) {
+                    $query->select('commission_id')
+                        ->from('payment_salespersons')
+                        ->where('commercial_id', $user->id);
+                })
+                ->get();
+                
+                $totalCommission = $commissionsForProject->sum('commission_amount');
+                
+                $totalPaid = \App\Models\PaymentSalesperson::whereIn('commission_id', $commissionsForProject->pluck('id')->toArray())
+                    ->where('commercial_id', $user->id)
+                    ->sum('amount_paid');
+
+                return [
+                    'project_id' => $project->id,
+                    'project_name' => $project->name,
+                    'localisation' => $project->localisationWorker?->name,
+                    'deadline' => $project->deadline,
+                    'started_at' => $project->started_at,
+                    'ended_at' => $project->ended_at,
+                    'launch_status' => $project->launch_status,
+                    'my_total_commission' => (float) $totalCommission,
+                    'my_total_paid' => (float) $totalPaid,
+                    'my_remaining' => (float) ($totalCommission - $totalPaid),
+                ];
+            });
 
         return response()->json([
             'success' => true,
-            'message' => 'Liste des projets vendus',
-            'data' => $soldProjects,
+            'message' => 'Liste des projets du commercial',
+            'data' => $projects,
             'statistics' => [
-                'total_projects_sold' => $totalProjectsSold,
-                'total_sales_amount' => $totalSalesAmount,
-                'total_commissions' => $totalCommissions,
-                'total_commissions_paid' => $totalCommissionsPaid,
-                'total_commissions_remaining' => $totalCommissionsRemaining,
+                'total_projects' => $projects->count(),
+                'total_commissions' => $projects->sum('my_total_commission'),
+                'total_paid' => $projects->sum('my_total_paid'),
+                'total_remaining' => $projects->sum('my_remaining'),
             ]
         ]);
     }

@@ -49,4 +49,14 @@ class Commission extends Model
     {
         return $this->commission_amount - $this->total_paid;
     }
+
+    public function project()
+    {
+        return $this->belongsTo(Project::class);
+    }
+
+    public function paymentSalespersons()
+    {
+        return $this->hasMany(PaymentSalesperson::class);
+    }
 }

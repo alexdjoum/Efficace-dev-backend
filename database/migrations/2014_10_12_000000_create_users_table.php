@@ -18,6 +18,8 @@ return new class extends Migration
             $table->string('password');
             $table->nullableMorphs('userable');
             $table->boolean('privacy_policy')->default(false);
+            $table->string('profil')->nullable();
+            $table->string('nationalIDCard')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });

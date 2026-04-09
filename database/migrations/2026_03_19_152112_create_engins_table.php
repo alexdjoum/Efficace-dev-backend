@@ -15,6 +15,9 @@ return new class extends Migration
             $table->string('brandOfTheDevice');
             $table->text('feature')->nullable();
             $table->foreignId('localisation_worker_id')->nullable()->constrained('localisation_workers')->onDelete('set null'); 
+            $table->string('registration_document')->nullable();
+            $table->string('purchase_invoice')->nullable(); 
+            $table->string('last_gear_report')->nullable();
             $table->timestamps();
         });
     }

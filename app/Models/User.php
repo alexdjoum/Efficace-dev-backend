@@ -189,4 +189,8 @@ class User extends Authenticatable implements HasMedia
         return $this->hasMany(ProjectEngin::class);
     }
 
+    public function enterpriseWorkers()
+    {
+        return $this->belongsToMany(User::class, 'worker_enterprises', 'enterprise_user_id', 'worker_user_id');
+    }
 }

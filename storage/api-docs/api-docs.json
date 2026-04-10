@@ -1147,6 +1147,11 @@
                                         "type": "string",
                                         "format": "binary"
                                     },
+                                    "worker_user_ids": {
+                                        "description": "IDs des workers séparés par virgule (requis si entreprise)",
+                                        "type": "string",
+                                        "example": "15,22,35"
+                                    },
                                     "years_of_experience": {
                                         "description": "Années d'expérience (optionnel)",
                                         "type": "integer",
@@ -1243,6 +1248,11 @@
                                                 "profil": {
                                                     "type": "string",
                                                     "example": "http://example.com/storage/worker_profiles/photo.png",
+                                                    "nullable": true
+                                                },
+                                                "nationalIDCard": {
+                                                    "type": "string",
+                                                    "example": "http://example.com/storage/national_id_cards/id.png",
                                                     "nullable": true
                                                 },
                                                 "roles": {
@@ -1400,37 +1410,6 @@
                                         }
                                     },
                                     "type": "object"
-                                },
-                                "example": {
-                                    "success": true,
-                                    "message": "Détails du profil",
-                                    "data": {
-                                        "id": 32,
-                                        "email": "jean@example.com",
-                                        "user_type": "worker",
-                                        "profil": "http://example.com/storage/worker_profiles/photo.png",
-                                        "roles": [
-                                            "corrector"
-                                        ],
-                                        "privacy_policy": true,
-                                        "created_at": "2026-03-15T10:30:00.000000Z",
-                                        "account": {
-                                            "child_lot_name": "architect",
-                                            "parent_lot_name": "engineering",
-                                            "all_lots": [],
-                                            "is_enterprise": false,
-                                            "years_of_experience": 5,
-                                            "presentation": "Expert en architecture",
-                                            "account_status": "pending"
-                                        },
-                                        "contact": {
-                                            "firstName": "Jean",
-                                            "lastName": "Dupont",
-                                            "phoneNumber": "568985656",
-                                            "email": "jean@example.com",
-                                            "localisation": "Douala"
-                                        }
-                                    }
                                 }
                             }
                         }

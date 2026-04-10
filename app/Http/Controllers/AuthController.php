@@ -1822,29 +1822,30 @@ class AuthController extends Controller
     }
 
     /**
- * @OA\Post(
- *     path="/api/worker/complete-profile",
- *     summary="Compléter le profil du worker (entreprise ou individuel)",
- *     tags={"Workers"},
- *     security={{"bearerAuth":{}}},
- *     @OA\RequestBody(
- *         required=true,
- *         @OA\MediaType(
- *             mediaType="multipart/form-data",
- *             @OA\Schema(
- *                 @OA\Property(property="profil", type="string", format="binary", description="Photo de profil (requis)"),
- *                 @OA\Property(property="nationalIDCard", type="string", format="binary", description="Carte d'identité nationale (requis)"),
- *                 @OA\Property(property="years_of_experience", type="integer", example=5, description="Années d'expérience (optionnel)"),
- *                 @OA\Property(property="presentation", type="string", example="Description professionnelle", description="Présentation (optionnel)"),
- *                 @OA\Property(property="commercial_register", type="string", format="binary", description="Registre de commerce (requis si entreprise)"),
- *                 @OA\Property(property="immigration_certificate", type="string", format="binary", description="Certificat d'immigration (requis si entreprise)"),
- *                 @OA\Property(property="certificate_of_compliance", type="string", format="binary", description="Certificat de conformité (requis si entreprise)"),
- *                 @OA\Property(property="approval", type="string", format="binary", description="Agrément (optionnel)"),
- *                 @OA\Property(property="patent", type="string", format="binary", description="Brevet (optionnel)")
- *             )
- *         )
- *     ),
- *     @OA\Response(response=200, description="Profil complété avec succès")
+     * @OA\Post(
+     *     path="/api/worker/complete-profile",
+     *     summary="Compléter le profil du worker (entreprise ou individuel)",
+     *     tags={"Workers"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 @OA\Property(property="profil", type="string", format="binary", description="Photo de profil (requis)"),
+     *                 @OA\Property(property="nationalIDCard", type="string", format="binary", description="Carte d'identité nationale (requis)"),
+     *                 @OA\Property(property="worker_user_ids", type="string", example="15,22,35", description="IDs des workers séparés par virgule (requis si entreprise)"),
+     *                 @OA\Property(property="years_of_experience", type="integer", example=5, description="Années d'expérience (optionnel)"),
+     *                 @OA\Property(property="presentation", type="string", example="Description professionnelle", description="Présentation (optionnel)"),
+     *                 @OA\Property(property="commercial_register", type="string", format="binary", description="Registre de commerce (requis si entreprise)"),
+     *                 @OA\Property(property="immigration_certificate", type="string", format="binary", description="Certificat d'immigration (requis si entreprise)"),
+     *                 @OA\Property(property="certificate_of_compliance", type="string", format="binary", description="Certificat de conformité (requis si entreprise)"),
+     *                 @OA\Property(property="approval", type="string", format="binary", description="Agrément (optionnel)"),
+     *                 @OA\Property(property="patent", type="string", format="binary", description="Brevet (optionnel)")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Profil complété avec succès")
     * )
     */
     public function completeWorkerOrEntrepriseProfile(Request $request)
@@ -1865,21 +1866,15 @@ class AuthController extends Controller
             }
         }
 
-        \Log::info('Complete Profile Debug', [
-            'user_id' => $user->id,
-            'has_accountType' => $user->accountType ? 'OUI' : 'NON',
-            'is_enterprise_raw' => $user->accountType?->is_enterprise ?? 'null',
-            'is_enterprise_converted' => $isEnterprise,
-        ]);
-
         $rules = [
             'profil' => 'required|image|mimes:jpeg,png,jpg|max:5120',
-            'nationalIDCard' => 'required|image|mimes:jpeg,png,jpg|max:5120', // ✅ Ajouté
+            'nationalIDCard' => 'required|image|mimes:jpeg,png,jpg|max:5120',
             'years_of_experience' => 'nullable|integer|min:0',
             'presentation' => 'nullable|string|max:5000',
         ];
 
         if ($isEnterprise === true) {
+            $rules['worker_user_ids'] = 'required|string';
             $rules['commercial_register'] = 'required|file|mimes:pdf|max:10240';
             $rules['immigration_certificate'] = 'required|file|mimes:pdf|max:10240';
             $rules['certificate_of_compliance'] = 'required|file|mimes:pdf|max:10240';
@@ -1889,10 +1884,47 @@ class AuthController extends Controller
 
         $validated = $request->validate($rules);
 
+        if ($isEnterprise === true && isset($validated['worker_user_ids'])) {
+            $workerIds = array_map('trim', explode(',', $validated['worker_user_ids']));
+            $workerIds = array_filter($workerIds, 'is_numeric');
+            
+            if (empty($workerIds)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Aucun ID de worker valide fourni',
+                ], 422);
+            }
+
+            $workers = \App\Models\User::whereIn('id', $workerIds)
+                ->with('accountType')
+                ->get();
+
+            if ($workers->count() !== count($workerIds)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Certains IDs de workers sont invalides',
+                ], 422);
+            }
+
+            $enterpriseWorkers = $workers->filter(function ($worker) {
+                return $worker->accountType && 
+                    in_array($worker->accountType->is_enterprise, [1, '1', true, 'true'], true);
+            });
+
+            if ($enterpriseWorkers->isNotEmpty()) {
+                $enterpriseIds = $enterpriseWorkers->pluck('id')->implode(', ');
+                return response()->json([
+                    'success' => false,
+                    'message' => "Les utilisateurs suivants sont des entreprises et ne peuvent pas être ajoutés comme workers: {$enterpriseIds}",
+                ], 422);
+            }
+
+            $validated['worker_user_ids'] = $workerIds;
+        }
+
         try {
             DB::beginTransaction();
 
-            // ✅ Upload de la photo de profil
             if ($request->hasFile('profil')) {
                 if ($user->profil && Storage::disk('public')->exists($user->profil)) {
                     Storage::disk('public')->delete($user->profil);
@@ -1901,7 +1933,6 @@ class AuthController extends Controller
                 $user->profil = $request->file('profil')->store('worker_profiles', 'public');
             }
 
-            // ✅ Upload de la carte d'identité nationale
             if ($request->hasFile('nationalIDCard')) {
                 if ($user->nationalIDCard && Storage::disk('public')->exists($user->nationalIDCard)) {
                     Storage::disk('public')->delete($user->nationalIDCard);
@@ -1912,7 +1943,6 @@ class AuthController extends Controller
 
             $user->save();
 
-            // ✅ Mise à jour des informations du compte
             if ($user->accountType) {
                 if ($request->has('years_of_experience')) {
                     $user->accountType->years_of_experience = $validated['years_of_experience'];
@@ -1923,7 +1953,6 @@ class AuthController extends Controller
                 $user->accountType->save();
             }
 
-            // ✅ Upload des documents d'entreprise si applicable
             if ($isEnterprise === true) {
                 $documentsData = [];
 
@@ -1972,26 +2001,56 @@ class AuthController extends Controller
                 } else {
                     $user->enterpriseDocument()->create($documentsData);
                 }
+
+                $addedWorkers = [];
+                foreach ($validated['worker_user_ids'] as $workerId) {
+                    $workerEnterprise = \App\Models\WorkerEnterprise::updateOrCreate(
+                        [
+                            'enterprise_user_id' => $user->id,
+                            'worker_user_id' => $workerId,
+                        ],
+                        [
+                            'enterprise_user_id' => $user->id,
+                            'worker_user_id' => $workerId,
+                            'status' => 'pending', 
+                        ]
+                    );
+                    
+                    $addedWorkers[] = $workerEnterprise;
+                }
             }
 
             DB::commit();
 
-            // ✅ Construire la réponse
             $responseData = [
                 'profil' => $user->profil ? asset('storage/' . $user->profil) : null,
-                'nationalIDCard' => $user->nationalIDCard ? asset('storage/' . $user->nationalIDCard) : null, // ✅ Ajouté
+                'nationalIDCard' => $user->nationalIDCard ? asset('storage/' . $user->nationalIDCard) : null,
                 'years_of_experience' => $user->accountType?->years_of_experience,
                 'presentation' => $user->accountType?->presentation,
             ];
 
-            if ($isEnterprise === true && $user->enterpriseDocument) {
-                $responseData['enterprise_documents'] = [
-                    'commercial_register' => $user->enterpriseDocument->commercial_register ? asset('storage/' . $user->enterpriseDocument->commercial_register) : null,
-                    'immigration_certificate' => $user->enterpriseDocument->immigration_certificate ? asset('storage/' . $user->enterpriseDocument->immigration_certificate) : null,
-                    'certificate_of_compliance' => $user->enterpriseDocument->certificate_of_compliance ? asset('storage/' . $user->enterpriseDocument->certificate_of_compliance) : null,
-                    'approval' => $user->enterpriseDocument->approval ? asset('storage/' . $user->enterpriseDocument->approval) : null,
-                    'patent' => $user->enterpriseDocument->patent ? asset('storage/' . $user->enterpriseDocument->patent) : null,
-                ];
+            if ($isEnterprise === true) {
+                if ($user->enterpriseDocument) {
+                    $responseData['enterprise_documents'] = [
+                        'commercial_register' => $user->enterpriseDocument->commercial_register ? asset('storage/' . $user->enterpriseDocument->commercial_register) : null,
+                        'immigration_certificate' => $user->enterpriseDocument->immigration_certificate ? asset('storage/' . $user->enterpriseDocument->immigration_certificate) : null,
+                        'certificate_of_compliance' => $user->enterpriseDocument->certificate_of_compliance ? asset('storage/' . $user->enterpriseDocument->certificate_of_compliance) : null,
+                        'approval' => $user->enterpriseDocument->approval ? asset('storage/' . $user->enterpriseDocument->approval) : null,
+                        'patent' => $user->enterpriseDocument->patent ? asset('storage/' . $user->enterpriseDocument->patent) : null,
+                    ];
+                }
+                
+                if (isset($addedWorkers) && !empty($addedWorkers)) {
+                    $responseData['workers'] = collect($addedWorkers)->map(function ($we) {
+                        $we->load('worker.contact');
+                        return [
+                            'id' => $we->id,
+                            'worker_user_id' => $we->worker_user_id,
+                            'worker_name' => $we->worker?->contact?->firstName . ' ' . $we->worker?->contact?->lastName,
+                            'worker_email' => $we->worker?->contact?->email,
+                        ];
+                    });
+                }
             }
 
             return response()->json([
@@ -2075,6 +2134,12 @@ class AuthController extends Controller
      *                     @OA\Property(property="certificate_of_compliance", type="string", nullable=true),
      *                     @OA\Property(property="approval", type="string", nullable=true),
      *                     @OA\Property(property="patent", type="string", nullable=true)
+     *                 ),
+     *                 @OA\Property(
+     *                     property="workers",
+     *                     type="array",
+     *                     description="Liste des workers de l'entreprise (présent uniquement si is_enterprise = true)",
+     *                     @OA\Items(type="object")
      *                 )
      *             )
      *         )
@@ -2126,12 +2191,20 @@ class AuthController extends Controller
             }
         }
 
+        $isEnterprise = false;
+        if ($user->accountType) {
+            $rawValue = $user->accountType->is_enterprise;
+            if (in_array($rawValue, [1, '1', true, 'true'], true)) {
+                $isEnterprise = true;
+            }
+        }
+
         $profileData = [
             'id' => $user->id,
             'email' => $user->email,
             'user_type' => $userType,
             'profil' => $user->profil ? asset('storage/' . $user->profil) : null,
-            'nationalIDCard' => $user->nationalIDCard ? asset('storage/' . $user->nationalIDCard) : null, // ✅ Ajouté
+            'nationalIDCard' => $user->nationalIDCard ? asset('storage/' . $user->nationalIDCard) : null,
             'roles' => $user->roles->pluck('name'),
             'privacy_policy' => $user->privacy_policy,
             'created_at' => $user->created_at,
@@ -2142,7 +2215,7 @@ class AuthController extends Controller
                 'child_lot_name' => $childLotName,
                 'parent_lot_name' => $parentLotName,
                 'all_lots' => $allLots,
-                'is_enterprise' => $user->accountType->is_enterprise ?? false,
+                'is_enterprise' => $isEnterprise,
                 'years_of_experience' => $user->accountType->years_of_experience,
                 'presentation' => $user->accountType->presentation,
                 'account_status' => $user->accountType->account_creation_request,
@@ -2179,6 +2252,26 @@ class AuthController extends Controller
                 'approval' => $user->enterpriseDocument->approval ? asset('storage/' . $user->enterpriseDocument->approval) : null,
                 'patent' => $user->enterpriseDocument->patent ? asset('storage/' . $user->enterpriseDocument->patent) : null,
             ];
+        }
+
+        if ($isEnterprise === true) {
+            $workerEnterprises = \App\Models\WorkerEnterprise::where('enterprise_user_id', $user->id)
+                ->with(['worker.contact.localisationWorker', 'worker.accountType.lot'])
+                ->get();
+
+            $profileData['workers'] = $workerEnterprises->map(function ($we) {
+                return [
+                    'id' => $we->id,
+                    'worker_user_id' => $we->worker_user_id,
+                    'status' => $we->status,
+                    'worker_name' => $we->worker?->contact?->firstName . ' ' . $we->worker?->contact?->lastName,
+                    'worker_email' => $we->worker?->contact?->email,
+                    'worker_phone' => $we->worker?->contact?->phoneNumber,
+                    'worker_localisation' => $we->worker?->contact?->localisationWorker?->name,
+                    'worker_lot' => $we->worker?->accountType?->lot?->name,
+                    'worker_profil' => $we->worker?->profil ? asset('storage/' . $we->worker->profil) : null,
+                ];
+            });
         }
 
         return response()->json([

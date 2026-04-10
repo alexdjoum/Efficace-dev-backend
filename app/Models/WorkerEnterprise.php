@@ -9,6 +9,11 @@ class WorkerEnterprise extends Model
     protected $fillable = [
         'enterprise_user_id',
         'worker_user_id',
+        'status',
+    ];
+
+    protected $attributes = [
+        'status' => 'pending',
     ];
 
     public function enterprise()
